@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { TopBar, WorkspaceTab } from './components/TopBar';
 import { StoreLandingPage } from './components/StoreLandingPage';
 import { GmcFeedWorkspace } from './components/GmcFeedWorkspace';
@@ -86,6 +87,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+      <Analytics />
       {/* 3-Zone Top Navigation Contract */}
       <TopBar
         activeTab={activeTab}
