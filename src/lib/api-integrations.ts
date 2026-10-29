@@ -135,16 +135,61 @@ export function mapCjProductToGmc(
   let additionalImages: string[] = [];
   const imageSet = (cj as any).productImageSet || (cj as any).images;
   if (Array.isArray(imageSet)) {
-    additionalImages = imageSet.filter((img) => typeof img === 'string' && img.startsWith('http'));
+    additionalImages = imageSet
+      .filter((img) => typeof img === 'string' && img.trim().startsWith('http'))
+      .map((img) => img.trim().replace(/^http:\/\//i, 'https://'));
   } else if (typeof imageSet === 'string') {
-    additionalImages = imageSet.split(',').map((s) => s.trim()).filter((img) => img.startsWith('http'));
+    const trimmedSet = imageSet.trim();
+    if (trimmedSet.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmedSet);
+        if (Array.isArray(parsed)) {
+          additionalImages = parsed
+            .filter((img) => typeof img === 'string' && img.trim().startsWith('http'))
+            .map((img) => img.trim().replace(/^http:\/\//i, 'https://'));
+        }
+      } catch {
+        // fallback below
+      }
+    }
+    if (additionalImages.length === 0) {
+      additionalImages = trimmedSet
+        .replace(/^[\["\s]+|[\]"\s]+$/g, '')
+        .split(',')
+        .map((s) => s.replace(/["']/g, '').trim())
+        .filter((img) => img.startsWith('http'))
+        .map((img) => img.replace(/^http:\/\//i, 'https://'));
+    }
   }
 
-  // Ensure main image is clean HTTPS
-  const rawImage = (cj as any).productImage || (cj as any).bigImage;
-  const mainImage = typeof rawImage === 'string' && rawImage.startsWith('http')
-    ? rawImage
-    : 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+  // Ensure main image is clean HTTPS (handles string, JSON array string, or array)
+  const rawImage = (cj as any).productImage || (cj as any).bigImage || (cj as any).image;
+  let mainImage = '';
+  if (Array.isArray(rawImage) && rawImage.length > 0) {
+    mainImage = String(rawImage[0] || '').trim();
+  } else if (typeof rawImage === 'string') {
+    const trimmed = rawImage.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          mainImage = String(parsed[0] || '').trim();
+        }
+      } catch {
+        mainImage = trimmed.replace(/^[\["\s]+|[\]"\s]+$/g, '').split(',')[0].replace(/["']/g, '').trim();
+      }
+    } else {
+      mainImage = trimmed.split(',')[0].replace(/["']/g, '').trim();
+    }
+  }
+  if (mainImage.startsWith('http://')) {
+    mainImage = mainImage.replace(/^http:\/\//i, 'https://');
+  }
+  if (!mainImage.startsWith('https://')) {
+    mainImage =
+      additionalImages[0] ||
+      'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+  }
 
   const rawDesc = (cj as any).description || (cj as any).remark;
 

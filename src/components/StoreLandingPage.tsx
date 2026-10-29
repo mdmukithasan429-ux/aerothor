@@ -32,6 +32,27 @@ interface CartItem {
 
 const SEARCH_STORAGE_KEY = 'aerothor_store_persistent_search';
 const CATEGORY_STORAGE_KEY = 'aerothor_store_persistent_category';
+const FALLBACK_PRODUCT_IMAGE =
+  'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+
+function resolveProductImage(rawUrl?: string): string {
+  if (!rawUrl || typeof rawUrl !== 'string') return FALLBACK_PRODUCT_IMAGE;
+  let cleaned = rawUrl.trim();
+  if (cleaned.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        cleaned = String(parsed[0] || '').trim();
+      }
+    } catch {
+      cleaned = cleaned.replace(/^[\["\s]+|[\]"\s]+$/g, '').split(',')[0].replace(/["']/g, '').trim();
+    }
+  }
+  if (cleaned.startsWith('http://')) {
+    cleaned = cleaned.replace(/^http:\/\//i, 'https://');
+  }
+  return cleaned.startsWith('https://') || cleaned.startsWith('/') ? cleaned : FALLBACK_PRODUCT_IMAGE;
+}
 
 function filterCatalogLocally(
   items: GmcProduct[],
@@ -353,8 +374,8 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
           </div>
         </div>
 
-        {/* Persistent Sticky Product Search Bar (Debounced /api/products/search) */}
-        <div className="sticky top-16 z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/90 backdrop-blur-md border border-slate-800 shadow-lg shadow-slate-950/60 rounded-xl p-3">
+        {/* Persistent Product Search Bar (Debounced /api/products/search) */}
+        <div className="sm:sticky sm:top-24 lg:top-16 z-30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/95 backdrop-blur-md border border-slate-800 shadow-lg shadow-slate-950/60 rounded-xl p-3">
           <div className="relative flex-1">
             {isSearching ? (
               <Loader2 className="w-4 h-4 text-emerald-400 animate-spin absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -366,13 +387,13 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products by title, description, brand, or SKU (e.g. CJ-CJZS3530159, AT-TI-FLASK-01)..."
+              placeholder="Search products by title, brand, or SKU..."
               aria-label="Search products by title, description, or SKU"
-              className="w-full pl-10 pr-20 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+              className="w-full pl-10 pr-20 py-2.5 bg-slate-950 border border-slate-800 rounded-lg text-base sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/70 focus:ring-1 focus:ring-emerald-500/30 transition-all"
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
               {isSearching && (
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded whitespace-nowrap">
                   Searching…
                 </span>
               )}
@@ -383,11 +404,11 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                     setSearchQuery('');
                     searchInputRef.current?.focus();
                   }}
-                  className="p-1 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800 transition-colors"
                   title="Clear search"
                   aria-label="Clear search"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
@@ -415,7 +436,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
 
         {/* Product Cards Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
+          <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center space-y-3">
             <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center mx-auto text-slate-400">
               <Search className="w-5 h-5" />
             </div>
@@ -438,95 +459,121 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                   setSearchQuery('');
                   setSelectedCategory('All');
                 }}
-                className="px-4 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg transition-colors"
+                className="px-4 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg transition-colors"
               >
                 Clear Search &amp; Filters
               </button>
             </div>
           </div>
         ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProducts.map((p) => {
-            return (
-              <div
-                key={p.id}
-                className="group bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  {/* Image Frame */}
-                  <div className="relative aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer" onClick={() => setQuickViewProduct(p)}>
-                    <img
-                      src={p.image_link}
-                      alt={p.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {p.sale_price && (
-                      <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-bold rounded">
-                        SALE
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            {filteredProducts.map((p) => {
+              const displayImage = resolveProductImage(p.image_link);
+              return (
+                <article
+                  key={p.id}
+                  className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-slate-700 hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between shadow-sm"
+                >
+                  <div>
+                    {/* Image Frame */}
+                    <div
+                      className="relative aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer"
+                      onClick={() => setQuickViewProduct(p)}
+                    >
+                      <img
+                        src={displayImage}
+                        alt={p.title}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                            target.src = FALLBACK_PRODUCT_IMAGE;
+                          }
+                        }}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {p.sale_price && (
+                        <span className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-extrabold tracking-wide rounded shadow-sm">
+                          SALE
+                        </span>
+                      )}
+                      <span
+                        title={p.id}
+                        className="absolute top-3 right-3 max-w-[55%] truncate px-2 py-0.5 bg-slate-950/85 backdrop-blur-sm border border-slate-800/80 text-slate-300 font-mono text-[10px] rounded"
+                      >
+                        {p.id}
                       </span>
-                    )}
-                    <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-slate-950/80 backdrop-blur text-slate-300 font-mono text-[10px] rounded">
-                      {p.id}
-                    </span>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-center justify-between text-xs text-slate-400">
-                      <span className="font-semibold text-slate-300">{p.brand}</span>
-                      <span className="text-emerald-400 font-medium">In Stock</span>
                     </div>
 
-                    <h3
-                      onClick={() => setQuickViewProduct(p)}
-                      className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors cursor-pointer line-clamp-2"
-                    >
-                      {p.title}
-                    </h3>
-
-                    <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
-                      {p.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Price & Add to Cart Footer */}
-                <div className="p-4 pt-0 border-t border-slate-800/60 mt-3 flex items-center justify-between">
-                  <div className="font-mono tabular-nums">
-                    {p.sale_price ? (
-                      <div>
-                        <span className="text-base font-extrabold text-emerald-400">{p.sale_price}</span>
-                        <span className="text-xs line-through text-slate-500 ml-1.5">{p.price}</span>
+                    {/* Card Content */}
+                    <div className="p-4 sm:p-5 space-y-2">
+                      <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
+                        <span className="font-semibold text-slate-300 uppercase tracking-wider text-[11px] truncate">
+                          {p.brand || 'AeroThor'}
+                        </span>
+                        <span className="text-emerald-400 font-medium text-[11px] whitespace-nowrap shrink-0">
+                          In Stock
+                        </span>
                       </div>
-                    ) : (
-                      <span className="text-base font-extrabold text-white">{p.price}</span>
-                    )}
+
+                      <h3
+                        onClick={() => setQuickViewProduct(p)}
+                        className="text-base font-semibold text-white group-hover:text-emerald-300 transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug"
+                      >
+                        {p.title}
+                      </h3>
+
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                        {p.description}
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => addToCart(p)}
-                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors inline-flex items-center gap-1"
-                      title="Add to cart"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Cart</span>
-                    </button>
-                    <button
-                      onClick={() => handleBuyNow(p)}
-                      className="px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1 shadow-sm"
-                      title="Express 1-Click Checkout"
-                    >
-                      <Zap className="w-3.5 h-3.5 fill-current" />
-                      <span>Buy Now</span>
-                    </button>
+                  {/* Price & Add to Cart Footer — Mobile Responsive without Wrapping or Crushing */}
+                  <div className="px-4 py-3.5 sm:px-5 border-t border-slate-800/80 bg-slate-950/40 flex items-center justify-between gap-3 mt-auto">
+                    <div className="font-mono tabular-nums min-w-0">
+                      {p.sale_price ? (
+                        <div className="flex flex-col leading-tight">
+                          <span className="text-base font-extrabold text-emerald-400 whitespace-nowrap">
+                            {p.sale_price}
+                          </span>
+                          <span className="text-[11px] line-through text-slate-500 whitespace-nowrap">
+                            {p.price}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-base font-extrabold text-white whitespace-nowrap">
+                          {p.price}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => addToCart(p)}
+                        className="min-h-[40px] px-3 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/70 transition-colors inline-flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
+                        title="Add to cart"
+                      >
+                        <Plus className="w-3.5 h-3.5 shrink-0" />
+                        <span>Add</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleBuyNow(p)}
+                        className="min-h-[40px] px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-950 text-xs font-bold rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
+                        title="Express 1-Click Checkout"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current shrink-0" />
+                        <span>Buy Now</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                </article>
+              );
+            })}
+          </div>
         )}
       </section>
 
@@ -609,9 +656,16 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                     className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center gap-3 text-xs"
                   >
                     <img
-                      src={item.product.image_link}
+                      src={resolveProductImage(item.product.image_link)}
                       alt={item.product.title}
-                      className="w-14 h-14 object-cover rounded-lg bg-slate-950"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                          target.src = FALLBACK_PRODUCT_IMAGE;
+                        }
+                      }}
+                      className="w-14 h-14 object-cover rounded-lg bg-slate-950 shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white truncate">{item.product.title}</p>
@@ -676,29 +730,36 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
 
       {/* Quick View Modal */}
       {quickViewProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-2xl bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl relative">
             <button
               onClick={() => setQuickViewProduct(null)}
-              className="absolute top-4 right-4 z-10 p-1.5 bg-slate-900/80 text-slate-400 hover:text-white rounded-lg"
+              className="absolute top-3 right-3 z-10 p-2 bg-slate-900/90 text-slate-300 hover:text-white rounded-lg border border-slate-700/60"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="aspect-square bg-slate-900">
+              <div className="aspect-[4/3] md:aspect-square bg-slate-900 overflow-hidden">
                 <img
-                  src={quickViewProduct.image_link}
+                  src={resolveProductImage(quickViewProduct.image_link)}
                   alt={quickViewProduct.title}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                      target.src = FALLBACK_PRODUCT_IMAGE;
+                    }
+                  }}
                   className="w-full h-full object-cover"
                 />
               </div>
 
-              <div className="p-6 flex flex-col justify-between space-y-4">
+              <div className="p-5 sm:p-6 flex flex-col justify-between space-y-4">
                 <div className="space-y-2 text-xs">
                   <span className="font-mono text-emerald-400">{quickViewProduct.id}</span>
-                  <h3 className="text-lg font-bold text-white">{quickViewProduct.title}</h3>
-                  <p className="text-slate-300 leading-relaxed text-xs">{quickViewProduct.description}</p>
+                  <h3 className="text-base sm:text-lg font-bold text-white leading-snug">{quickViewProduct.title}</h3>
+                  <p className="text-slate-300 leading-relaxed text-xs line-clamp-4 sm:line-clamp-none">{quickViewProduct.description}</p>
                   
                   <div className="pt-2 grid grid-cols-2 gap-2 text-[11px] text-slate-400">
                     <div>Brand: <strong className="text-white">{quickViewProduct.brand}</strong></div>
@@ -715,7 +776,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                   <div className="space-y-2 pt-1">
                     <button
                       onClick={() => handleBuyNow(quickViewProduct)}
-                      className="w-full py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                      className="w-full min-h-[42px] py-2.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
                     >
                       <Zap className="w-3.5 h-3.5 fill-current" />
                       <span>Buy Now with Express Checkout</span>
@@ -726,7 +787,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                           addToCart(quickViewProduct);
                           setQuickViewProduct(null);
                         }}
-                        className="flex-1 py-2 bg-slate-800 text-slate-200 font-semibold text-xs rounded-lg hover:bg-slate-700 transition-colors"
+                        className="flex-1 min-h-[40px] py-2 bg-slate-800 text-slate-200 font-semibold text-xs rounded-lg hover:bg-slate-700 transition-colors whitespace-nowrap"
                       >
                         Add to Cart
                       </button>
@@ -735,7 +796,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                           setFullPdpProduct(quickViewProduct);
                           setQuickViewProduct(null);
                         }}
-                        className="px-3 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg hover:bg-slate-700 transition-colors"
+                        className="min-h-[40px] px-3 py-2 bg-slate-800 text-slate-300 text-xs rounded-lg hover:bg-slate-700 transition-colors whitespace-nowrap"
                         title="Inspect Next.js PDP & Schema.org JSON-LD"
                       >
                         View PDP
@@ -751,29 +812,36 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
 
       {/* Full PDP & Schema.org JSON-LD Modal */}
       {fullPdpProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative my-8">
-            <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-mono text-[10px] border border-emerald-800/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative my-4 sm:my-8">
+            <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 font-mono text-[10px] border border-emerald-800/40 shrink-0">
                   app/product/[id]/page.tsx
                 </span>
-                <span className="text-xs font-bold text-white">Next.js App Router PDP &amp; Schema.org Rich Snippet</span>
+                <span className="text-xs font-bold text-white truncate">Next.js App Router PDP &amp; Schema.org Rich Snippet</span>
               </div>
               <button
                 onClick={() => setFullPdpProduct(null)}
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 max-h-[80vh] overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="aspect-square bg-slate-900 rounded-xl overflow-hidden p-4 border border-slate-800 flex items-center justify-center">
+                <div className="aspect-[4/3] sm:aspect-square bg-slate-900 rounded-xl overflow-hidden p-4 border border-slate-800 flex items-center justify-center">
                   <img
-                    src={fullPdpProduct.image_link}
+                    src={resolveProductImage(fullPdpProduct.image_link)}
                     alt={fullPdpProduct.title}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== FALLBACK_PRODUCT_IMAGE) {
+                        target.src = FALLBACK_PRODUCT_IMAGE;
+                      }
+                    }}
                     className="max-h-full max-w-full object-contain"
                   />
                 </div>

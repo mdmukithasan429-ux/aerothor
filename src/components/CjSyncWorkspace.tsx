@@ -784,7 +784,7 @@ export const CjSyncWorkspace: React.FC<CjSyncWorkspaceProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-h-[560px] overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:max-h-[620px] sm:overflow-y-auto pr-0 sm:pr-1">
           {mappedGmcProducts.map((item, idx) => {
             const isAlreadyInStore = catalogSkuSet.has(item.id.toLowerCase());
             const isAddingThis = addingSku === item.id;
@@ -792,7 +792,7 @@ export const CjSyncWorkspace: React.FC<CjSyncWorkspaceProps> = ({
             return (
               <div
                 key={`${item.id}-${idx}`}
-                className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all"
+                className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex flex-col justify-between hover:border-slate-700 transition-all shadow-sm"
               >
                 <div>
                   <div
@@ -802,6 +802,7 @@ export const CjSyncWorkspace: React.FC<CjSyncWorkspaceProps> = ({
                     <img
                       src={item.image_link}
                       alt={item.title}
+                      loading="lazy"
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                       onError={(e: any) => {
@@ -809,33 +810,36 @@ export const CjSyncWorkspace: React.FC<CjSyncWorkspaceProps> = ({
                           'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
                       }}
                     />
-                    <span className="absolute top-2 left-2 px-2 py-0.5 bg-slate-950/85 text-emerald-400 font-mono text-[10px] rounded border border-emerald-500/30">
+                    <span
+                      title={item.id}
+                      className="absolute top-2.5 left-2.5 max-w-[55%] truncate px-2 py-0.5 bg-slate-950/85 text-emerald-400 font-mono text-[10px] rounded border border-emerald-500/30"
+                    >
                       {item.id}
                     </span>
                     {isAlreadyInStore && (
-                      <span className="absolute top-2 right-2 px-2 py-0.5 bg-emerald-500 text-slate-950 font-bold text-[10px] rounded flex items-center gap-1">
+                      <span className="absolute top-2.5 right-2.5 px-2 py-0.5 bg-emerald-500 text-slate-950 font-bold text-[10px] rounded flex items-center gap-1 whitespace-nowrap">
                         <Check className="w-3 h-3 stroke-[3]" />
                         In Store
                       </span>
                     )}
                   </div>
 
-                  <div className="p-3.5 space-y-1.5">
+                  <div className="p-4 space-y-2">
                     <h4
                       onClick={() => setActivePreviewIndex(idx)}
-                      className="text-xs font-bold text-white line-clamp-2 cursor-pointer hover:text-emerald-300"
+                      className="text-sm font-bold text-white line-clamp-2 min-h-[2.5rem] leading-snug cursor-pointer hover:text-emerald-300"
                     >
                       {item.title}
                     </h4>
 
-                    <div className="flex items-center justify-between text-[11px] font-mono pt-1">
-                      <span className="text-slate-400">
+                    <div className="flex items-center justify-between gap-2 text-[11px] font-mono pt-1">
+                      <span className="text-slate-400 whitespace-nowrap">
                         Cost:{' '}
                         <strong className="text-slate-200">
                           ${(item.wholesale_price ?? 12.5).toFixed(2)}
                         </strong>
                       </span>
-                      <span className="text-emerald-400 font-bold">
+                      <span className="text-emerald-400 font-bold whitespace-nowrap">
                         Retail: {item.sale_price || item.price}
                       </span>
                     </div>
@@ -847,27 +851,27 @@ export const CjSyncWorkspace: React.FC<CjSyncWorkspaceProps> = ({
                   </div>
                 </div>
 
-                <div className="p-3 pt-0 grid grid-cols-2 gap-1.5">
+                <div className="p-3.5 pt-3 border-t border-slate-800/80 bg-slate-900/40 grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => handleAddCjProductToStore(item)}
                     disabled={isAddingThis}
-                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                    className={`min-h-[40px] px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer touch-manipulation ${
                       isAlreadyInStore
                         ? 'bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30'
                         : 'bg-emerald-400 hover:bg-emerald-300 text-slate-950'
                     }`}
                   >
-                    <Plus className="w-3.5 h-3.5" />
+                    <Plus className="w-3.5 h-3.5 shrink-0" />
                     <span>{isAddingThis ? 'Adding...' : isAlreadyInStore ? 'Pin to #1' : 'Add to Store'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setOrderModalProduct(item)}
-                    className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                    className="min-h-[40px] px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0 transition-colors cursor-pointer touch-manipulation"
                   >
-                    <Truck className="w-3.5 h-3.5" />
+                    <Truck className="w-3.5 h-3.5 shrink-0" />
                     <span>Real Order</span>
                   </button>
                 </div>
@@ -1002,12 +1006,12 @@ export const CjSyncWorkspace: React.FC<CjSyncWorkspaceProps> = ({
             </h3>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-400">Inspecting Product:</span>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+            <span className="text-xs text-slate-400 whitespace-nowrap">Inspecting Product:</span>
             <select
               value={activePreviewIndex}
               onChange={(e) => setActivePreviewIndex(parseInt(e.target.value, 10))}
-              className="bg-slate-900 border border-slate-700 rounded px-2.5 py-1 text-xs text-white font-mono max-w-[260px] truncate"
+              className="w-full sm:w-auto sm:max-w-[280px] bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono truncate"
             >
               {mappedGmcProducts.map((p, idx) => (
                 <option key={idx} value={idx}>
