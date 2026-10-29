@@ -923,6 +923,60 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
             <span>Authorization header verified on every mutation</span>
           </div>
         </div>
+
+        {/* Vercel Environment Variables & GitHub Integration Quick-Fix Strip */}
+        <div className="p-3.5 bg-slate-950/90 border border-indigo-500/30 rounded-lg space-y-2.5 text-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Terminal className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span className="font-semibold text-white">
+                Vercel Deploy & Environment Variables (Pre-Configured in <code className="text-emerald-400 font-mono">vercel.json</code> & <code className="text-emerald-400 font-mono">.env.production</code>)
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const vercelEnvBlock = `VITE_GA_MEASUREMENT_ID=G-0KS0T13HQ7
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-0KS0T13HQ7
+NEXT_PUBLIC_SITE_URL=https://e-commerce-dropshiping-store.vercel.app
+APP_URL=https://e-commerce-dropshiping-store.vercel.app
+STORE_NAME=AeroCommerce Direct
+DEFAULT_CURRENCY=USD
+ADMIN_SECRET_KEY=aero_secret_adm_994821
+CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
+                  navigator.clipboard.writeText(vercelEnvBlock);
+                  showToast('Copied all 8 Vercel Environment Variables to clipboard!');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy All Vercel Env Vars (.env)</span>
+              </button>
+              <a
+                href="https://github.com/settings/installations"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-indigo-200 bg-indigo-950/80 border border-indigo-500/40 hover:bg-indigo-900/70 rounded-md transition-colors"
+              >
+                <span>1. Grant Vercel GitHub Access</span>
+                <ExternalLink className="w-3 h-3 text-indigo-400" />
+              </a>
+              <a
+                href="https://vercel.com/new"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-200 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-md transition-colors"
+              >
+                <span>2. Open Vercel Import</span>
+                <ExternalLink className="w-3 h-3 text-emerald-400" />
+              </a>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            <strong className="text-amber-300">Fix for Vercel &ldquo;install the GitHub integration first&rdquo; error:</strong> Because <code className="text-slate-200 font-mono">mukithasan232/E-commerce-dropshiping-store-</code> is currently Private on GitHub, either make the repository <strong>Public</strong> in GitHub Settings &rarr; General &rarr; Change repository visibility, OR open <strong className="text-slate-200">vercel.com/new</strong> &rarr; click <strong>Adjust GitHub App Permissions</strong> &rarr; select <code className="text-slate-200 font-mono">E-commerce-dropshiping-store-</code> &rarr; click <strong>Import</strong>. All environment variables are already baked into <code className="text-emerald-400 font-mono">vercel.json</code>.
+          </p>
+        </div>
       </div>
 
       {/* Metrics Row */}

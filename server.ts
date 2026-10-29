@@ -112,6 +112,18 @@ function sanitizeInputString(value: unknown, fallback = '', maxLength = 250): st
 
 app.use(express.json({ limit: '10mb' }));
 
+function getCanonicalBaseUrl(): string {
+  const raw =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.APP_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : '') ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+    'https://e-commerce-dropshiping-store.vercel.app';
+  return raw.replace(/\/+$/, '');
+}
+
 // Load persistent catalog & orders from disk so reloads & restarts never lose data
 let currentCatalog: GmcProduct[] = loadPersistedCatalog();
 let currentOrders: PersistedOrder[] = loadPersistedOrders();
@@ -420,7 +432,7 @@ function buildDeterministicCjBatchProducts(
       id: sku,
       title,
       description: `${title}. Direct CJ Dropshipping US/UK domestic warehouse inventory. Dispatches within 3–7 business days via USPS Priority or Royal Mail Tracked 48 with a 30-day money-back guarantee.`,
-      link: `${process.env.APP_URL || 'https://my-store.com'}/product/${sku}`,
+      link: `${getCanonicalBaseUrl()}/product/${sku}`,
       image_link: cat.images[seq % cat.images.length],
       price: `${retailPrice.toFixed(2)} USD`,
       availability: 'in_stock',
@@ -469,11 +481,7 @@ app.get(['/api/feed.xml', '/feed.xml'], (req, res) => {
 // 1b. Dynamic SEO Sitemap XML API (/api/sitemap.xml & /sitemap.xml)
 app.get(['/api/sitemap.xml', '/sitemap.xml'], (_req, res) => {
   try {
-    const baseUrl = (
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.APP_URL ||
-      'https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app'
-    ).replace(/\/+$/, '');
+    const baseUrl = getCanonicalBaseUrl();
     const nowIso = new Date().toISOString();
 
     const staticRoutes = [
@@ -538,11 +546,7 @@ ${productUrlsXml}
 
 // 1c. Robots.txt pointing search crawlers to dynamic sitemap.xml
 app.get('/robots.txt', (_req, res) => {
-  const baseUrl = (
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    process.env.APP_URL ||
-    'https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app'
-  ).replace(/\/+$/, '');
+  const baseUrl = getCanonicalBaseUrl();
   const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /api/admin/
@@ -582,7 +586,7 @@ app.post('/api/feed/refresh', (req, res) => {
     }
 
     const trigger = (req.body?.trigger as any) || (secretParam ? 'cloud_scheduler' : 'admin_manual');
-    const log = executeFeedRefresh(currentCatalog, trigger, process.env.APP_URL);
+    const log = executeFeedRefresh(currentCatalog, trigger, getCanonicalBaseUrl());
     const status = getFeedSchedulerStatus(currentCatalog);
 
     res.status(200).json({
@@ -923,7 +927,7 @@ app.post('/api/admin/products', (req, res) => {
           id: sku,
           title: String(item.title || 'Product').trim().slice(0, 150),
           description: String(item.description || item.title || '').trim(),
-          link: `${process.env.APP_URL || 'https://my-store.com'}/product/${sku}`,
+          link: `${getCanonicalBaseUrl()}/product/${sku}`,
           image_link: String(item.mainImageUrl || item.image_link || '').trim(),
           price: `${numPrice.toFixed(2)} USD`,
           sale_price: item.salePrice ? `${parseFloat(String(item.salePrice)).toFixed(2)} USD` : undefined,
@@ -986,7 +990,7 @@ app.post('/api/admin/products', (req, res) => {
       id: String(sku).trim(),
       title: String(title).trim().slice(0, 150),
       description: String(description || title).trim(),
-      link: `${process.env.APP_URL || 'https://my-store.com'}/product/${String(sku).trim()}`,
+      link: `${getCanonicalBaseUrl()}/product/${String(sku).trim()}`,
       image_link: String(mainImageUrl).trim(),
       price: `${numPrice.toFixed(2)} USD`,
       sale_price: salePrice ? `${parseFloat(String(salePrice)).toFixed(2)} USD` : undefined,
@@ -1134,11 +1138,7 @@ app.get('/api/products/:id/metadata', (req, res) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    const baseUrl = (
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      process.env.APP_URL ||
-      'https://e-commerce-dropshiping-store.vercel.app'
-    ).replace(/\/+$/, '');
+    const baseUrl = getCanonicalBaseUrl();
 
     const rawPrice = (product.sale_price || product.price || '0.00').replace(/[^0-9.]/g, '') || '0.00';
     const effectiveTitle =
