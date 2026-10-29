@@ -1,0 +1,85 @@
+// Prisma Schema for Headless B2C E-commerce (USA/UK) with Google Merchant Center (GMC) & Stripe Checkout
+// Strictly configured for PostgreSQL (Supabase, Neon, AWS RDS, Railway)
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id                  String   @id @default(uuid())
+  sku                 String   @unique
+  cjPid               String?  @unique @map("cj_pid")
+  title               String   @db.VarChar(255)
+  description         String   @db.Text
+  slug                String   @unique @db.VarChar(255)
+  brand               String   @default("AeroCommerce") @db.VarChar(128)
+
+  // Pricing (High-Precision Decimal for Google Merchant Center & Stripe compliance)
+  costPrice           Decimal  @default(0.00) @map("cost_price") @db.Decimal(10, 2)
+  price               Decimal  @db.Decimal(10, 2)
+  salePrice           Decimal? @map("sale_price") @db.Decimal(10, 2)
+  currency            String   @default("USD") @db.VarChar(3)
+
+  // Stock, Availability & Warehouse Logistics (US/UK 3-7 days fast dispatch)
+  stockQuantity       Int      @default(99) @map("stock_quantity")
+  availability        String   @default("in_stock") @db.VarChar(20) // in_stock, out_of_stock, preorder
+  condition           String   @default("new") @db.VarChar(20)      // new, refurbished, used
+  warehouseCountry    String   @default("US") @map("warehouse_country") @db.VarChar(2)
+  fulfillmentDaysMin  Int      @default(3) @map("fulfillment_days_min")
+  fulfillmentDaysMax  Int      @default(7) @map("fulfillment_days_max")
+
+  // Imagery (Google Merchant Center requires clean HTTPS links)
+  mainImageUrl        String   @map("main_image_url") @db.Text
+  additionalImages    Json?    @default("[]") @map("additional_images")
+
+  // Identification & Identifiers (Strict GMC GTIN/MPN rules)
+  gtin                String?  @db.VarChar(32)
+  mpn                 String?  @db.VarChar(64)
+  googleCategory      String?  @map("google_category") @db.VarChar(255)
+  productType         String?  @map("product_type") @db.VarChar(255)
+
+  // Status flags
+  status              String   @default("active") @db.VarChar(20) // active, draft, archived
+  isVisible           Boolean  @default(true) @map("is_visible")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([status, isVisible, updatedAt(sort: Desc)], name: "idx_products_gmc_feed")
+  @@index([sku], name: "idx_products_sku")
+  @@index([cjPid], name: "idx_products_cj_pid")
+  @@map("products")
+}
+
+model Order {
+  id                  String   @id @default(uuid())
+  stripeSessionId     String   @unique @map("stripe_session_id")
+  customerEmail       String?  @map("customer_email") @db.VarChar(255)
+  customerName        String?  @map("customer_name") @db.VarChar(255)
+  shippingCountry     String   @default("US") @map("shipping_country") @db.VarChar(2)
+  totalAmount         Decimal  @map("total_amount") @db.Decimal(10, 2)
+  currency            String   @default("USD") @db.VarChar(3)
+  paymentStatus       String   @default("pending") @map("payment_status") @db.VarChar(32)
+  itemsJson           Json     @map("items_json")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@index([stripeSessionId], name: "idx_orders_stripe_session")
+  @@map("orders")
+}
+
+model InventorySyncLog {
+  id              String   @id @default(uuid())
+  syncedAt        DateTime @default(now()) @map("synced_at")
+  productsScanned Int      @map("products_scanned")
+  productsUpdated Int      @map("products_updated")
+  status          String   @default("success") @db.VarChar(20)
+  errorMessage    String?  @map("error_message") @db.Text
+
+  @@map("inventory_sync_logs")
+}
