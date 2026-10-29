@@ -1092,16 +1092,48 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           </div>
         </div>
 
-        {/* Vercel Environment Variables & GitHub Integration Quick-Fix Strip */}
-        <div className="p-3.5 bg-slate-950/90 border border-indigo-500/30 rounded-lg space-y-2.5 text-xs">
+        {/* Live Published Store & Vercel / GitHub Production Strip */}
+        <div className="p-3.5 bg-slate-950/90 border border-emerald-500/30 rounded-lg space-y-2.5 text-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-indigo-400 shrink-0" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
               <span className="font-semibold text-white">
-                Vercel Deploy & Environment Variables (Pre-Configured in <code className="text-emerald-400 font-mono">vercel.json</code> & <code className="text-emerald-400 font-mono">.env.production</code>)
+                Store Published &amp; Live · GitHub Repo <code className="text-emerald-400 font-mono">mukithasan232/E-commerce-dropshiping-store-</code> Set to <strong>PUBLIC</strong>
               </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md transition-colors"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>Open Live Published Store</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(
+                    'https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app'
+                  );
+                  showToast('Copied Live Published Store URL to clipboard!');
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-200 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-md transition-colors cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Copy Live Store URL</span>
+              </button>
+              <a
+                href="https://vercel.com/new/import?s=https%3A%2F%2Fgithub.com%2Fmukithasan232%2FE-commerce-dropshiping-store-"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-indigo-200 bg-indigo-950/80 border border-indigo-500/40 hover:bg-indigo-900/70 rounded-md transition-colors"
+              >
+                <span>Deploy on Vercel (1-Click)</span>
+                <ExternalLink className="w-3 h-3 text-indigo-400" />
+              </a>
               <button
                 type="button"
                 onClick={() => {
@@ -1116,42 +1148,24 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                   navigator.clipboard.writeText(vercelEnvBlock);
                   showToast('Copied all 8 Vercel Environment Variables to clipboard!');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-300 bg-slate-900 border border-slate-800 hover:bg-slate-800 rounded-md transition-colors cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" />
-                <span>Copy All Vercel Env Vars (.env)</span>
+                <Copy className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Copy Env Vars (.env)</span>
               </button>
-              <a
-                href="https://github.com/apps/vercel/installations/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-indigo-200 bg-indigo-950/80 border border-indigo-500/40 hover:bg-indigo-900/70 rounded-md transition-colors"
-              >
-                <span>1. Install Vercel App on GitHub</span>
-                <ExternalLink className="w-3 h-3 text-indigo-400" />
-              </a>
-              <a
-                href="https://github.com/mukithasan232/E-commerce-dropshiping-store-/settings"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-amber-200 bg-amber-950/60 border border-amber-500/40 hover:bg-amber-900/60 rounded-md transition-colors"
-              >
-                <span>2. Repo Settings (Make Public)</span>
-                <ExternalLink className="w-3 h-3 text-amber-400" />
-              </a>
-              <a
-                href="https://vercel.com/new"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-200 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-md transition-colors"
-              >
-                <span>3. Open Vercel Import</span>
-                <ExternalLink className="w-3 h-3 text-emerald-400" />
-              </a>
             </div>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            <strong className="text-amber-300">Fix for Vercel &ldquo;install the GitHub integration first&rdquo; error:</strong> Tap <strong>1. Install Vercel App on GitHub</strong> above (&rarr; select <code className="text-slate-200 font-mono">mukithasan232</code> &rarr; choose <strong>All repositories</strong> or select <code className="text-slate-200 font-mono">E-commerce-dropshiping-store-</code> &rarr; tap <strong>Install / Save</strong>), then return to Vercel and reload. All environment variables are already pre-configured in <code className="text-emerald-400 font-mono">vercel.json</code> and <code className="text-emerald-400 font-mono">.env.production</code>.
+            Your store is live now at{' '}
+            <a
+              href="https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:underline font-mono"
+            >
+              https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app
+            </a>
+            . We also switched <code className="text-slate-200 font-mono">mukithasan232/E-commerce-dropshiping-store-</code> from Private to <strong className="text-emerald-400">Public</strong> on GitHub and pushed the latest build so Vercel can import and deploy it without any private repository errors.
           </p>
         </div>
       </div>
