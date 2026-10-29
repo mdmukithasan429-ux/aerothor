@@ -2,6 +2,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { GmcProduct } from '../lib/gmc-feed';
 import { ExpressCheckoutDrawer, CheckoutItem } from './ExpressCheckoutDrawer';
 import {
+  applyProductMetadataToDocumentHead,
+  generateProductPageMetadata,
+  resolveProductSeoTitle,
+  resolveProductSeoDescription,
+} from '../lib/seo-metadata';
+import {
+  trackViewItem,
+  trackAddToCart,
+  trackBeginCheckout,
+  trackSearch,
+} from '../lib/analytics';
+import {
   ShoppingBag,
   ShieldCheck,
   Truck,
@@ -18,6 +30,7 @@ import {
   Zap,
   Search,
   Loader2,
+  Globe,
 } from 'lucide-react';
 
 interface StoreLandingPageProps {
@@ -137,7 +150,29 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
   const [isExpressCheckoutOpen, setIsExpressCheckoutOpen] = useState(false);
   const [expressCheckoutItems, setExpressCheckoutItems] = useState<CheckoutItem[]>([]);
 
+  // Keep active modal product in sync with latest catalog edits (including SEO meta title/description updates)
+  useEffect(() => {
+    if (quickViewProduct) {
+      const latest = products.find((p) => p.id === quickViewProduct.id);
+      if (latest && latest !== quickViewProduct) setQuickViewProduct(latest);
+    }
+    if (fullPdpProduct) {
+      const latest = products.find((p) => p.id === fullPdpProduct.id);
+      if (latest && latest !== fullPdpProduct) setFullPdpProduct(latest);
+    }
+  }, [products]);
+
+  // Reflect active product's SEO meta title & description in the live document <head> and JSON-LD
+  useEffect(() => {
+    const activeProduct = fullPdpProduct || quickViewProduct;
+    applyProductMetadataToDocumentHead(activeProduct);
+  }, [fullPdpProduct, quickViewProduct]);
+
   const handleBuyNow = (product: GmcProduct) => {
+    const rawPrice = parseFloat(
+      product.sale_price?.replace(/[^0-9.]/g, '') || product.price.replace(/[^0-9.]/g, '') || '0'
+    );
+    trackBeginCheckout([{ product, quantity: 1 }], rawPrice, 'USD');
     setExpressCheckoutItems([{ product, quantity: 1 }]);
     setQuickViewProduct(null);
     setFullPdpProduct(null);
@@ -210,11 +245,18 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
         const data = await res.json();
         if (active && Array.isArray(data.products)) {
           setFilteredProducts(data.products);
+          if (debouncedQuery.trim()) {
+            trackSearch(debouncedQuery.trim(), data.products.length);
+          }
         }
       } catch (err: any) {
         if (err?.name === 'AbortError') return;
         if (active) {
-          setFilteredProducts(filterCatalogLocally(products, debouncedQuery, selectedCategory));
+          const localMatches = filterCatalogLocally(products, debouncedQuery, selectedCategory);
+          setFilteredProducts(localMatches);
+          if (debouncedQuery.trim()) {
+            trackSearch(debouncedQuery.trim(), localMatches.length);
+          }
         }
       } finally {
         if (active) {
@@ -232,6 +274,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
   }, [debouncedQuery, selectedCategory, products]);
 
   const addToCart = (product: GmcProduct) => {
+    trackAddToCart(product, 1);
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
@@ -478,7 +521,10 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                     {/* Image Frame */}
                     <div
                       className="relative aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer"
-                      onClick={() => setQuickViewProduct(p)}
+                      onClick={() => {
+                        trackViewItem(p);
+                        setQuickViewProduct(p);
+                      }}
                     >
                       <img
                         src={displayImage}
@@ -518,7 +564,10 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                       </div>
 
                       <h3
-                        onClick={() => setQuickViewProduct(p)}
+                        onClick={() => {
+                          trackViewItem(p);
+                          setQuickViewProduct(p);
+                        }}
                         className="text-base font-semibold text-white group-hover:text-emerald-300 transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug"
                       >
                         {p.title}
@@ -712,6 +761,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
               ) : (
                 <button
                   onClick={() => {
+                    trackBeginCheckout(cart, cartTotal, 'USD');
                     setIsCartOpen(false);
                     setExpressCheckoutItems(cart);
                     setIsExpressCheckoutOpen(true);
@@ -895,45 +945,50 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({ products, on
                 </div>
               </div>
 
-              {/* Live JSON-LD Schema Snippet Viewer */}
-              <div className="border border-slate-800 rounded-xl bg-slate-900/90 overflow-hidden">
-                <div className="px-4 py-2 border-b border-slate-800 bg-slate-950 flex items-center justify-between text-xs">
-                  <span className="font-mono text-emerald-400 text-[11px]">Dynamic &lt;script type=&quot;application/ld+json&quot;&gt;</span>
-                  <span className="text-slate-500 text-[10px]">Google Search &amp; GMC Crawlable</span>
-                </div>
-                <pre className="p-4 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed">
-                  {JSON.stringify(
-                    {
-                      '@context': 'https://schema.org/',
-                      '@type': 'Product',
-                      name: fullPdpProduct.title,
-                      image: [fullPdpProduct.image_link],
-                      description: fullPdpProduct.description,
-                      sku: fullPdpProduct.id,
-                      brand: { '@type': 'Brand', name: fullPdpProduct.brand },
-                      offers: {
-                        '@type': 'Offer',
-                        priceCurrency: 'USD',
-                        price: fullPdpProduct.price.replace(/[^0-9.]/g, ''),
-                        availability: 'https://schema.org/InStock',
-                        itemCondition: 'https://schema.org/NewCondition',
-                        shippingDetails: {
-                          '@type': 'OfferShippingDetails',
-                          shippingRate: { '@type': 'MonetaryAmount', value: '0.00', currency: 'USD' },
-                          deliveryTime: { '@type': 'ShippingDeliveryTime', transitTime: { minValue: 3, maxValue: 7, unitCode: 'DAY' } },
-                        },
-                        hasMerchantReturnPolicy: {
-                          '@type': 'MerchantReturnPolicy',
-                          merchantReturnDays: 30,
-                          returnFees: 'https://schema.org/FreeReturn',
-                        },
-                      },
-                    },
-                    null,
-                    2
-                  )}
-                </pre>
-              </div>
+              {/* Generated Product Page SEO Metadata (<head> & OpenGraph) */}
+              {(() => {
+                const pageMeta = generateProductPageMetadata(fullPdpProduct);
+                return (
+                  <div className="space-y-4">
+                    <div className="border border-slate-800 rounded-xl bg-slate-900/90 overflow-hidden">
+                      <div className="px-4 py-2 border-b border-slate-800 bg-slate-950 flex items-center justify-between text-xs">
+                        <span className="font-mono text-emerald-400 text-[11px] flex items-center gap-1.5">
+                          <Globe className="w-3.5 h-3.5" />
+                          <span>Generated Product Page Metadata (Document &lt;head&gt; &amp; OpenGraph)</span>
+                        </span>
+                        <span className="text-slate-400 text-[10px] font-mono">
+                          {fullPdpProduct.seo_title ? 'Custom Admin SEO Active' : 'Default SEO Template'}
+                        </span>
+                      </div>
+                      <div className="p-4 space-y-2 text-xs">
+                        <div>
+                          <span className="text-slate-400 font-mono text-[11px]">&lt;title&gt;: </span>
+                          <span className="text-white font-semibold">{pageMeta.title}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 font-mono text-[11px]">meta[name=&quot;description&quot;]: </span>
+                          <span className="text-slate-300">{pageMeta.description}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 font-mono text-[11px]">link[rel=&quot;canonical&quot;]: </span>
+                          <span className="text-emerald-400 font-mono text-[11px]">{pageMeta.canonicalUrl}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Live JSON-LD Schema Snippet Viewer */}
+                    <div className="border border-slate-800 rounded-xl bg-slate-900/90 overflow-hidden">
+                      <div className="px-4 py-2 border-b border-slate-800 bg-slate-950 flex items-center justify-between text-xs">
+                        <span className="font-mono text-emerald-400 text-[11px]">Dynamic &lt;script type=&quot;application/ld+json&quot;&gt;</span>
+                        <span className="text-slate-500 text-[10px]">Google Search &amp; GMC Crawlable</span>
+                      </div>
+                      <pre className="p-4 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed">
+                        {JSON.stringify(pageMeta.jsonLd, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

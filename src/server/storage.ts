@@ -162,6 +162,8 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
         mpn VARCHAR(64),
         google_category VARCHAR(255),
         product_type VARCHAR(255),
+        seo_title TEXT,
+        seo_description TEXT,
         status VARCHAR(20) DEFAULT 'active',
         is_visible BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -169,13 +171,15 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
       );
 
       ALTER TABLE products DROP CONSTRAINT IF EXISTS products_slug_key;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title TEXT;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description TEXT;
 
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         stripe_session_id VARCHAR(255) UNIQUE NOT NULL,
         customer_email VARCHAR(255),
         customer_name VARCHAR(255),
-        shipping_country VARCHAR(2) DEFAULT 'US',
+        shipping_country VARCHAR(255) DEFAULT 'US',
         total_amount NUMERIC(10, 2) NOT NULL,
         currency VARCHAR(3) DEFAULT 'USD',
         payment_status VARCHAR(32) DEFAULT 'pending',
@@ -215,6 +219,8 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
         cj_pid: row.cj_pid || undefined,
         wholesale_price: row.cost_price ? Number(row.cost_price) : undefined,
         source: row.cj_pid ? 'cj_live' : undefined,
+        seo_title: row.seo_title || undefined,
+        seo_description: row.seo_description || undefined,
       }));
 
       // Merge local disk products (e.g. recently synced CJ items) with DB products so nothing is lost
@@ -268,7 +274,7 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
       const placeholders: string[] = [];
 
       chunk.forEach((p, idx) => {
-        const base = idx * 13;
+        const base = idx * 15;
         const numPrice = parseFloat(String(p.price || '0').replace(/[^0-9.]/g, '')) || 0;
         const numSale = p.sale_price
           ? parseFloat(String(p.sale_price).replace(/[^0-9.]/g, '')) || null
@@ -277,9 +283,11 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
         const sku = String(p.id || '').trim().slice(0, 240);
         const title = String(p.title || 'Product').trim().slice(0, 240);
         const cjPid = p.cj_pid ? String(p.cj_pid).trim().slice(0, 240) : null;
+        const seoTitle = p.seo_title ? String(p.seo_title).trim() : null;
+        const seoDesc = p.seo_description ? String(p.seo_description).trim() : null;
 
         placeholders.push(
-          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13})`
+          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15})`
         );
         values.push(
           sku,
@@ -294,13 +302,15 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
           p.availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
           String(p.image_link || ''),
           String(p.mpn || sku).slice(0, 60),
-          String(p.product_type || 'Home & Lifestyle').slice(0, 240)
+          String(p.product_type || 'Home & Lifestyle').slice(0, 240),
+          seoTitle,
+          seoDesc
         );
       });
 
       await pool.query(
         `INSERT INTO products (
-          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type
+          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type, seo_title, seo_description
         ) VALUES ${placeholders.join(', ')}
         ON CONFLICT (sku) DO UPDATE SET
           cj_pid = COALESCE(EXCLUDED.cj_pid, products.cj_pid),
@@ -315,6 +325,8 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
           main_image_url = EXCLUDED.main_image_url,
           mpn = EXCLUDED.mpn,
           product_type = EXCLUDED.product_type,
+          seo_title = EXCLUDED.seo_title,
+          seo_description = EXCLUDED.seo_description,
           updated_at = NOW()`,
         values
       );

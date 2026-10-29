@@ -917,6 +917,8 @@ app.post('/api/admin/products', (req, res) => {
       const added: GmcProduct[] = req.body.products.map((item: any) => {
         const numPrice = parseFloat(String(item.price || '0'));
         const sku = String(item.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`).trim();
+        const rawSeoTitle = item.seoTitle ?? item.seo_title;
+        const rawSeoDesc = item.seoDescription ?? item.seo_description;
         return {
           id: sku,
           title: String(item.title || 'Product').trim().slice(0, 150),
@@ -933,6 +935,8 @@ app.post('/api/admin/products', (req, res) => {
           identifier_exists: true,
           product_type: item.product_type || 'Lifestyle & Travel',
           source: 'manual',
+          seo_title: rawSeoTitle ? String(rawSeoTitle).trim().slice(0, 120) : undefined,
+          seo_description: rawSeoDesc ? String(rawSeoDesc).trim().slice(0, 320) : undefined,
         };
       });
 
@@ -962,11 +966,20 @@ app.post('/api/admin/products', (req, res) => {
       condition = 'new',
       gtin,
       mpn,
+      seoTitle,
+      seo_title,
+      seoDescription,
+      seo_description,
     } = req.body;
 
     if (!sku || !title || !price || !mainImageUrl) {
       return res.status(400).json({ error: 'Required fields: sku, title, price, mainImageUrl' });
     }
+
+    const resolvedSeoTitle = (seoTitle ?? seo_title) ? String(seoTitle ?? seo_title).trim().slice(0, 120) : undefined;
+    const resolvedSeoDesc = (seoDescription ?? seo_description)
+      ? String(seoDescription ?? seo_description).trim().slice(0, 320)
+      : undefined;
 
     const numPrice = parseFloat(String(price));
     const newProduct: GmcProduct = {
@@ -985,6 +998,8 @@ app.post('/api/admin/products', (req, res) => {
       identifier_exists: true,
       product_type: 'Home & Travel',
       source: 'manual',
+      seo_title: resolvedSeoTitle,
+      seo_description: resolvedSeoDesc,
     };
 
     prependProductsToCatalog([newProduct]);
@@ -1013,6 +1028,9 @@ app.patch('/api/admin/products', (req, res) => {
         const targetId = item.id || item.sku;
         if (!targetId || !map.has(targetId)) continue;
         const existing = map.get(targetId)!;
+        const rawSeoTitle = item.seoTitle !== undefined ? item.seoTitle : item.seo_title;
+        const rawSeoDesc = item.seoDescription !== undefined ? item.seoDescription : item.seo_description;
+
         const nextItem: GmcProduct = {
           ...existing,
           title: item.title ? String(item.title).slice(0, 150) : existing.title,
@@ -1022,6 +1040,14 @@ app.patch('/api/admin/products', (req, res) => {
           availability: item.availability !== undefined
             ? (item.availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock')
             : (item.stockQuantity !== undefined ? (item.stockQuantity > 0 ? 'in_stock' : 'out_of_stock') : existing.availability),
+          seo_title:
+            rawSeoTitle !== undefined
+              ? (String(rawSeoTitle).trim() ? String(rawSeoTitle).trim().slice(0, 120) : undefined)
+              : existing.seo_title,
+          seo_description:
+            rawSeoDesc !== undefined
+              ? (String(rawSeoDesc).trim() ? String(rawSeoDesc).trim().slice(0, 320) : undefined)
+              : existing.seo_description,
         };
         map.set(targetId, nextItem);
         updatedSubset.push(nextItem);
@@ -1033,10 +1059,24 @@ app.patch('/api/admin/products', (req, res) => {
         success: true,
         message: `Batch updated ${updatedCount} products.`,
         updatedCount,
+        updatedProducts: updatedSubset,
       });
     }
 
-    const { id, sku, price, salePrice, stockQuantity, availability, title, description } = req.body;
+    const {
+      id,
+      sku,
+      price,
+      salePrice,
+      stockQuantity,
+      availability,
+      title,
+      description,
+      seoTitle,
+      seo_title,
+      seoDescription,
+      seo_description,
+    } = req.body;
     const targetId = id || sku;
 
     if (!targetId) {
@@ -1049,6 +1089,9 @@ app.patch('/api/admin/products', (req, res) => {
     }
 
     const existing = currentCatalog[existingIndex];
+    const rawSeoTitle = seoTitle !== undefined ? seoTitle : seo_title;
+    const rawSeoDesc = seoDescription !== undefined ? seoDescription : seo_description;
+
     const updated: GmcProduct = {
       ...existing,
       title: title ? String(title).slice(0, 150) : existing.title,
@@ -1058,6 +1101,14 @@ app.patch('/api/admin/products', (req, res) => {
       availability: availability !== undefined
         ? (availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock')
         : (stockQuantity !== undefined ? (stockQuantity > 0 ? 'in_stock' : 'out_of_stock') : existing.availability),
+      seo_title:
+        rawSeoTitle !== undefined
+          ? (String(rawSeoTitle).trim() ? String(rawSeoTitle).trim().slice(0, 120) : undefined)
+          : existing.seo_title,
+      seo_description:
+        rawSeoDesc !== undefined
+          ? (String(rawSeoDesc).trim() ? String(rawSeoDesc).trim().slice(0, 320) : undefined)
+          : existing.seo_description,
     };
 
     const nextCatalog = [...currentCatalog];
@@ -1068,6 +1119,58 @@ app.patch('/api/admin/products', (req, res) => {
       success: true,
       message: `Product ${updated.id} updated and persisted.`,
       product: updated,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Product SEO Metadata Inspection API (/api/products/:id/metadata)
+app.get('/api/products/:id/metadata', (req, res) => {
+  try {
+    const targetId = req.params.id.trim().toLowerCase();
+    const product = currentCatalog.find((p) => p.id.toLowerCase() === targetId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const baseUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.APP_URL ||
+      'https://e-commerce-dropshiping-store.vercel.app'
+    ).replace(/\/+$/, '');
+
+    const rawPrice = (product.sale_price || product.price || '0.00').replace(/[^0-9.]/g, '') || '0.00';
+    const effectiveTitle =
+      product.seo_title?.trim() ||
+      `${product.title} — $${rawPrice} | ${product.brand || 'AeroThor'}`.slice(0, 60);
+    const effectiveDescription =
+      product.seo_description?.trim() ||
+      product.description.slice(0, 160);
+    const canonicalUrl = `${baseUrl}/product/${encodeURIComponent(product.id)}`;
+
+    res.status(200).json({
+      sku: product.id,
+      seo_title: product.seo_title || null,
+      seo_description: product.seo_description || null,
+      generatedMetadata: {
+        title: effectiveTitle,
+        description: effectiveDescription,
+        canonicalUrl,
+        openGraph: {
+          title: effectiveTitle,
+          description: effectiveDescription,
+          url: canonicalUrl,
+          type: 'product',
+          image: product.image_link,
+        },
+        twitter: {
+          card: 'summary_large_image',
+          title: effectiveTitle,
+          description: effectiveDescription,
+          image: product.image_link,
+        },
+      },
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message });

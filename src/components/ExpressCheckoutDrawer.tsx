@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GmcProduct } from '../lib/gmc-feed';
+import { trackPurchase } from '../lib/analytics';
 import {
   X,
   ShieldCheck,
@@ -147,6 +148,13 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
           : `9400 1118 9956 ${Math.floor(1000 + Math.random() * 9000)} 00`);
 
       setOrderConfirmed(true);
+      trackPurchase(
+        orderId,
+        items,
+        total,
+        shippingCost,
+        formData.country === 'GB' ? 'GBP' : 'USD'
+      );
       setConfirmedOrderDetails({
         orderId,
         cjOrderId: persistedOrder?.cjOrderId || 'CJ-DISPATCHED',

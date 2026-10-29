@@ -20,6 +20,8 @@ export interface GmcProduct {
   cj_sku?: string;
   wholesale_price?: number;
   source?: 'cj_live' | 'supplier_api' | 'manual' | 'seed' | 'cj_batch';
+  seo_title?: string;
+  seo_description?: string;
   shipping?: {
     country: string;
     service: string;

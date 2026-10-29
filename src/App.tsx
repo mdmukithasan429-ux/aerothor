@@ -11,10 +11,16 @@ import { CreativeStudioWorkspace } from './components/CreativeStudioWorkspace';
 import { AdminInventoryDashboard } from './components/AdminInventoryDashboard';
 import { INITIAL_PRODUCTS } from './server/seed-data';
 import { GmcProduct } from './lib/gmc-feed';
+import { trackPageView } from './lib/analytics';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>('storefront');
   const [products, setProducts] = useState<GmcProduct[]>(INITIAL_PRODUCTS);
+
+  useEffect(() => {
+    const virtualPath = activeTab === 'storefront' ? '/' : `/${activeTab.replace(/_/g, '-')}`;
+    trackPageView(virtualPath, document.title);
+  }, [activeTab]);
 
   useEffect(() => {
     // Keep client storefront strictly synced with persisted backend database

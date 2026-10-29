@@ -327,11 +327,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
   if (!product) return { title: 'Product Not Found | AeroCommerce' };
 
+  const effectiveSeoTitle =
+    product.seoTitle?.trim() ||
+    \`\${product.title} - $\${Number(product.price).toFixed(2)} | \${product.brand || 'AeroCommerce'}\`;
+  const effectiveSeoDescription =
+    product.seoDescription?.trim() ||
+    product.description.slice(0, 160);
+
   return {
-    title: \`\${product.title} - $\${Number(product.price).toFixed(2)} | AeroCommerce\`,
-    description: product.description.slice(0, 160),
+    title: effectiveSeoTitle,
+    description: effectiveSeoDescription,
     openGraph: {
-      title: product.title,
+      title: effectiveSeoTitle,
+      description: effectiveSeoDescription,
+      images: [product.mainImageUrl],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: effectiveSeoTitle,
+      description: effectiveSeoDescription,
       images: [product.mainImageUrl],
     },
   };
@@ -513,6 +527,8 @@ model Product {
   mpn                 String?  @db.VarChar(64)
   googleCategory      String?  @map("google_category") @db.VarChar(255)
   productType         String?  @map("product_type") @db.VarChar(255)
+  seoTitle            String?  @map("seo_title") @db.VarChar(120)
+  seoDescription      String?  @map("seo_description") @db.VarChar(320)
   status              String   @default("active") @db.VarChar(20)
   isVisible           Boolean  @default(true) @map("is_visible")
   createdAt           DateTime @default(now()) @map("created_at")
@@ -528,8 +544,10 @@ model Product {
 DATABASE_URL="postgresql://postgres:[PASSWORD]@[HOST]:5432/[DB_NAME]?sslmode=require"
 ADMIN_SECRET_KEY="aero_secret_adm_994821"
 CJ_API_KEY="CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7"
-NEXT_PUBLIC_SITE_URL="https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app"
-APP_URL="https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app"
+NEXT_PUBLIC_GA_MEASUREMENT_ID="G-0KS0T13HQ7"
+VITE_GA_MEASUREMENT_ID="G-0KS0T13HQ7"
+NEXT_PUBLIC_SITE_URL="https://e-commerce-dropshiping-store.vercel.app"
+APP_URL="https://e-commerce-dropshiping-store.vercel.app"
 STORE_NAME="AeroCommerce Direct"
 DEFAULT_CURRENCY="USD"`;
 
