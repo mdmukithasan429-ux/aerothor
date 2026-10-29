@@ -1129,10 +1129,58 @@ app.patch('/api/admin/products', (req, res) => {
   }
 });
 
+// Dedicated Individual Product SEO Meta Title & Meta Description Update Endpoint
+app.patch('/api/admin/products/:id/seo', (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+
+  try {
+    const targetId = decodeURIComponent(req.params.id).trim();
+    const existingIndex = currentCatalog.findIndex(
+      (p) => p.id.toLowerCase() === targetId.toLowerCase()
+    );
+    if (existingIndex === -1) {
+      return res.status(404).json({ error: `Product ${targetId} not found in database.` });
+    }
+
+    const existing = currentCatalog[existingIndex];
+    const rawSeoTitle = req.body.seoTitle !== undefined ? req.body.seoTitle : req.body.seo_title;
+    const rawSeoDesc =
+      req.body.seoDescription !== undefined ? req.body.seoDescription : req.body.seo_description;
+
+    const updated: GmcProduct = {
+      ...existing,
+      seo_title:
+        rawSeoTitle !== undefined
+          ? String(rawSeoTitle).trim()
+            ? String(rawSeoTitle).trim().slice(0, 120)
+            : undefined
+          : existing.seo_title,
+      seo_description:
+        rawSeoDesc !== undefined
+          ? String(rawSeoDesc).trim()
+            ? String(rawSeoDesc).trim().slice(0, 320)
+            : undefined
+          : existing.seo_description,
+    };
+
+    const nextCatalog = [...currentCatalog];
+    nextCatalog[existingIndex] = updated;
+    persistAndRefreshFeed(nextCatalog, [updated]);
+
+    return res.status(200).json({
+      success: true,
+      message: `SEO meta title and meta description for ${updated.id} saved to database.`,
+      product: updated,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Product SEO Metadata Inspection API (/api/products/:id/metadata)
 app.get('/api/products/:id/metadata', (req, res) => {
   try {
-    const targetId = req.params.id.trim().toLowerCase();
+    const targetId = decodeURIComponent(req.params.id).trim().toLowerCase();
     const product = currentCatalog.find((p) => p.id.toLowerCase() === targetId);
     if (!product) {
       return res.status(404).json({ error: 'Product not found' });
@@ -1149,8 +1197,37 @@ app.get('/api/products/:id/metadata', (req, res) => {
       product.description.slice(0, 160);
     const canonicalUrl = `${baseUrl}/product/${encodeURIComponent(product.id)}`;
 
+    const jsonLd = {
+      '@context': 'https://schema.org/',
+      '@type': 'Product',
+      name: effectiveTitle,
+      alternateName: product.title,
+      image: [product.image_link],
+      description: effectiveDescription,
+      sku: product.id,
+      mpn: product.mpn || product.id,
+      ...(product.gtin ? { gtin13: product.gtin } : {}),
+      brand: {
+        '@type': 'Brand',
+        name: product.brand || 'AeroThor',
+      },
+      offers: {
+        '@type': 'Offer',
+        url: canonicalUrl,
+        priceCurrency: 'USD',
+        price: rawPrice,
+        availability:
+          product.availability === 'out_of_stock'
+            ? 'https://schema.org/OutOfStock'
+            : 'https://schema.org/InStock',
+        itemCondition: 'https://schema.org/NewCondition',
+      },
+    };
+
     res.status(200).json({
       sku: product.id,
+      persistedInDatabase: true,
+      isCustomSeo: Boolean(product.seo_title?.trim() || product.seo_description?.trim()),
       seo_title: product.seo_title || null,
       seo_description: product.seo_description || null,
       generatedMetadata: {
@@ -1170,6 +1247,7 @@ app.get('/api/products/:id/metadata', (req, res) => {
           description: effectiveDescription,
           image: product.image_link,
         },
+        jsonLd,
       },
     });
   } catch (err: any) {

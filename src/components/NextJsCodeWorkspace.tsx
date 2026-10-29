@@ -221,18 +221,37 @@ function authenticateAdmin(req: NextRequest) {
   return { authorized: true };
 }
 
-// 1. POST: Add Single Product Manually
+// 1. POST: Add Single Product Manually (Including Custom SEO Meta Title & Description)
 export async function POST(req: NextRequest) {
   const auth = authenticateAdmin(req);
   if (!auth.authorized) return auth.response!;
 
   try {
     const body = await req.json();
-    const { sku, title, description, price, salePrice, brand = 'AeroCommerce', mainImageUrl, stockQuantity = 99, availability = 'in_stock' } = body;
+    const {
+      sku,
+      title,
+      description,
+      price,
+      salePrice,
+      brand = 'AeroCommerce',
+      mainImageUrl,
+      stockQuantity = 99,
+      availability = 'in_stock',
+      seoTitle,
+      seo_title,
+      seoDescription,
+      seo_description,
+    } = body;
 
     if (!sku || !title || !price || !mainImageUrl) {
       return NextResponse.json({ error: 'sku, title, price, and mainImageUrl are mandatory' }, { status: 400 });
     }
+
+    const resolvedSeoTitle = (seoTitle ?? seo_title) ? String(seoTitle ?? seo_title).trim().slice(0, 120) : null;
+    const resolvedSeoDesc = (seoDescription ?? seo_description)
+      ? String(seoDescription ?? seo_description).trim().slice(0, 320)
+      : null;
 
     const newProduct = await prisma.product.create({
       data: {
@@ -247,6 +266,8 @@ export async function POST(req: NextRequest) {
         availability: availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
         condition: 'new',
         mainImageUrl,
+        seoTitle: resolvedSeoTitle,
+        seoDescription: resolvedSeoDesc,
         status: 'active',
         isVisible: true,
       },
@@ -258,16 +279,32 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// 2. PATCH: Update Stock Availability, Price, or Visibility
+// 2. PATCH: Update Product Details, SEO Meta Title & Description, Price, or Stock Availability
 export async function PATCH(req: NextRequest) {
   const auth = authenticateAdmin(req);
   if (!auth.authorized) return auth.response!;
 
   try {
-    const { id, sku, price, salePrice, stockQuantity, availability, isVisible } = await req.json();
+    const {
+      id,
+      sku,
+      title,
+      description,
+      price,
+      salePrice,
+      stockQuantity,
+      availability,
+      isVisible,
+      seoTitle,
+      seo_title,
+      seoDescription,
+      seo_description,
+    } = await req.json();
     if (!id && !sku) return NextResponse.json({ error: 'id or sku is required' }, { status: 400 });
 
     const updateData: any = {};
+    if (title !== undefined) updateData.title = String(title).slice(0, 150);
+    if (description !== undefined) updateData.description = String(description);
     if (price !== undefined) updateData.price = parseFloat(String(price));
     if (salePrice !== undefined) updateData.salePrice = salePrice ? parseFloat(String(salePrice)) : null;
     if (stockQuantity !== undefined) {
@@ -276,6 +313,15 @@ export async function PATCH(req: NextRequest) {
     }
     if (availability !== undefined) updateData.availability = availability;
     if (isVisible !== undefined) updateData.isVisible = Boolean(isVisible);
+
+    const rawSeoTitle = seoTitle !== undefined ? seoTitle : seo_title;
+    const rawSeoDesc = seoDescription !== undefined ? seoDescription : seo_description;
+    if (rawSeoTitle !== undefined) {
+      updateData.seoTitle = String(rawSeoTitle).trim() ? String(rawSeoTitle).trim().slice(0, 120) : null;
+    }
+    if (rawSeoDesc !== undefined) {
+      updateData.seoDescription = String(rawSeoDesc).trim() ? String(rawSeoDesc).trim().slice(0, 320) : null;
+    }
 
     const updated = await prisma.product.update({
       where: id ? { id } : { sku },
@@ -361,13 +407,21 @@ export default async function ProductDetailPage({ params }: Props) {
   const salePriceNum = product.salePrice ? Number(product.salePrice) : null;
   const currentPrice = salePriceNum || priceNum;
 
+  const effectiveSeoTitle =
+    product.seoTitle?.trim() ||
+    \`\${product.title} - $\${currentPrice.toFixed(2)} | \${product.brand || 'AeroCommerce'}\`;
+  const effectiveSeoDescription =
+    product.seoDescription?.trim() ||
+    product.description;
+
   // CRITICAL: Schema.org JSON-LD for Google Shopping & Organic SERP Rich Snippets
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
-    name: product.title,
+    name: effectiveSeoTitle,
+    alternateName: product.title,
     image: [product.mainImageUrl],
-    description: product.description,
+    description: effectiveSeoDescription,
     sku: product.sku,
     mpn: product.mpn || product.sku,
     brand: { '@type': 'Brand', name: product.brand },

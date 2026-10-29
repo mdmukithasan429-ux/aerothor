@@ -119,12 +119,20 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
 
   // Dedicated SEO Meta Editor Section State
   const seoSectionRef = useRef<HTMLDivElement | null>(null);
+  const [seoEditorView, setSeoEditorView] = useState<'studio' | 'inline_table'>('studio');
+  const [seoSearchQuery, setSeoSearchQuery] = useState<string>('');
   const [selectedSeoProductId, setSelectedSeoProductId] = useState<string>(() => products[0]?.id || '');
   const [seoFilterMode, setSeoFilterMode] = useState<'all' | 'custom' | 'default'>('all');
   const [seoTitleInput, setSeoTitleInput] = useState<string>('');
   const [seoDescriptionInput, setSeoDescriptionInput] = useState<string>('');
-  const [seoPreviewTab, setSeoPreviewTab] = useState<'serp' | 'head' | 'jsonld'>('serp');
+  const [seoPreviewTab, setSeoPreviewTab] = useState<'serp' | 'head' | 'jsonld' | 'db_verify'>('serp');
   const [isSavingSeo, setIsSavingSeo] = useState<boolean>(false);
+  const [savingRowSku, setSavingRowSku] = useState<string | null>(null);
+  const [inlineSeoDrafts, setInlineSeoDrafts] = useState<
+    Record<string, { seoTitle: string; seoDescription: string }>
+  >({});
+  const [verifiedServerMeta, setVerifiedServerMeta] = useState<any | null>(null);
+  const [isVerifyingServerMeta, setIsVerifyingServerMeta] = useState<boolean>(false);
 
   // Google Analytics 4 Live Event Stream
   const [ga4Events, setGa4Events] = useState<Ga4TrackedEventLog[]>([]);
@@ -148,6 +156,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
       setSeoDescriptionInput(
         selectedSeoProduct.seo_description || buildDefaultSeoDescription(selectedSeoProduct)
       );
+      setVerifiedServerMeta(null);
     }
   }, [selectedSeoProduct?.id, selectedSeoProduct?.seo_title, selectedSeoProduct?.seo_description]);
 
@@ -415,6 +424,22 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     }
   };
 
+  const handleVerifyServerMetadata = async (sku: string) => {
+    setIsVerifyingServerMeta(true);
+    try {
+      const res = await fetch(`/api/products/${encodeURIComponent(sku)}/metadata`);
+      const data = await res.json();
+      addLog('GET', `/api/products/${sku}/metadata`, res.status, 'Verified persisted DB SEO metadata');
+      if (!res.ok) throw new Error(data.error || 'Failed to verify metadata from server');
+      setVerifiedServerMeta(data);
+      setSeoPreviewTab('db_verify');
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setIsVerifyingServerMeta(false);
+    }
+  };
+
   const handleSaveProductSeo = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!selectedSeoProduct) return;
@@ -428,7 +453,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
 
     setIsSavingSeo(true);
     try {
-      const res = await fetch('/api/admin/products', {
+      const res = await fetch(`/api/admin/products/${encodeURIComponent(selectedSeoProduct.id)}/seo`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -444,9 +469,9 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
       const data = await res.json();
       addLog(
         'PATCH',
-        '/api/admin/products (SEO)',
+        `/api/admin/products/${selectedSeoProduct.id}/seo`,
         res.status,
-        `Updated SEO meta title & description for ${selectedSeoProduct.id}`
+        `Saved SEO meta title & description for ${selectedSeoProduct.id} to database`
       );
 
       if (!res.ok) {
@@ -461,7 +486,140 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
 
       onUpdateProduct(updatedProduct);
       applyProductMetadataToDocumentHead(updatedProduct);
-      showToast(`Saved SEO metadata for ${updatedProduct.id} & updated live page <head>!`);
+      showToast(`Saved SEO metadata for ${updatedProduct.id} to database & updated product page <head>!`);
+      // Refresh server verification snapshot
+      handleVerifyServerMetadata(updatedProduct.id);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setIsSavingSeo(false);
+    }
+  };
+
+  const handleInlineSeoDraftChange = (
+    product: GmcProduct,
+    field: 'seoTitle' | 'seoDescription',
+    value: string
+  ) => {
+    setInlineSeoDrafts((prev) => {
+      const current = prev[product.id] || {
+        seoTitle: product.seo_title || buildDefaultSeoTitle(product),
+        seoDescription: product.seo_description || buildDefaultSeoDescription(product),
+      };
+      return {
+        ...prev,
+        [product.id]: {
+          ...current,
+          [field]: value,
+        },
+      };
+    });
+  };
+
+  const handleSaveSingleInlineSeo = async (product: GmcProduct) => {
+    const draft = inlineSeoDrafts[product.id];
+    const nextTitle = (draft ? draft.seoTitle : product.seo_title || buildDefaultSeoTitle(product)).trim();
+    const nextDesc = (
+      draft ? draft.seoDescription : product.seo_description || buildDefaultSeoDescription(product)
+    ).trim();
+
+    if (!nextTitle || !nextDesc) {
+      showToast('SEO Meta Title and Meta Description cannot be empty.', 'error');
+      return;
+    }
+
+    setSavingRowSku(product.id);
+    try {
+      const res = await fetch(`/api/admin/products/${encodeURIComponent(product.id)}/seo`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken.trim()}`,
+        },
+        body: JSON.stringify({
+          sku: product.id,
+          seoTitle: nextTitle,
+          seoDescription: nextDesc,
+        }),
+      });
+      const data = await res.json();
+      addLog(
+        'PATCH',
+        `/api/admin/products/${product.id}/seo`,
+        res.status,
+        `Saved inline SEO metadata for ${product.id}`
+      );
+      if (!res.ok) throw new Error(data.error || 'Failed to save SEO metadata');
+
+      const updatedProduct: GmcProduct = data.product || {
+        ...product,
+        seo_title: nextTitle,
+        seo_description: nextDesc,
+      };
+      onUpdateProduct(updatedProduct);
+      applyProductMetadataToDocumentHead(updatedProduct);
+      setInlineSeoDrafts((prev) => {
+        const next = { ...prev };
+        delete next[product.id];
+        return next;
+      });
+      showToast(`Saved SEO meta title & description for ${product.id} to database!`);
+    } catch (err: any) {
+      showToast(err.message, 'error');
+    } finally {
+      setSavingRowSku(null);
+    }
+  };
+
+  const handleSaveAllInlineSeoDrafts = async () => {
+    const draftEntries = Object.entries(inlineSeoDrafts) as Array<
+      [string, { seoTitle: string; seoDescription: string }]
+    >;
+    if (draftEntries.length === 0) return;
+
+    setIsSavingSeo(true);
+    const itemsPayload = draftEntries.map(([sku, draft]) => ({
+      sku,
+      seoTitle: draft.seoTitle.trim(),
+      seoDescription: draft.seoDescription.trim(),
+    }));
+
+    try {
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken.trim()}`,
+        },
+        body: JSON.stringify({ items: itemsPayload }),
+      });
+      const data = await res.json();
+      addLog(
+        'PATCH',
+        '/api/admin/products (batch inline SEO)',
+        res.status,
+        `Saved ${itemsPayload.length} modified product SEO records to database`
+      );
+      if (!res.ok) throw new Error(data.error || 'Failed to batch save SEO drafts');
+
+      const updatedProducts: GmcProduct[] = [];
+      for (const [sku, draft] of draftEntries) {
+        const existing = products.find((p) => p.id === sku);
+        if (existing) {
+          updatedProducts.push({
+            ...existing,
+            seo_title: draft.seoTitle.trim(),
+            seo_description: draft.seoDescription.trim(),
+          });
+        }
+      }
+      if (onBatchUpdate) {
+        onBatchUpdate(updatedProducts);
+      } else {
+        updatedProducts.forEach((up) => onUpdateProduct(up));
+      }
+      setInlineSeoDrafts({});
+      showToast(`Saved ${updatedProducts.length} product SEO meta titles & descriptions to database!`);
     } catch (err: any) {
       showToast(err.message, 'error');
     } finally {
@@ -530,13 +688,23 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   );
 
   const seoSelectableProducts = useMemo(() => {
+    const q = seoSearchQuery.trim().toLowerCase();
     return products.filter((p) => {
       const hasCustom = Boolean(p.seo_title?.trim() || p.seo_description?.trim());
-      if (seoFilterMode === 'custom') return hasCustom;
-      if (seoFilterMode === 'default') return !hasCustom;
+      if (seoFilterMode === 'custom' && !hasCustom) return false;
+      if (seoFilterMode === 'default' && hasCustom) return false;
+      if (q) {
+        const match =
+          p.id.toLowerCase().includes(q) ||
+          p.title.toLowerCase().includes(q) ||
+          (p.brand || '').toLowerCase().includes(q) ||
+          (p.seo_title || '').toLowerCase().includes(q) ||
+          (p.seo_description || '').toLowerCase().includes(q);
+        if (!match) return false;
+      }
       return true;
     });
-  }, [products, seoFilterMode]);
+  }, [products, seoFilterMode, seoSearchQuery]);
 
   const livePreviewProduct = useMemo<GmcProduct | null>(() => {
     if (!selectedSeoProduct) return null;
@@ -1036,22 +1204,48 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 <span>Product SEO Metadata Studio</span>
               </span>
               <span aria-hidden="true">·</span>
-              <span>Dynamic &lt;head&gt; &amp; Schema.org Sync</span>
+              <span>Database Persistence &amp; Product Page &lt;head&gt; Sync</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono text-slate-300">
                 Custom Configured: <strong className="text-emerald-400">{customSeoCount}</strong> / {products.length}
               </span>
             </div>
             <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-              SEO Meta Title &amp; Description Editor
+              Individual Product SEO Meta Title &amp; Meta Description Editor
             </h3>
             <p className="text-xs text-slate-400">
-              Customize <code className="text-emerald-300 font-mono">seo_title</code> and{' '}
-              <code className="text-emerald-300 font-mono">seo_description</code> for each product. Changes persist to the database and immediately update generated product page <code className="text-slate-300 font-mono">&lt;title&gt;</code>, OpenGraph, Twitter Card, and Schema.org <code className="text-slate-300 font-mono">Product</code> JSON-LD metadata.
+              Edit <code className="text-emerald-300 font-mono">seo_title</code> and{' '}
+              <code className="text-emerald-300 font-mono">seo_description</code> for individual products. Every save persists to the backend database (<code className="text-slate-300 font-mono">products.seo_title</code> &amp; <code className="text-slate-300 font-mono">products.seo_description</code>) and updates the product page <code className="text-slate-300 font-mono">&lt;title&gt;</code>, <code className="text-slate-300 font-mono">&lt;meta name=&quot;description&quot;&gt;</code>, OpenGraph, Twitter Card, and Schema.org <code className="text-slate-300 font-mono">Product</code> JSON-LD metadata.
             </p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Switch between Single-Product Studio & Multi-Product Inline Table */}
+            <div className="flex items-center gap-1 p-1 bg-slate-950 border border-slate-800 rounded-lg text-xs">
+              <button
+                type="button"
+                onClick={() => setSeoEditorView('studio')}
+                className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
+                  seoEditorView === 'studio'
+                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Studio Inspector
+              </button>
+              <button
+                type="button"
+                onClick={() => setSeoEditorView('inline_table')}
+                className={`px-3 py-1.5 rounded-md font-semibold transition-colors cursor-pointer ${
+                  seoEditorView === 'inline_table'
+                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Inline Table Editor ({products.length})
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={handleBulkAutoOptimizeSeo}
@@ -1083,35 +1277,239 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
           </div>
         </div>
 
-        {selectedSeoProduct && liveGeneratedMeta ? (
+        {/* Filter & Search Bar inside SEO Section */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={seoSearchQuery}
+              onChange={(e) => setSeoSearchQuery(e.target.value)}
+              placeholder="Search products to edit SEO by SKU, Title, Brand, or current Meta Title..."
+              className="w-full pl-8 pr-8 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+            />
+            {seoSearchQuery && (
+              <button
+                type="button"
+                onClick={() => setSeoSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[11px]">
+            {(['all', 'custom', 'default'] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setSeoFilterMode(mode)}
+                className={`px-2.5 py-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  seoFilterMode === mode
+                    ? 'bg-slate-800 border-emerald-500/50 text-emerald-400 font-semibold'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                {mode === 'all'
+                  ? `All Products (${products.length})`
+                  : mode === 'custom'
+                  ? `Custom SEO (${customSeoCount})`
+                  : `Default Template (${products.length - customSeoCount})`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {seoEditorView === 'inline_table' ? (
+          <div className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-950/90 border border-slate-800 rounded-lg p-3 text-xs">
+              <div className="text-slate-300">
+                Directly edit <code className="text-emerald-400 font-mono">seo_title</code> and{' '}
+                <code className="text-emerald-400 font-mono">seo_description</code> for individual products below. Click <strong>Save SEO</strong> on any row or save all modified rows at once.
+              </div>
+              {Object.keys(inlineSeoDrafts).length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleSaveAllInlineSeoDrafts}
+                  disabled={isSavingSeo}
+                  className="px-4 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-lg transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  {isSavingSeo ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  <span>Save All Modified SEO ({Object.keys(inlineSeoDrafts).length})</span>
+                </button>
+              )}
+            </div>
+
+            <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+              <div className="overflow-x-auto max-h-[460px] overflow-y-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900 border-b border-slate-800 text-slate-400 font-mono text-[11px] sticky top-0 z-10">
+                    <tr>
+                      <th className="p-3 w-56">Product &amp; SKU</th>
+                      <th className="p-3">SEO Meta Title (seo_title · 30–60 chars)</th>
+                      <th className="p-3">SEO Meta Description (seo_description · 120–160 chars)</th>
+                      <th className="p-3 w-36 text-right">Persist to DB</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/70">
+                    {seoSelectableProducts.slice(0, 60).map((p) => {
+                      const draft = inlineSeoDrafts[p.id];
+                      const currentSeoTitle = draft
+                        ? draft.seoTitle
+                        : p.seo_title || buildDefaultSeoTitle(p);
+                      const currentSeoDesc = draft
+                        ? draft.seoDescription
+                        : p.seo_description || buildDefaultSeoDescription(p);
+                      const isRowDirty = Boolean(draft);
+                      const isSavingThisRow = savingRowSku === p.id;
+
+                      return (
+                        <tr key={p.id} className="hover:bg-slate-900/50 align-top">
+                          <td className="p-3">
+                            <div className="flex items-start gap-2.5">
+                              <img
+                                src={p.image_link}
+                                alt={p.title}
+                                className="w-9 h-9 rounded-lg object-cover bg-slate-900 border border-slate-800 shrink-0 mt-0.5"
+                                onError={(e: any) => {
+                                  e.target.src =
+                                    'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+                                }}
+                              />
+                              <div className="min-w-0">
+                                <p className="font-semibold text-white line-clamp-1">{p.title}</p>
+                                <p className="text-[10px] font-mono text-slate-400">{p.id}</p>
+                                <span
+                                  className={`text-[10px] font-mono ${
+                                    p.seo_title ? 'text-emerald-400' : 'text-slate-500'
+                                  }`}
+                                >
+                                  {p.seo_title ? '✓ Saved in DB' : 'Default Template'}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="p-3">
+                            <input
+                              type="text"
+                              value={currentSeoTitle}
+                              onChange={(e) =>
+                                handleInlineSeoDraftChange(p, 'seoTitle', e.target.value)
+                              }
+                              maxLength={120}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                            />
+                            <div className="flex items-center justify-between mt-1 text-[10px] font-mono text-slate-400">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleInlineSeoDraftChange(p, 'seoTitle', buildDefaultSeoTitle(p))
+                                }
+                                className="text-emerald-400 hover:underline cursor-pointer"
+                              >
+                                Auto-Fill Title
+                              </button>
+                              <span
+                                className={
+                                  currentSeoTitle.trim().length >= 30 &&
+                                  currentSeoTitle.trim().length <= 60
+                                    ? 'text-emerald-400'
+                                    : 'text-amber-400'
+                                }
+                              >
+                                {currentSeoTitle.trim().length}/60 chars
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="p-3">
+                            <textarea
+                              rows={2}
+                              value={currentSeoDesc}
+                              onChange={(e) =>
+                                handleInlineSeoDraftChange(p, 'seoDescription', e.target.value)
+                              }
+                              maxLength={320}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500"
+                            />
+                            <div className="flex items-center justify-between mt-1 text-[10px] font-mono text-slate-400">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleInlineSeoDraftChange(
+                                    p,
+                                    'seoDescription',
+                                    buildDefaultSeoDescription(p)
+                                  )
+                                }
+                                className="text-emerald-400 hover:underline cursor-pointer"
+                              >
+                                Auto-Fill Description
+                              </button>
+                              <span
+                                className={
+                                  currentSeoDesc.trim().length >= 120 &&
+                                  currentSeoDesc.trim().length <= 160
+                                    ? 'text-emerald-400'
+                                    : 'text-amber-400'
+                                }
+                              >
+                                {currentSeoDesc.trim().length}/160 chars
+                              </span>
+                            </div>
+                          </td>
+
+                          <td className="p-3 text-right space-y-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleSaveSingleInlineSeo(p)}
+                              disabled={isSavingThisRow}
+                              className={`w-full px-3 py-1.5 rounded-lg font-bold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                                isRowDirty
+                                  ? 'bg-emerald-400 hover:bg-emerald-300 text-slate-950'
+                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+                              }`}
+                            >
+                              {isSavingThisRow ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Check className="w-3 h-3" />
+                              )}
+                              <span>{isSavingThisRow ? 'Saving...' : 'Save SEO'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedSeoProductId(p.id);
+                                setSeoEditorView('studio');
+                              }}
+                              className="w-full px-2 py-1 text-[10px] font-mono text-slate-400 hover:text-emerald-400 cursor-pointer"
+                            >
+                              Inspect SERP &rarr;
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        ) : selectedSeoProduct && liveGeneratedMeta ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column: Product Selector & SEO Meta Inputs */}
             <form onSubmit={handleSaveProductSeo} className="lg:col-span-6 space-y-4 text-xs">
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <label className="font-semibold text-slate-300">
-                    Select Product to Edit SEO Metadata
+                    Select Individual Product to Edit SEO Metadata
                   </label>
-                  <div className="flex items-center gap-1 text-[11px]">
-                    {(['all', 'custom', 'default'] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setSeoFilterMode(mode)}
-                        className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
-                          seoFilterMode === mode
-                            ? 'bg-slate-800 text-emerald-400 font-semibold'
-                            : 'text-slate-400 hover:text-slate-200'
-                        }`}
-                      >
-                        {mode === 'all'
-                          ? `All (${products.length})`
-                          : mode === 'custom'
-                          ? `Custom (${customSeoCount})`
-                          : `Default (${products.length - customSeoCount})`}
-                      </button>
-                    ))}
-                  </div>
+                  <span className="text-[11px] font-mono text-slate-400">
+                    Matching: {seoSelectableProducts.length} products
+                  </span>
                 </div>
 
                 <select
@@ -1148,9 +1546,11 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] font-mono text-emerald-400 shrink-0">
-                  {selectedSeoProduct.seo_title ? 'Custom SEO Active' : 'Default Template'}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-mono text-emerald-400">
+                    {selectedSeoProduct.seo_title ? 'Custom SEO Saved in DB' : 'Default Template'}
+                  </span>
+                </div>
               </div>
 
               {/* SEO Meta Title Field */}
@@ -1239,17 +1639,30 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 </div>
               </div>
 
-              <div className="pt-2 flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSeoTitleInput(buildDefaultSeoTitle(selectedSeoProduct));
-                    setSeoDescriptionInput(buildDefaultSeoDescription(selectedSeoProduct));
-                  }}
-                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors cursor-pointer"
-                >
-                  Reset to Default Template
-                </button>
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSeoTitleInput(buildDefaultSeoTitle(selectedSeoProduct));
+                      setSeoDescriptionInput(buildDefaultSeoDescription(selectedSeoProduct));
+                    }}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors cursor-pointer"
+                  >
+                    Reset to Default
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyServerMetadata(selectedSeoProduct.id)}
+                    disabled={isVerifyingServerMeta}
+                    className="px-3 py-2 bg-slate-950 hover:bg-slate-800 text-emerald-400 border border-slate-800 rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-1.5"
+                    title="Verify saved SEO metadata from database endpoint /api/products/:id/metadata"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    <span>{isVerifyingServerMeta ? 'Verifying...' : 'Verify Saved DB Metadata'}</span>
+                  </button>
+                </div>
 
                 <button
                   type="submit"
@@ -1268,7 +1681,7 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
 
             {/* Right Column: Live SERP & Generated Product Page Metadata Inspector */}
             <div className="lg:col-span-6 flex flex-col justify-between bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-              <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between gap-2">
+              <div className="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs font-bold text-white">
                   Generated Product Page Metadata Preview
                 </span>
@@ -1305,6 +1718,17 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                     }`}
                   >
                     Schema.org JSON-LD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleVerifyServerMetadata(selectedSeoProduct.id)}
+                    className={`px-2.5 py-1 rounded transition-colors cursor-pointer ${
+                      seoPreviewTab === 'db_verify'
+                        ? 'bg-slate-800 text-emerald-400 font-semibold'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    DB API Response
                   </button>
                 </div>
               </div>
@@ -1387,6 +1811,24 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                   <pre className="p-3 bg-slate-900 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed max-h-60">
                     {JSON.stringify(liveGeneratedMeta.jsonLd, null, 2)}
                   </pre>
+                )}
+
+                {seoPreviewTab === 'db_verify' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px] text-emerald-400 font-mono">
+                      <span>GET /api/products/{selectedSeoProduct.id}/metadata</span>
+                      <span>
+                        {verifiedServerMeta?.persistedInDatabase
+                          ? '✓ Persisted in Database'
+                          : 'Click Verify Saved DB Metadata'}
+                      </span>
+                    </div>
+                    <pre className="p-3 bg-slate-900 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto leading-relaxed max-h-56">
+                      {verifiedServerMeta
+                        ? JSON.stringify(verifiedServerMeta, null, 2)
+                        : 'Click "Verify Saved DB Metadata" or save the product SEO to inspect the live database response.'}
+                    </pre>
+                  </div>
                 )}
 
                 <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400 font-mono">
@@ -1695,15 +2137,23 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                         </button>
                       </td>
 
-                      {/* Identifiers */}
-                      <td className="p-3.5 font-mono text-[11px] text-slate-400">
-                        <div>MPN: {p.mpn || p.id}</div>
-                        {p.gtin && <div className="text-emerald-400">GTIN: {p.gtin}</div>}
-                        <div className="mt-0.5 text-[10px]">
-                          SEO:{' '}
-                          <span className={p.seo_title ? 'text-emerald-400' : 'text-slate-400'}>
-                            {p.seo_title ? 'Custom Meta' : 'Auto Template'}
-                          </span>
+                      {/* Identifiers & Active SEO Metadata */}
+                      <td className="p-3.5 text-[11px] text-slate-400 max-w-[230px]">
+                        <div className="font-mono">MPN: {p.mpn || p.id}</div>
+                        {p.gtin && <div className="font-mono text-emerald-400">GTIN: {p.gtin}</div>}
+                        <div className="mt-1 pt-1 border-t border-slate-800/80 space-y-0.5">
+                          <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                            <span>SEO:</span>
+                            <span className={p.seo_title ? 'text-emerald-400 font-semibold' : 'text-slate-400'}>
+                              {p.seo_title ? '✓ Custom Meta' : 'Auto Template'}
+                            </span>
+                          </div>
+                          <p
+                            className="text-[10px] text-slate-300 truncate font-sans"
+                            title={resolveProductSeoTitle(p)}
+                          >
+                            {resolveProductSeoTitle(p)}
+                          </p>
                         </div>
                       </td>
 
@@ -1713,12 +2163,13 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                           <button
                             onClick={() => {
                               setSelectedSeoProductId(p.id);
+                              setSeoEditorView('studio');
                               seoSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                             }}
                             className="px-2 py-1 text-[11px] font-mono text-emerald-400 hover:text-white bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded transition-colors cursor-pointer"
                             title="Edit SEO Meta Title & Description for this product"
                           >
-                            SEO
+                            Edit SEO
                           </button>
 
                           <button
@@ -1918,6 +2369,69 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                   className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 font-mono text-[11px]"
                   required
                 />
+              </div>
+
+              <div className="p-3 bg-slate-900/70 border border-slate-800 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>SEO Meta Title &amp; Description (Persisted to Database)</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const mockProd: GmcProduct = {
+                        id: newProductForm.sku || 'NEW-SKU',
+                        title: newProductForm.title || 'New Product',
+                        description: newProductForm.description || newProductForm.title || 'Product description',
+                        link: '',
+                        image_link: newProductForm.mainImageUrl,
+                        price: `${newProductForm.price || '49.99'} USD`,
+                        sale_price: newProductForm.salePrice ? `${newProductForm.salePrice} USD` : undefined,
+                        availability: newProductForm.availability,
+                        brand: newProductForm.brand || 'AeroCommerce',
+                        condition: newProductForm.condition,
+                        identifier_exists: true,
+                      };
+                      setNewProductForm({
+                        ...newProductForm,
+                        seoTitle: buildDefaultSeoTitle(mockProd),
+                        seoDescription: buildDefaultSeoDescription(mockProd),
+                      });
+                    }}
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
+                  >
+                    Auto-Generate Optimal SEO
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">
+                    SEO Meta Title (<code className="text-emerald-400 font-mono">seo_title</code> · 30–60 chars optimal)
+                  </label>
+                  <input
+                    type="text"
+                    value={newProductForm.seoTitle}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, seoTitle: e.target.value })}
+                    placeholder="Leave blank to auto-generate or enter custom SEO meta title..."
+                    maxLength={120}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 font-semibold mb-1">
+                    SEO Meta Description (<code className="text-emerald-400 font-mono">seo_description</code> · 120–160 chars optimal)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={newProductForm.seoDescription}
+                    onChange={(e) => setNewProductForm({ ...newProductForm, seoDescription: e.target.value })}
+                    placeholder="Leave blank to auto-generate or enter custom 120-160 character SEO meta description..."
+                    maxLength={320}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
               </div>
 
               <div className="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
