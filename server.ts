@@ -3,15 +3,15 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import Stripe from 'stripe';
-import { executeEcomChat, executeImageGeneration } from './src/server/gemini-api.ts';
-import { GmcProduct, escapeXml } from './src/lib/gmc-feed.ts';
-import { mapCjProductToGmc, mapGenericApiProductToGmc } from './src/lib/api-integrations.ts';
+import { executeEcomChat, executeImageGeneration } from './src/server/gemini-api';
+import { GmcProduct, escapeXml } from './src/lib/gmc-feed';
+import { mapCjProductToGmc, mapGenericApiProductToGmc } from './src/lib/api-integrations';
 import {
   initDailyFeedScheduler,
   getCachedFeed,
   getFeedSchedulerStatus,
   executeFeedRefresh,
-} from './src/server/feed-scheduler.ts';
+} from './src/server/feed-scheduler';
 import {
   loadPersistedCatalog,
   savePersistedCatalog,
@@ -25,7 +25,7 @@ import {
   loadPersistedOrders,
   savePersistedOrder,
   initOrdersFromPostgres,
-} from './src/server/storage.ts';
+} from './src/server/storage';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
@@ -1666,8 +1666,9 @@ export function ensureCatalogInitialized(): Promise<void> {
 async function startServer() {
   await ensureCatalogInitialized();
 
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
+  if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
+    const vitePkg = 'vite';
+    const { createServer: createViteServer } = await import(vitePkg);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

@@ -3,8 +3,8 @@ import os from 'os';
 import path from 'path';
 import pg from 'pg';
 import dotenv from 'dotenv';
-import { GmcProduct } from '../lib/gmc-feed.ts';
-import { INITIAL_PRODUCTS } from './seed-data.ts';
+import { GmcProduct } from '../lib/gmc-feed';
+import { INITIAL_PRODUCTS } from './seed-data';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config();
