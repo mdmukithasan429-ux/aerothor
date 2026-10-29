@@ -9,4 +9,5 @@ coverage/
 !.env.production
 .playwright-cli/
 .aistudio/
+public/assets/aistudio/
 /*.png

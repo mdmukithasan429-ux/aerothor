@@ -954,13 +954,22 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 <span>Copy All Vercel Env Vars (.env)</span>
               </button>
               <a
-                href="https://github.com/settings/installations"
+                href="https://github.com/apps/vercel/installations/new"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-indigo-200 bg-indigo-950/80 border border-indigo-500/40 hover:bg-indigo-900/70 rounded-md transition-colors"
               >
-                <span>1. Grant Vercel GitHub Access</span>
+                <span>1. Install Vercel App on GitHub</span>
                 <ExternalLink className="w-3 h-3 text-indigo-400" />
+              </a>
+              <a
+                href="https://github.com/mukithasan232/E-commerce-dropshiping-store-/settings"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-amber-200 bg-amber-950/60 border border-amber-500/40 hover:bg-amber-900/60 rounded-md transition-colors"
+              >
+                <span>2. Repo Settings (Make Public)</span>
+                <ExternalLink className="w-3 h-3 text-amber-400" />
               </a>
               <a
                 href="https://vercel.com/new"
@@ -968,13 +977,13 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-slate-200 bg-slate-800 border border-slate-700 hover:bg-slate-700 rounded-md transition-colors"
               >
-                <span>2. Open Vercel Import</span>
+                <span>3. Open Vercel Import</span>
                 <ExternalLink className="w-3 h-3 text-emerald-400" />
               </a>
             </div>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            <strong className="text-amber-300">Fix for Vercel &ldquo;install the GitHub integration first&rdquo; error:</strong> Because <code className="text-slate-200 font-mono">mukithasan232/E-commerce-dropshiping-store-</code> is currently Private on GitHub, either make the repository <strong>Public</strong> in GitHub Settings &rarr; General &rarr; Change repository visibility, OR open <strong className="text-slate-200">vercel.com/new</strong> &rarr; click <strong>Adjust GitHub App Permissions</strong> &rarr; select <code className="text-slate-200 font-mono">E-commerce-dropshiping-store-</code> &rarr; click <strong>Import</strong>. All environment variables are already baked into <code className="text-emerald-400 font-mono">vercel.json</code>.
+            <strong className="text-amber-300">Fix for Vercel &ldquo;install the GitHub integration first&rdquo; error:</strong> Tap <strong>1. Install Vercel App on GitHub</strong> above (&rarr; select <code className="text-slate-200 font-mono">mukithasan232</code> &rarr; choose <strong>All repositories</strong> or select <code className="text-slate-200 font-mono">E-commerce-dropshiping-store-</code> &rarr; tap <strong>Install / Save</strong>), then return to Vercel and reload. All environment variables are already pre-configured in <code className="text-emerald-400 font-mono">vercel.json</code> and <code className="text-emerald-400 font-mono">.env.production</code>.
           </p>
         </div>
       </div>
