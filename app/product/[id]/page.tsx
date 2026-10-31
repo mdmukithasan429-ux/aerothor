@@ -34,6 +34,8 @@ async function getProductWithVariants(idOrSku: string) {
         seoDescription: product.seoDescription || undefined,
         gtin: product.gtin || undefined,
         mpn: product.mpn || product.sku,
+        productType: ((product as any).productType || 'dropshipping') as 'dropshipping' | 'affiliate',
+        affiliateUrl: (product as any).affiliateUrl || undefined,
         variants:
           product.variants.length > 0
             ? product.variants.map((v) => ({

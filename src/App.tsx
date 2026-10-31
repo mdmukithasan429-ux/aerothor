@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TopBar, WorkspaceTab } from './components/TopBar';
 import { StoreLandingPage } from './components/StoreLandingPage';
+import { AffiliatesPage } from './components/AffiliatesPage';
 import { OrderTrackingPage } from './components/OrderTrackingPage';
 import { AdminOrdersManager } from './components/AdminOrdersManager';
 import { GmcFeedWorkspace } from './components/GmcFeedWorkspace';
@@ -24,6 +25,7 @@ import {
 function resolveInitialTabFromPath(): WorkspaceTab {
   if (typeof window === 'undefined') return 'storefront';
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (pathname === '/affiliates' || pathname === '/deals') return 'affiliates';
   if (pathname === '/track-order') return 'track_order';
   if (pathname === '/admin/orders') return 'admin_orders';
   if (pathname === '/admin') return 'admin_inventory';
@@ -34,6 +36,8 @@ function mapTabToPathname(tab: WorkspaceTab): string {
   switch (tab) {
     case 'storefront':
       return '/';
+    case 'affiliates':
+      return '/affiliates';
     case 'track_order':
       return '/track-order';
     case 'admin_inventory':
@@ -64,7 +68,7 @@ export default function App() {
     const targetPath = mapTabToPathname(activeTab);
     try {
       if (window.location.pathname !== targetPath) {
-        const search = activeTab === 'storefront' || activeTab === 'track_order' ? window.location.search : '';
+        const search = activeTab === 'storefront' || activeTab === 'affiliates' || activeTab === 'track_order' ? window.location.search : '';
         window.history.pushState({}, '', `${targetPath}${search}`);
       }
     } catch {
@@ -77,7 +81,8 @@ export default function App() {
   useEffect(() => {
     const onPopState = () => {
       const nextTab = resolveInitialTabFromPath();
-      if (nextTab !== 'storefront' && nextTab !== 'track_order' && !getAdminSession().isAuthenticated) {
+      const isPublic = nextTab === 'storefront' || nextTab === 'affiliates' || nextTab === 'track_order';
+      if (!isPublic && !getAdminSession().isAuthenticated) {
         setPendingAdminTab(nextTab);
         setIsAdminLoginModalOpen(true);
         setActiveTab('storefront');
@@ -93,7 +98,7 @@ export default function App() {
   useEffect(() => {
     const session = getAdminSession();
     const initialTab = resolveInitialTabFromPath();
-    const isAdminRoute = initialTab !== 'storefront' && initialTab !== 'track_order';
+    const isAdminRoute = initialTab !== 'storefront' && initialTab !== 'affiliates' && initialTab !== 'track_order';
 
     if (session.isAuthenticated && session.token) {
       fetch('/api/admin/auth/verify', {
@@ -263,6 +268,17 @@ export default function App() {
           />
         )}
 
+        {effectiveTab === 'affiliates' && (
+          <AffiliatesPage
+            products={products}
+            onNavigateToStorefront={() => setActiveTab('storefront')}
+            onSelectCategory={(cat) => {
+              setExternalCategory(cat);
+              setActiveTab('storefront');
+            }}
+          />
+        )}
+
         {effectiveTab === 'track_order' && (
           <OrderTrackingPage
             onBackToStore={() => setActiveTab('storefront')}
@@ -369,6 +385,14 @@ export default function App() {
           <div className="border-t border-slate-900/80 pt-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-slate-400">
             <p>© 2026 AeroThor Commerce. All rights reserved.</p>
             <div className="flex items-center gap-4 text-slate-400 flex-wrap">
+              <button
+                type="button"
+                onClick={() => setActiveTab('affiliates')}
+                className="text-amber-400 hover:text-amber-300 font-semibold cursor-pointer"
+              >
+                Affiliate Deals (/affiliates)
+              </button>
+              <span>·</span>
               <button
                 type="button"
                 onClick={() => setActiveTab('track_order')}

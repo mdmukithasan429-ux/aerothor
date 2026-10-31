@@ -1,8 +1,9 @@
 import React from 'react';
-import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList } from 'lucide-react';
+import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag } from 'lucide-react';
 
 export type WorkspaceTab =
   | 'storefront'
+  | 'affiliates'
   | 'track_order'
   | 'admin_inventory'
   | 'admin_orders'
@@ -239,6 +240,21 @@ export const TopBar: React.FC<TopBarProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => onTabChange('affiliates')}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === 'affiliates'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                    : 'text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/40 hover:border-amber-400'
+                }`}
+              >
+                <Tag className="w-3.5 h-3.5 text-amber-400" />
+                <span>Affiliate Deals</span>
+                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-amber-400/20 text-amber-200">
+                  Amazon
+                </span>
+              </button>
+              <button
+                type="button"
                 onClick={() => onTabChange('track_order')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
                   activeTab === 'track_order'
@@ -415,6 +431,18 @@ export const TopBar: React.FC<TopBarProps> = ({
               className="px-3 py-1.5 text-xs font-medium text-emerald-400 bg-slate-900/60 rounded-md whitespace-nowrap shrink-0"
             >
               Trending Arrivals
+            </button>
+            <button
+              type="button"
+              onClick={() => onTabChange('affiliates')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 flex items-center gap-1 ${
+                activeTab === 'affiliates'
+                  ? 'bg-amber-500 text-slate-950 font-black'
+                  : 'bg-amber-950/40 text-amber-300 border border-amber-500/40'
+              }`}
+            >
+              <Tag className="w-3 h-3 text-amber-400" />
+              <span>Affiliate Deals</span>
             </button>
             <button
               type="button"

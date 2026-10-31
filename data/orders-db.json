@@ -1,5 +1,46 @@
 [
   {
+    "id": "ORD-2026-676090",
+    "orderNumber": "ORD-2026-676090",
+    "trackingCode": "9400 1118 9956 4293 00",
+    "trackingNumber": "9400 1118 9956 4293 00",
+    "status": "Paid - Ready for CJ Fulfill",
+    "stripeSessionId": "cs_test_yzfykhu9znmvwi0vpx",
+    "cjOrderStatus": "awaiting_fulfillment",
+    "cjApiMessage": "Paid - Ready for CJ Fulfill (Manual US Visa Fulfillment)",
+    "customerName": "Alex Vance",
+    "customerEmail": "customer@example.com",
+    "customerPhone": "+1 (555) 234-5678",
+    "shippingAddress": "742 Evergreen Terrace, Apt 4B",
+    "shippingCity": "Springfield",
+    "shippingState": "OR",
+    "shippingZip": "97477",
+    "shippingCountry": "US",
+    "shippingMethod": "free",
+    "paymentMethod": "google_pay",
+    "totalAmount": 290.95,
+    "currency": "USD",
+    "paymentStatus": "paid",
+    "carrier": "USPS Priority Mail",
+    "estimatedDelivery": "3 to 5 Business Days",
+    "items": [
+      {
+        "sku": "CJ-CJFU3532843",
+        "cjPid": "2115690241535590402",
+        "cjSku": "CJFU3532843",
+        "title": "8-in-1 Multifunctional Folding Work Table with US Standard Socket, Portable Heavy Duty Workbench with Wheels for Garage Workshop H",
+        "price": 290.95,
+        "quantity": 1,
+        "image": "https://cf.cjdropshipping.com/saleyee-import/d3d7f3d983564c7c881a996b71db881e.jpg"
+      }
+    ],
+    "createdAt": "2026-10-31T14:30:54.358Z",
+    "updatedAt": "2026-10-31T14:30:54.358Z",
+    "purchasedSkus": [
+      "CJ-CJFU3532843"
+    ]
+  },
+  {
     "id": "ORD-2026-742530",
     "stripeSessionId": "cs_test_z3p0hsj7nemvwh167o",
     "cjOrderStatus": "awaiting_fulfillment",
@@ -35,7 +76,10 @@
     "orderNumber": "ORD-2026-742530",
     "trackingCode": "9400 1118 9956 8711 00",
     "status": "Pending",
-    "updatedAt": "2026-10-31T14:03:08.340Z"
+    "updatedAt": "2026-10-31T14:03:08.340Z",
+    "purchasedSkus": [
+      "CJ-CJZN3533304"
+    ]
   },
   {
     "id": "ORD-2026-884120",
@@ -79,7 +123,11 @@
       }
     ],
     "createdAt": "2026-10-29T13:51:39.093Z",
-    "updatedAt": "2026-10-31T13:57:35.488Z"
+    "updatedAt": "2026-10-31T13:57:35.488Z",
+    "purchasedSkus": [
+      "AERO-TI-FLASK-01",
+      "AERO-QI2-DOCK-02"
+    ]
   },
   {
     "id": "ORD-2026-773019",
@@ -116,7 +164,10 @@
       }
     ],
     "createdAt": "2026-10-30T13:51:39.093Z",
-    "updatedAt": "2026-10-31T11:51:39.093Z"
+    "updatedAt": "2026-10-31T11:51:39.093Z",
+    "purchasedSkus": [
+      "AERO-MERINO-HOOD-03"
+    ]
   },
   {
     "id": "ORD-2026-651904",
@@ -153,6 +204,9 @@
       }
     ],
     "createdAt": "2026-10-26T13:51:39.093Z",
-    "updatedAt": "2026-10-30T13:51:39.093Z"
+    "updatedAt": "2026-10-30T13:51:39.093Z",
+    "purchasedSkus": [
+      "AERO-CARBON-PACK-04"
+    ]
   }
 ]

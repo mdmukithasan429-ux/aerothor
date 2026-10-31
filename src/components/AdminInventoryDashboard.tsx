@@ -118,6 +118,8 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     condition: 'new' as 'new' | 'refurbished' | 'used',
     gtin: '',
     mpn: '',
+    productType: 'dropshipping' as 'dropshipping' | 'affiliate',
+    affiliateUrl: '',
   });
 
   // Dedicated SEO Meta Editor Section State
@@ -314,6 +316,8 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           mpn: newProductForm.mpn.trim() || generatedSku,
           seoTitle: newProductForm.seoTitle.trim() || undefined,
           seoDescription: newProductForm.seoDescription.trim() || undefined,
+          productType: newProductForm.productType,
+          affiliateUrl: newProductForm.productType === 'affiliate' ? newProductForm.affiliateUrl.trim() : undefined,
         }),
       });
 
@@ -342,6 +346,8 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
         condition: 'new',
         gtin: '',
         mpn: '',
+        productType: 'dropshipping',
+        affiliateUrl: '',
       });
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -2274,8 +2280,8 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                         </div>
                       </td>
 
-                      {/* SKU / ID */}
-                      <td className="p-3.5 font-mono text-[11px]">
+                      {/* SKU / ID & Commercial Type */}
+                      <td className="p-3.5 font-mono text-[11px] space-y-1">
                         <button
                           onClick={() => handleCopySku(p.id)}
                           className="flex items-center gap-1.5 text-slate-300 hover:text-emerald-400 group"
@@ -2288,6 +2294,18 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                             <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                           )}
                         </button>
+                        <div>
+                          {p.productType === 'affiliate' || p.id.toLowerCase().startsWith('aff-') ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-amber-300 bg-amber-950/60 border border-amber-500/40 px-1.5 py-0.5 rounded">
+                              <Tag className="w-2.5 h-2.5 text-amber-400" />
+                              Affiliate Deal
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 px-1.5 py-0.5 rounded">
+                              Dropship
+                            </span>
+                          )}
+                        </div>
                       </td>
 
                       {/* Brand */}
@@ -2565,6 +2583,55 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                   className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-emerald-500 font-mono text-[11px]"
                   required
                 />
+              </div>
+
+              {/* Product Model Type: Dropshipping vs Affiliate */}
+              <div className="p-3.5 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Product Commercial Model</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewProductForm({ ...newProductForm, productType: 'dropshipping' })}
+                      className={`p-2.5 rounded-lg border text-left transition-all ${
+                        newProductForm.productType === 'dropshipping'
+                          ? 'bg-emerald-950/60 border-emerald-500 text-emerald-300 font-bold'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="font-semibold text-xs">Dropshipping</div>
+                      <div className="text-[10px] text-slate-500">Native Stripe Checkout</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewProductForm({ ...newProductForm, productType: 'affiliate' })}
+                      className={`p-2.5 rounded-lg border text-left transition-all ${
+                        newProductForm.productType === 'affiliate'
+                          ? 'bg-amber-950/60 border-amber-500 text-amber-300 font-bold'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="font-semibold text-xs text-amber-400">Affiliate / Partner</div>
+                      <div className="text-[10px] text-slate-500">Amazon / AliExpress Redirect</div>
+                    </button>
+                  </div>
+                </div>
+
+                {newProductForm.productType === 'affiliate' && (
+                  <div>
+                    <label className="block text-amber-300 font-semibold mb-1">
+                      Affiliate Target URL (Required for Partner Deals)
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      value={newProductForm.affiliateUrl}
+                      onChange={(e) => setNewProductForm({ ...newProductForm, affiliateUrl: e.target.value })}
+                      placeholder="https://www.amazon.com/dp/B000000000?tag=aerothor-20"
+                      className="w-full bg-slate-950 border border-amber-500/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-400 font-mono text-[11px]"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="p-3 bg-slate-900/70 border border-slate-800 rounded-xl space-y-3">

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description:
     'Grade 1 titanium vessels, 100% pure merino thermal wear, and Qi2 aerospace charging hardware. Direct US & UK domestic warehouse dispatch within 3-7 business days.',
   verification: {
-    google: 'XYvXZ1Kd3MsTbTSeQRzyddv22J163MNCsdavsGaW4iE',
+    google: ['googlee6a39edbc64fe5aa', 'XYvXZ1Kd3MsTbTSeQRzyddv22J163MNCsdavsGaW4iE'],
   },
   openGraph: {
     title: 'AeroThor — Minimalist Performance Essentials',
@@ -52,6 +52,14 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Google Merchant Center & Search Console Domain Ownership Verification Meta */}
+        <meta
+          name="google-site-verification"
+          content="googlee6a39edbc64fe5aa"
+        />
+        <meta
+          name="google-site-verification"
+          content="googlee6a39edbc64fe5aa.html"
+        />
         <meta
           name="google-site-verification"
           content="XYvXZ1Kd3MsTbTSeQRzyddv22J163MNCsdavsGaW4iE"

@@ -1062,6 +1062,86 @@ var INITIAL_PRODUCTS = [
     affiliate_url: "https://www.amazon.com/dp/B08LP1N6F6?tag=aerothor-20",
     google_product_category: "Luggage & Bags > Backpacks",
     product_type: "Partner Deal > EDC Travel Bags"
+  },
+  {
+    id: "AFF-SONY-WH1000XM5",
+    title: "Sony WH-1000XM5 Wireless Industry Leading Noise Canceling Headphones",
+    description: "Two processors and 8 microphones for unprecedented noise cancellation. Up to 30-hour battery life with quick charging. Auto NC Optimizer automatically optimizes sound based on wearing conditions.",
+    link: "https://aerothor.com/product/AFF-SONY-WH1000XM5",
+    image_link: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+    price: "399.99 USD",
+    sale_price: "348.00 USD",
+    availability: "in_stock",
+    brand: "Sony",
+    gtin: "0027242923508",
+    mpn: "WH1000XM5/B",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B09XS7JWHH?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B09XS7JWHH?tag=aerothor-20",
+    google_product_category: "Electronics > Audio > Headphones",
+    product_type: "Amazon Partner Deal > Audio & Electronics"
+  },
+  {
+    id: "AFF-KINDLE-PW-11",
+    title: 'Amazon Kindle Paperwhite (16 GB) \u2013 6.8" Display with Adjustable Warm Light',
+    description: "Purpose-built for reading with a flush-front design and 300 ppi glare-free display that reads like real paper even in bright sunlight. Waterproof IPX8 protection for bath or beach reading.",
+    link: "https://aerothor.com/product/AFF-KINDLE-PW-11",
+    image_link: "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?auto=format&fit=crop&w=800&q=80",
+    price: "149.99 USD",
+    sale_price: "129.99 USD",
+    availability: "in_stock",
+    brand: "Amazon",
+    gtin: "0840080536415",
+    mpn: "B08N41Y4Q2",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B08N41Y4Q2?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B08N41Y4Q2?tag=aerothor-20",
+    google_product_category: "Electronics > Computers > E-Book Readers",
+    product_type: "Amazon Partner Deal > Digital Readers"
+  },
+  {
+    id: "AFF-GARMIN-FORERUNNER",
+    title: "Garmin Forerunner 265 Running Smartwatch with Colorful AMOLED Display",
+    description: "Brilliant AMOLED touchscreen display with traditional button controls and lightweight 46mm design. Up to 13 days of battery life in smartwatch mode and training readiness metrics.",
+    link: "https://aerothor.com/product/AFF-GARMIN-FORERUNNER",
+    image_link: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+    price: "449.99 USD",
+    sale_price: "399.99 USD",
+    availability: "in_stock",
+    brand: "Garmin",
+    gtin: "0075375931215",
+    mpn: "010-02810-00",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B0BSLN9Y8X?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B0BSLN9Y8X?tag=aerothor-20",
+    google_product_category: "Electronics > Wearable Technology > Smartwatches",
+    product_type: "Amazon Partner Deal > Wearables & Fitness"
+  },
+  {
+    id: "AFF-PEAKDESIGN-SLING",
+    title: "Peak Design Everyday Sling 6L V2 \u2014 Weatherproof Camera & Commuter Bag",
+    description: "Minimalist 6L everyday carry and camera sling bag. 100% recycled 400D weatherproof shell, ultra-clean aesthetic with FlexFold dividers and dedicated 11-inch tablet sleeve.",
+    link: "https://aerothor.com/product/AFF-PEAKDESIGN-SLING",
+    image_link: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80",
+    price: "119.95 USD",
+    sale_price: "99.95 USD",
+    availability: "in_stock",
+    brand: "Peak Design",
+    gtin: "0818373021313",
+    mpn: "BEDS-6-AS-2",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B07ZTTS4B6?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B07ZTTS4B6?tag=aerothor-20",
+    google_product_category: "Cameras & Optics > Camera & Video Camera Bags",
+    product_type: "Amazon Partner Deal > Everyday Carry"
   }
 ];
 
@@ -1895,6 +1975,10 @@ app.post(
   }
 );
 app.use(express.json({ limit: "10mb" }));
+app.get(["/googlee6a39edbc64fe5aa.html", "/googlee6a39edbc64fe5aa"], (req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send("google-site-verification: googlee6a39edbc64fe5aa.html");
+});
 function getCanonicalBaseUrl() {
   const raw = process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "") || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") || "https://e-commerce-dropshiping-store.vercel.app";
   return raw.replace(/\/+$/, "");

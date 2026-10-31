@@ -264,6 +264,12 @@ app.post(
 
 app.use(express.json({ limit: '10mb' }));
 
+// Google Site Verification Route (Google Merchant Center & Search Console)
+app.get(['/googlee6a39edbc64fe5aa.html', '/googlee6a39edbc64fe5aa'], (req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send('google-site-verification: googlee6a39edbc64fe5aa.html');
+});
+
 function getCanonicalBaseUrl(): string {
   const raw =
     process.env.NEXT_PUBLIC_SITE_URL ||
