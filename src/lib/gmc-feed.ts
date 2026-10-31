@@ -149,17 +149,73 @@ export function validateGmcProduct(product: Partial<GmcProduct>): GmcValidationE
   return errors;
 }
 
+export const CANONICAL_STORE_URL = 'https://aerothor.vercel.app';
+
+/**
+ * Resolves a product's canonical online store URL on the verified Merchant Center domain
+ */
+export function resolveCanonicalProductLink(
+  product: Pick<GmcProduct, 'id' | 'link'>,
+  storeBaseUrl: string = CANONICAL_STORE_URL
+): string {
+  const cleanBase = (storeBaseUrl || CANONICAL_STORE_URL).replace(/\/+$/, '');
+  const rawLink = (product.link || '').trim();
+  const encodedId = encodeURIComponent(product.id);
+
+  if (!rawLink) {
+    return `${cleanBase}/product/${encodedId}`;
+  }
+
+  // Rewrite legacy/unverified domains to the verified Merchant Center store domain
+  if (
+    rawLink.includes('aerothor.com') ||
+    rawLink.includes('example-store.com') ||
+    rawLink.includes('my-store.com') ||
+    rawLink.includes('e-commerce-dropshiping-store.vercel.app') ||
+    rawLink.includes('.run.app')
+  ) {
+    return `${cleanBase}/product/${encodedId}`;
+  }
+
+  return rawLink;
+}
+
+/**
+ * Cleans supplier marketplace notes (e.g. "(TikTok, temu pick-up service)", "Ban The Sale Of Amazon") from titles
+ */
+export function cleanMerchantTitle(rawTitle: string): string {
+  return (rawTitle || '')
+    .replace(/\(\s*tiktok[^)]*\)/gi, '')
+    .replace(/\bBan The Sale Of Amazon\b/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 150);
+}
+
 /**
  * Builds standard Google Merchant Center RSS 2.0 XML string
  */
 export function buildGmcXmlFeed(products: GmcProduct[], channelMeta?: ChannelMeta): string {
-  const meta = channelMeta || {
-    title: 'Headless Store Catalog — Google Merchant Center Feed',
-    link: 'https://example-store.com',
-    description: 'Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max',
+  const rawChannelLink = channelMeta?.link || CANONICAL_STORE_URL;
+  const normalizedChannelLink =
+    rawChannelLink.includes('example-store.com') ||
+    rawChannelLink.includes('aerothor.com') ||
+    rawChannelLink.includes('e-commerce-dropshiping-store.vercel.app') ||
+    rawChannelLink.includes('.run.app')
+      ? CANONICAL_STORE_URL
+      : rawChannelLink.replace(/\/+$/, '');
+
+  const meta: ChannelMeta = {
+    title: channelMeta?.title || 'AeroThor Global Store — Official GMC Product Feed',
+    link: normalizedChannelLink,
+    description:
+      channelMeta?.description ||
+      'Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max',
   };
 
   const xmlItems = products.map((item) => {
+    const canonicalLink = resolveCanonicalProductLink(item, normalizedChannelLink);
+    const cleanTitle = cleanMerchantTitle(item.title);
     const additionalImages = (item.additional_image_link || [])
       .filter((url) => Boolean(url && url.trim()))
       .map((url) => `      <g:additional_image_link>${escapeXml(url.trim())}</g:additional_image_link>`)
@@ -192,9 +248,9 @@ export function buildGmcXmlFeed(products: GmcProduct[], channelMeta?: ChannelMet
 
     return `    <item>
       <g:id>${escapeXml(item.id)}</g:id>
-      <g:title>${escapeXml(item.title)}</g:title>
+      <g:title>${escapeXml(cleanTitle)}</g:title>
       <g:description><![CDATA[${item.description}]]></g:description>
-      <g:link>${escapeXml(item.link)}</g:link>
+      <g:link>${escapeXml(canonicalLink)}</g:link>
       <g:image_link>${escapeXml(item.image_link)}</g:image_link>
 ${additionalImages ? `${additionalImages}\n` : ''}      <g:condition>${escapeXml(item.condition)}</g:condition>
       <g:availability>${escapeXml(item.availability)}</g:availability>

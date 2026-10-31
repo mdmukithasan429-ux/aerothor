@@ -274,22 +274,43 @@ function getCanonicalBaseUrl(): string {
   const raw =
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.APP_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : '') ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-    'https://e-commerce-dropshiping-store.vercel.app';
+    'https://aerothor.vercel.app';
+  if (
+    raw.includes('e-commerce-dropshiping-store.vercel.app') ||
+    raw.includes('aerothor.com') ||
+    raw.includes('example-store.com') ||
+    raw.includes('.run.app')
+  ) {
+    return 'https://aerothor.vercel.app';
+  }
   return raw.replace(/\/+$/, '');
 }
 
+function normalizeCatalogLinks(items: GmcProduct[]): GmcProduct[] {
+  const baseUrl = getCanonicalBaseUrl();
+  return items.map((item) => {
+    const rawLink = (item.link || '').trim();
+    const needsRewrite =
+      !rawLink ||
+      rawLink.includes('aerothor.com') ||
+      rawLink.includes('example-store.com') ||
+      rawLink.includes('e-commerce-dropshiping-store.vercel.app') ||
+      rawLink.includes('.run.app');
+    return {
+      ...item,
+      link: needsRewrite ? `${baseUrl}/product/${encodeURIComponent(item.id)}` : rawLink,
+    };
+  });
+}
+
 // Load persistent catalog & orders from disk so reloads & restarts never lose data
-let currentCatalog: GmcProduct[] = loadPersistedCatalog();
+let currentCatalog: GmcProduct[] = normalizeCatalogLinks(loadPersistedCatalog());
 let currentOrders: PersistedOrder[] = loadPersistedOrders();
 
 function persistAndRefreshFeed(catalog: GmcProduct[], changedSubset?: GmcProduct[]) {
-  currentCatalog = prioritizeRealProductsFirst(catalog);
+  currentCatalog = normalizeCatalogLinks(prioritizeRealProductsFirst(catalog));
   savePersistedCatalog(currentCatalog, changedSubset);
-  executeFeedRefresh(currentCatalog, 'inventory_change');
+  executeFeedRefresh(currentCatalog, 'inventory_change', getCanonicalBaseUrl());
 }
 
 function prependProductsToCatalog(newProducts: GmcProduct[]): GmcProduct[] {

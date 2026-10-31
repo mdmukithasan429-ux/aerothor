@@ -31,7 +31,7 @@ export async function GET(_req: NextRequest) {
     const baseUrl = (
       process.env.NEXT_PUBLIC_SITE_URL ||
       process.env.APP_URL ||
-      'https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app'
+      'https://aerothor.vercel.app'
     ).replace(/\/+$/, '');
 
     const nowIso = new Date().toISOString();

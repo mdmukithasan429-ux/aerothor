@@ -94,7 +94,7 @@ export function generateProductPageMetadata(
   const origin = (
     baseUrl ||
     (typeof window !== 'undefined' ? window.location.origin : '') ||
-    'https://e-commerce-dropshiping-store.vercel.app'
+    'https://aerothor.vercel.app'
   ).replace(/\/+$/, '');
 
   const seoTitle = resolveProductSeoTitle(product);

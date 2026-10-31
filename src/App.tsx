@@ -71,14 +71,22 @@ export default function App() {
   useEffect(() => {
     const targetPath = mapTabToPathname(activeTab);
     try {
-      if (window.location.pathname !== targetPath) {
-        const search = activeTab === 'storefront' || activeTab === 'affiliates' || activeTab === 'track_order' ? window.location.search : '';
+      const currentPathname = window.location.pathname.replace(/\/+$/, '') || '/';
+      const isDirectProductUrl =
+        activeTab === 'storefront' &&
+        (currentPathname.startsWith('/product/') || currentPathname.startsWith('/products/'));
+
+      if (!isDirectProductUrl && currentPathname !== targetPath) {
+        const search =
+          activeTab === 'storefront' || activeTab === 'affiliates' || activeTab === 'track_order'
+            ? window.location.search
+            : '';
         window.history.pushState({}, '', `${targetPath}${search}`);
       }
     } catch {
       // ignore in restricted iframe contexts
     }
-    trackPageView(targetPath, document.title);
+    trackPageView(window.location.pathname || targetPath, document.title);
   }, [activeTab]);
 
   // Listen to browser Back/Forward navigation

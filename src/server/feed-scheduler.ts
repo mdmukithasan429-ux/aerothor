@@ -64,7 +64,7 @@ export function getMsUntilNextMidnightUtc(): number {
 export function executeFeedRefresh(
   products: GmcProduct[],
   trigger: FeedRefreshLog['trigger'] = 'automated_daily',
-  appUrl: string = 'https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app'
+  appUrl: string = 'https://aerothor.vercel.app'
 ): FeedRefreshLog {
   const startTime = Date.now();
   const now = new Date();
@@ -93,8 +93,8 @@ export function executeFeedRefresh(
 
   // Build compliant XML feed with current lastBuildDate
   const xml = buildGmcXmlFeed(products, {
-    title: 'AeroCommerce Global Store — Official GMC Product Feed',
-    link: appUrl,
+    title: 'AeroThor Global Store — Official GMC Product Feed',
+    link: appUrl || 'https://aerothor.vercel.app',
     description: `High-CRP Direct-to-Consumer Catalog strictly compliant with Google Shopping RSS 2.0 standards. Auto-refreshed: ${rfc822Date}`,
   });
 

@@ -363,13 +363,33 @@ function validateGmcProduct(product) {
   }
   return errors;
 }
+var CANONICAL_STORE_URL = "https://aerothor.vercel.app";
+function resolveCanonicalProductLink(product, storeBaseUrl = CANONICAL_STORE_URL) {
+  const cleanBase = (storeBaseUrl || CANONICAL_STORE_URL).replace(/\/+$/, "");
+  const rawLink = (product.link || "").trim();
+  const encodedId = encodeURIComponent(product.id);
+  if (!rawLink) {
+    return `${cleanBase}/product/${encodedId}`;
+  }
+  if (rawLink.includes("aerothor.com") || rawLink.includes("example-store.com") || rawLink.includes("my-store.com") || rawLink.includes("e-commerce-dropshiping-store.vercel.app") || rawLink.includes(".run.app")) {
+    return `${cleanBase}/product/${encodedId}`;
+  }
+  return rawLink;
+}
+function cleanMerchantTitle(rawTitle) {
+  return (rawTitle || "").replace(/\(\s*tiktok[^)]*\)/gi, "").replace(/\bBan The Sale Of Amazon\b/gi, "").replace(/\s+/g, " ").trim().slice(0, 150);
+}
 function buildGmcXmlFeed(products, channelMeta) {
-  const meta = channelMeta || {
-    title: "Headless Store Catalog \u2014 Google Merchant Center Feed",
-    link: "https://example-store.com",
-    description: "Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max"
+  const rawChannelLink = channelMeta?.link || CANONICAL_STORE_URL;
+  const normalizedChannelLink = rawChannelLink.includes("example-store.com") || rawChannelLink.includes("aerothor.com") || rawChannelLink.includes("e-commerce-dropshiping-store.vercel.app") || rawChannelLink.includes(".run.app") ? CANONICAL_STORE_URL : rawChannelLink.replace(/\/+$/, "");
+  const meta = {
+    title: channelMeta?.title || "AeroThor Global Store \u2014 Official GMC Product Feed",
+    link: normalizedChannelLink,
+    description: channelMeta?.description || "Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max"
   };
   const xmlItems = products.map((item) => {
+    const canonicalLink = resolveCanonicalProductLink(item, normalizedChannelLink);
+    const cleanTitle = cleanMerchantTitle(item.title);
     const additionalImages = (item.additional_image_link || []).filter((url) => Boolean(url && url.trim())).map((url) => `      <g:additional_image_link>${escapeXml(url.trim())}</g:additional_image_link>`).join("\n");
     const effectiveShipping = item.shipping && item.shipping.length > 0 ? item.shipping : [
       {
@@ -392,9 +412,9 @@ function buildGmcXmlFeed(products, channelMeta) {
     ).join("\n");
     return `    <item>
       <g:id>${escapeXml(item.id)}</g:id>
-      <g:title>${escapeXml(item.title)}</g:title>
+      <g:title>${escapeXml(cleanTitle)}</g:title>
       <g:description><![CDATA[${item.description}]]></g:description>
-      <g:link>${escapeXml(item.link)}</g:link>
+      <g:link>${escapeXml(canonicalLink)}</g:link>
       <g:image_link>${escapeXml(item.image_link)}</g:image_link>
 ${additionalImages ? `${additionalImages}
 ` : ""}      <g:condition>${escapeXml(item.condition)}</g:condition>
@@ -435,7 +455,7 @@ function sanitizeGmcTitle(rawTitle) {
       cleaned = cleaned.replace(/^[\["\s]+|[\]"\s]+$/g, "");
     }
   }
-  cleaned = cleaned.replace(/[\u4e00-\u9fa5]+/g, "").replace(/[\[\]"']/g, "").replace(/\s+/g, " ").trim();
+  cleaned = cleaned.replace(/[\u4e00-\u9fa5]+/g, "").replace(/\(\s*tiktok[^)]*\)/gi, "").replace(/\bBan The Sale Of Amazon\b/gi, "").replace(/[\[\]"']/g, "").replace(/\s+/g, " ").trim();
   if (!cleaned) {
     cleaned = "Direct-to-Consumer Precision Gear";
   }
@@ -455,7 +475,8 @@ function mapCjProductToGmc(cj, options = {}) {
   const multiplier = options.markupMultiplier ?? 2.5;
   const currency = options.currency ?? "USD";
   const brand = options.defaultBrand ?? "AeroThor";
-  const domain = options.domain ?? "aerothor.com";
+  const rawDomain = options.domain ?? "aerothor.vercel.app";
+  const domain = rawDomain === "aerothor.com" || rawDomain === "example-store.com" ? "aerothor.vercel.app" : rawDomain.replace(/^https?:\/\//, "").replace(/\/+$/, "");
   const rawPrice = cj.sellPrice || cj.nowPrice || cj.price;
   const costPrice = parseCjPrice(rawPrice);
   const retailPriceNum = Number((costPrice * multiplier).toFixed(2));
@@ -467,7 +488,6 @@ function mapCjProductToGmc(cj, options = {}) {
   const sku = cleanRawSku ? cleanRawSku.toUpperCase().startsWith("CJ-") ? cleanRawSku : `CJ-${cleanRawSku}` : `CJ-${rawPid.slice(0, 12)}`;
   const rawTitle = cj.productNameEn || cj.nameEn || cj.productName || "Premium Lifestyle Accessory";
   const title = sanitizeGmcTitle(rawTitle);
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 70);
   let additionalImages = [];
   const imageSet = cj.productImageSet || cj.images;
   if (Array.isArray(imageSet)) {
@@ -517,7 +537,7 @@ function mapCjProductToGmc(cj, options = {}) {
     id: sku,
     title,
     description: (typeof rawDesc === "string" ? rawDesc.replace(/<[^>]*>/g, "").trim() : "") || `${title} - Official CJ Dropshipping US/UK domestic warehouse inventory. Dispatches within 3\u20137 business days with 30-day money-back guarantee.`,
-    link: `https://${domain}/products/${slug || sku.toLowerCase()}`,
+    link: `https://${domain}/product/${encodeURIComponent(sku)}`,
     image_link: mainImage,
     additional_image_link: additionalImages.length > 0 ? additionalImages.slice(0, 3) : void 0,
     price: `${retailPriceNum.toFixed(2)} ${currency}`,
@@ -800,7 +820,7 @@ function getMsUntilNextMidnightUtc() {
   ));
   return Math.max(1e3, nextMidnight.getTime() - now.getTime());
 }
-function executeFeedRefresh(products, trigger = "automated_daily", appUrl = "https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app") {
+function executeFeedRefresh(products, trigger = "automated_daily", appUrl = "https://aerothor.vercel.app") {
   const startTime = Date.now();
   const now = /* @__PURE__ */ new Date();
   const rfc822Date = now.toUTCString();
@@ -820,8 +840,8 @@ function executeFeedRefresh(products, trigger = "automated_daily", appUrl = "htt
   const penalty = totalErrors * 15 + totalWarnings * 2;
   const score = Math.max(10, Math.min(100, 100 - penalty));
   const xml = buildGmcXmlFeed(products, {
-    title: "AeroCommerce Global Store \u2014 Official GMC Product Feed",
-    link: appUrl,
+    title: "AeroThor Global Store \u2014 Official GMC Product Feed",
+    link: appUrl || "https://aerothor.vercel.app",
     description: `High-CRP Direct-to-Consumer Catalog strictly compliant with Google Shopping RSS 2.0 standards. Auto-refreshed: ${rfc822Date}`
   });
   cachedXmlFeed = xml;
@@ -918,10 +938,32 @@ import dotenv from "dotenv";
 // src/server/seed-data.ts
 var INITIAL_PRODUCTS = [
   {
+    id: "CJ-CIFBUY-SKULL-01",
+    title: "CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home",
+    description: "Heavy-duty laser-cut wrought iron gothic skull silhouette wall plaque with weather-resistant matte black powder coating. Engineered for indoor living rooms, studies, and outdoor yard, patio, or garden wall installation. Fast 3\u20137 business day domestic US & UK tracked dispatch with 30-day money-back guarantee.",
+    link: "https://aerothor.vercel.app/product/CJ-CIFBUY-SKULL-01",
+    image_link: "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+    price: "28.99 USD",
+    sale_price: "24.99 USD",
+    availability: "in_stock",
+    brand: "CIFbuy",
+    mpn: "CIFBUY-SKULL-PLAQUE-01",
+    condition: "new",
+    identifier_exists: true,
+    productType: "dropshipping",
+    source: "cj_live",
+    google_product_category: "Home & Garden > Decor > Artwork > Wall Sculptures",
+    product_type: "Home & Garden > Yard & Wall Decor",
+    shipping: [
+      { country: "US", service: "USPS Priority Tracked", price: "0.00 USD" },
+      { country: "GB", service: "Royal Mail Tracked 48", price: "0.00 GBP" }
+    ]
+  },
+  {
     id: "SKU-TITAN-FLASK-01",
     title: "Titanium Thermal Travel Flask 750ml Vacuum Insulated - Fast 2-Day Shipping",
     description: "Double-walled ultra-lightweight grade 1 titanium travel flask engineered for extreme temperature retention. Keeps beverages steaming hot for 18 hours or ice cold for 36 hours. Designed with leak-proof magnetic cap and zero chemical leaching.",
-    link: "https://example-store.com/products/titanium-thermal-flask",
+    link: "https://aerothor.vercel.app/product/SKU-TITAN-FLASK-01",
     image_link: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80",
     additional_image_link: [
       "https://images.unsplash.com/photo-1544003484-3cd181d17917?auto=format&fit=crop&w=800&q=80"
@@ -945,7 +987,7 @@ var INITIAL_PRODUCTS = [
     id: "SKU-MERINO-PILLOW-02",
     title: "Merino Wool Ergonomic Travel Pillow 360 Head Support - Next Day Delivery",
     description: "Hypoallergenic 100% New Zealand pure merino wool neck cushion with adaptive memory core. Breathable, moisture-wicking and temperature regulating for red-eye flights and high-speed rail commutes.",
-    link: "https://example-store.com/products/merino-travel-pillow",
+    link: "https://aerothor.vercel.app/product/SKU-MERINO-PILLOW-02",
     image_link: "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?auto=format&fit=crop&w=800&q=80",
     price: "54.00 GBP",
     availability: "in_stock",
@@ -965,7 +1007,7 @@ var INITIAL_PRODUCTS = [
     id: "SKU-MAG-DOCK-03",
     title: "3-in-1 Foldable Magnetic Wireless Charging Stand 15W Qi2 - Fast 2-Day Shipping",
     description: "CNC aerospace-grade aluminum wireless charging station engineered for iPhone, Apple Watch, and AirPods simultaneously. Official Qi2 certified fast charging with thermal cooling dissipation.",
-    link: "https://example-store.com/products/qi2-magnetic-dock",
+    link: "https://aerothor.vercel.app/product/SKU-MAG-DOCK-03",
     image_link: "https://images.unsplash.com/photo-1622445262464-84b1456045b6?auto=format&fit=crop&w=800&q=80",
     price: "89.99 USD",
     sale_price: "74.99 USD",
@@ -985,7 +1027,7 @@ var INITIAL_PRODUCTS = [
     id: "SKU-BLUE-LENS-04",
     title: "Titanium Blue-Light Blocking Eyewear Zero-Glare - Next Day Delivery",
     description: "Ultralight Japanese titanium frame fitted with CR-39 anti-reflective amber tint lenses. Filters 99.4% of high-energy 455nm blue light to eliminate digital screen eye strain and optimize sleep architecture.",
-    link: "https://example-store.com/products/titanium-blue-light-glasses",
+    link: "https://aerothor.vercel.app/product/SKU-BLUE-LENS-04",
     image_link: "https://images.unsplash.com/photo-1591076482161-42ce6da69f67?auto=format&fit=crop&w=800&q=80",
     price: "65.00 USD",
     availability: "in_stock",
@@ -1001,7 +1043,7 @@ var INITIAL_PRODUCTS = [
     id: "SKU-AERO-BACKPACK-05",
     title: "Waterproof Cordura Modular Commuter Backpack 28L - Fast 2-Day Shipping",
     description: "Ballistic 1000D Cordura fabric with YKK AquaGuard waterproof zippers. Features dedicated 16-inch suspended laptop vault, magnetic Fidlock quick-release buckles, and expandable 28L clamshell travel opening.",
-    link: "https://example-store.com/products/cordura-commuter-backpack",
+    link: "https://aerothor.vercel.app/product/SKU-AERO-BACKPACK-05",
     image_link: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
     price: "135.00 USD",
     sale_price: "115.00 USD",
@@ -1019,7 +1061,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-ANKER-QI2-01",
     title: "Anker MagGo 3-in-1 Foldable Qi2 15W Ultra-Fast Wireless Charging Station",
     description: "Official Apple 15W Qi2 fast magnetic charging station with Wireless PowerIQ. Foldable aerospace hinge charges iPhone, Apple Watch Ultra, and AirPods simultaneously. Available directly on Amazon with Prime next-day delivery.",
-    link: "https://example-store.com/product/AFF-ANKER-QI2-01",
+    link: "https://aerothor.vercel.app/product/AFF-ANKER-QI2-01",
     image_link: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80",
     price: "109.99 USD",
     sale_price: "89.99 USD",
@@ -1039,7 +1081,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-STANLEY-TUMBLER-02",
     title: "Stanley IceFlow Stainless Steel 30oz Straw Tumbler \u2014 Cold for 12 Hours",
     description: "Double-wall vacuum insulation keeps iced drinks cold for up to 2 days. Features leak-resistant Flip Straw 2.0, ergonomic folding handle, and car cup-holder compatible base. Verified authentic Stanley on Amazon.",
-    link: "https://example-store.com/product/AFF-STANLEY-TUMBLER-02",
+    link: "https://aerothor.vercel.app/product/AFF-STANLEY-TUMBLER-02",
     image_link: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=800&q=80",
     price: "45.00 USD",
     sale_price: "38.00 USD",
@@ -1059,7 +1101,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-OSPREY-PACK-03",
     title: "Osprey Daylite Plus Commuter Travel Pack 20L \u2014 Ergonomic Breathable Harness",
     description: "Everyday urban commuter pack with padded interior laptop sleeve and dual stretch-mesh side water bottle pockets. Built with bluesign-approved recycled polyester. Direct partner deal via AliExpress & Amazon.",
-    link: "https://example-store.com/product/AFF-OSPREY-PACK-03",
+    link: "https://aerothor.vercel.app/product/AFF-OSPREY-PACK-03",
     image_link: "https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&w=800&q=80",
     price: "75.00 USD",
     sale_price: "64.95 USD",
@@ -1079,7 +1121,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-SONY-WH1000XM5",
     title: "Sony WH-1000XM5 Wireless Industry Leading Noise Canceling Headphones",
     description: "Two processors and 8 microphones for unprecedented noise cancellation. Up to 30-hour battery life with quick charging. Auto NC Optimizer automatically optimizes sound based on wearing conditions.",
-    link: "https://aerothor.com/product/AFF-SONY-WH1000XM5",
+    link: "https://aerothor.vercel.app/product/AFF-SONY-WH1000XM5",
     image_link: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
     price: "399.99 USD",
     sale_price: "348.00 USD",
@@ -1099,7 +1141,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-KINDLE-PW-11",
     title: 'Amazon Kindle Paperwhite (16 GB) \u2013 6.8" Display with Adjustable Warm Light',
     description: "Purpose-built for reading with a flush-front design and 300 ppi glare-free display that reads like real paper even in bright sunlight. Waterproof IPX8 protection for bath or beach reading.",
-    link: "https://aerothor.com/product/AFF-KINDLE-PW-11",
+    link: "https://aerothor.vercel.app/product/AFF-KINDLE-PW-11",
     image_link: "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?auto=format&fit=crop&w=800&q=80",
     price: "149.99 USD",
     sale_price: "129.99 USD",
@@ -1119,7 +1161,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-GARMIN-FORERUNNER",
     title: "Garmin Forerunner 265 Running Smartwatch with Colorful AMOLED Display",
     description: "Brilliant AMOLED touchscreen display with traditional button controls and lightweight 46mm design. Up to 13 days of battery life in smartwatch mode and training readiness metrics.",
-    link: "https://aerothor.com/product/AFF-GARMIN-FORERUNNER",
+    link: "https://aerothor.vercel.app/product/AFF-GARMIN-FORERUNNER",
     image_link: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
     price: "449.99 USD",
     sale_price: "399.99 USD",
@@ -1139,7 +1181,7 @@ var INITIAL_PRODUCTS = [
     id: "AFF-PEAKDESIGN-SLING",
     title: "Peak Design Everyday Sling 6L V2 \u2014 Weatherproof Camera & Commuter Bag",
     description: "Minimalist 6L everyday carry and camera sling bag. 100% recycled 400D weatherproof shell, ultra-clean aesthetic with FlexFold dividers and dedicated 11-inch tablet sleeve.",
-    link: "https://aerothor.com/product/AFF-PEAKDESIGN-SLING",
+    link: "https://aerothor.vercel.app/product/AFF-PEAKDESIGN-SLING",
     image_link: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80",
     price: "119.95 USD",
     sale_price: "99.95 USD",
@@ -1992,15 +2034,29 @@ app.get(["/googlee6a39edbc64fe5aa.html", "/googlee6a39edbc64fe5aa"], (req, res) 
   res.send("google-site-verification: googlee6a39edbc64fe5aa.html");
 });
 function getCanonicalBaseUrl() {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "") || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") || "https://e-commerce-dropshiping-store.vercel.app";
+  const raw = process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || "https://aerothor.vercel.app";
+  if (raw.includes("e-commerce-dropshiping-store.vercel.app") || raw.includes("aerothor.com") || raw.includes("example-store.com") || raw.includes(".run.app")) {
+    return "https://aerothor.vercel.app";
+  }
   return raw.replace(/\/+$/, "");
 }
-var currentCatalog = loadPersistedCatalog();
+function normalizeCatalogLinks(items) {
+  const baseUrl = getCanonicalBaseUrl();
+  return items.map((item) => {
+    const rawLink = (item.link || "").trim();
+    const needsRewrite = !rawLink || rawLink.includes("aerothor.com") || rawLink.includes("example-store.com") || rawLink.includes("e-commerce-dropshiping-store.vercel.app") || rawLink.includes(".run.app");
+    return {
+      ...item,
+      link: needsRewrite ? `${baseUrl}/product/${encodeURIComponent(item.id)}` : rawLink
+    };
+  });
+}
+var currentCatalog = normalizeCatalogLinks(loadPersistedCatalog());
 var currentOrders = loadPersistedOrders();
 function persistAndRefreshFeed(catalog, changedSubset) {
-  currentCatalog = prioritizeRealProductsFirst(catalog);
+  currentCatalog = normalizeCatalogLinks(prioritizeRealProductsFirst(catalog));
   savePersistedCatalog(currentCatalog, changedSubset);
-  executeFeedRefresh(currentCatalog, "inventory_change");
+  executeFeedRefresh(currentCatalog, "inventory_change", getCanonicalBaseUrl());
 }
 function prependProductsToCatalog(newProducts) {
   const incomingIds = new Set(newProducts.map((p) => String(p.id || "").trim().toLowerCase()));

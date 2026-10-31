@@ -231,6 +231,45 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
     };
   };
 
+  // Automatically resolve and open Product Detail Page when visiting /product/:id, /products/:slug, or ?product=:id
+  useEffect(() => {
+    if (!products || products.length === 0) return;
+    try {
+      const pathname = window.location.pathname.replace(/\/+$/, '');
+      const urlParams = new URLSearchParams(window.location.search);
+      let targetKey = urlParams.get('product') || urlParams.get('sku') || '';
+
+      if (!targetKey) {
+        const match = pathname.match(/^\/products?\/([^/]+)$/i);
+        if (match && match[1]) {
+          targetKey = decodeURIComponent(match[1]);
+        }
+      }
+
+      if (!targetKey) return;
+      const norm = targetKey.trim().toLowerCase();
+
+      const matched = products.find((p) => {
+        const idMatch = (p.id || '').toLowerCase() === norm;
+        const mpnMatch = (p.mpn || '').toLowerCase() === norm;
+        const cjSkuMatch = (p.cj_sku || '').toLowerCase() === norm;
+        const slugTitle = (p.title || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        const slugMatch = slugTitle === norm || slugTitle.startsWith(norm) || norm.startsWith(slugTitle.slice(0, 40));
+        const linkMatch = (p.link || '').toLowerCase().endsWith(`/${norm}`);
+        return idMatch || mpnMatch || cjSkuMatch || slugMatch || linkMatch;
+      });
+
+      if (matched && (!fullPdpProduct || fullPdpProduct.id !== matched.id)) {
+        setFullPdpProduct(matched);
+      }
+    } catch {
+      // ignore URL parsing errors
+    }
+  }, [products]);
+
   // Keep active modal product in sync with latest catalog edits (including SEO meta title/description updates)
   useEffect(() => {
     if (quickViewProduct) {

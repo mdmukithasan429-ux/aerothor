@@ -68,6 +68,8 @@ export function sanitizeGmcTitle(rawTitle: string): string {
 
   cleaned = cleaned
     .replace(/[\u4e00-\u9fa5]+/g, '') // remove Chinese characters
+    .replace(/\(\s*tiktok[^)]*\)/gi, '') // remove supplier marketplace notes like (TikTok, temu pick-up service)
+    .replace(/\bBan The Sale Of Amazon\b/gi, '')
     .replace(/[\[\]"']/g, '') // remove lingering brackets/quotes
     .replace(/\s+/g, ' ')
     .trim();
@@ -107,7 +109,11 @@ export function mapCjProductToGmc(
   const multiplier = options.markupMultiplier ?? 2.5;
   const currency = options.currency ?? 'USD';
   const brand = options.defaultBrand ?? 'AeroThor';
-  const domain = options.domain ?? 'aerothor.com';
+  const rawDomain = options.domain ?? 'aerothor.vercel.app';
+  const domain =
+    rawDomain === 'aerothor.com' || rawDomain === 'example-store.com'
+      ? 'aerothor.vercel.app'
+      : rawDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
   const rawPrice = cj.sellPrice || (cj as any).nowPrice || (cj as any).price;
   const costPrice = parseCjPrice(rawPrice);
@@ -125,11 +131,6 @@ export function mapCjProductToGmc(
 
   const rawTitle = (cj as any).productNameEn || (cj as any).nameEn || (cj as any).productName || 'Premium Lifestyle Accessory';
   const title = sanitizeGmcTitle(rawTitle);
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 70);
 
   // Parse additional images
   let additionalImages: string[] = [];
@@ -199,7 +200,7 @@ export function mapCjProductToGmc(
     description:
       (typeof rawDesc === 'string' ? rawDesc.replace(/<[^>]*>/g, '').trim() : '') ||
       `${title} - Official CJ Dropshipping US/UK domestic warehouse inventory. Dispatches within 3–7 business days with 30-day money-back guarantee.`,
-    link: `https://${domain}/products/${slug || sku.toLowerCase()}`,
+    link: `https://${domain}/product/${encodeURIComponent(sku)}`,
     image_link: mainImage,
     additional_image_link: additionalImages.length > 0 ? additionalImages.slice(0, 3) : undefined,
     price: `${retailPriceNum.toFixed(2)} ${currency}`,
