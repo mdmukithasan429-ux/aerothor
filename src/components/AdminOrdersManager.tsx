@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
+import {
   Package,
   Truck,
   Search,
@@ -15,6 +25,7 @@ import {
   Clock,
   Shield,
   Download,
+  TrendingUp,
 } from 'lucide-react';
 import { getAdminAuthHeaders } from '../lib/admin-auth';
 import { OrderStatusType, TrackedOrderResult } from './OrderTrackingPage';
@@ -210,6 +221,65 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
     });
   }, [orders, statusFilter, searchQuery]);
 
+  const revenueTrends30Days = useMemo(() => {
+    const today = new Date();
+    const dayBuckets: {
+      isoDate: string;
+      dateLabel: string;
+      dailyRevenue: number;
+      cumulativeRevenue: number;
+      orderCount: number;
+    }[] = [];
+
+    const bucketMap = new Map<string, { dailyRevenue: number; orderCount: number }>();
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const isoDate = d.toISOString().slice(0, 10);
+      const dateLabel = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      bucketMap.set(isoDate, { dailyRevenue: 0, orderCount: 0 });
+      dayBuckets.push({
+        isoDate,
+        dateLabel,
+        dailyRevenue: 0,
+        cumulativeRevenue: 0,
+        orderCount: 0,
+      });
+    }
+
+    orders.forEach((ord) => {
+      const rawDate = ord.createdAt ? new Date(ord.createdAt) : new Date();
+      const isoKey = !isNaN(rawDate.getTime())
+        ? rawDate.toISOString().slice(0, 10)
+        : today.toISOString().slice(0, 10);
+
+      const amount = Number(ord.totalAmount || 0);
+      if (bucketMap.has(isoKey)) {
+        const entry = bucketMap.get(isoKey)!;
+        entry.dailyRevenue = Number((entry.dailyRevenue + amount).toFixed(2));
+        entry.orderCount += 1;
+      } else if (dayBuckets.length > 0) {
+        const latestKey = dayBuckets[dayBuckets.length - 1].isoDate;
+        const entry = bucketMap.get(latestKey)!;
+        entry.dailyRevenue = Number((entry.dailyRevenue + amount).toFixed(2));
+        entry.orderCount += 1;
+      }
+    });
+
+    let runningTotal = 0;
+    return dayBuckets.map((b) => {
+      const stat = bucketMap.get(b.isoDate) || { dailyRevenue: 0, orderCount: 0 };
+      runningTotal = Number((runningTotal + stat.dailyRevenue).toFixed(2));
+      return {
+        ...b,
+        dailyRevenue: stat.dailyRevenue,
+        cumulativeRevenue: runningTotal,
+        orderCount: stat.orderCount,
+      };
+    });
+  }, [orders]);
+
   const copyText = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedId(text);
@@ -366,6 +436,97 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
             </button>
           );
         })}
+      </div>
+
+      {/* Dynamic 30-Day Revenue & Order Performance Line Chart (Recharts) */}
+      <div className="p-5 bg-slate-900 border border-slate-800 rounded-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-emerald-400" />
+              <span>30-Day Revenue &amp; Order Performance Trends</span>
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Daily revenue and cumulative 30-day gross volume across all verified customer orders.
+            </p>
+          </div>
+        </div>
+
+        <div className="h-64 w-full pt-1">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={revenueTrends30Days} margin={{ top: 10, right: 20, left: 4, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+              <XAxis
+                dataKey="dateLabel"
+                stroke="#64748b"
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                tickLine={false}
+                minTickGap={22}
+              />
+              <YAxis
+                yAxisId="revenue"
+                stroke="#64748b"
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                tickLine={false}
+                tickFormatter={(val) => `$${val}`}
+              />
+              <YAxis
+                yAxisId="orders"
+                orientation="right"
+                stroke="#64748b"
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                tickLine={false}
+                allowDecimals={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#020617',
+                  borderColor: '#1e293b',
+                  borderRadius: '0.75rem',
+                  fontSize: '12px',
+                  color: '#f8fafc',
+                }}
+                formatter={(value: any, name: any) => {
+                  if (String(name).includes('Revenue')) {
+                    return [`$${Number(value || 0).toFixed(2)} USD`, name];
+                  }
+                  return [value, name];
+                }}
+              />
+              <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+              <Line
+                yAxisId="revenue"
+                type="monotone"
+                dataKey="dailyRevenue"
+                name="Daily Revenue ($)"
+                stroke="#34d399"
+                strokeWidth={2.5}
+                dot={{ r: 3, fill: '#34d399', strokeWidth: 0 }}
+                activeDot={{ r: 5, fill: '#10b981' }}
+              />
+              <Line
+                yAxisId="revenue"
+                type="monotone"
+                dataKey="cumulativeRevenue"
+                name="Cumulative 30d Revenue ($)"
+                stroke="#22d3ee"
+                strokeWidth={2}
+                strokeDasharray="5 5"
+                dot={false}
+                activeDot={{ r: 5, fill: '#06b6d4' }}
+              />
+              <Line
+                yAxisId="orders"
+                type="monotone"
+                dataKey="orderCount"
+                name="Daily Orders"
+                stroke="#fbbf24"
+                strokeWidth={1.75}
+                dot={{ r: 2.5, fill: '#fbbf24', strokeWidth: 0 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
