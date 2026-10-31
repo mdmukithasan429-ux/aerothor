@@ -1,9 +1,9 @@
 import { GmcProduct } from './gmc-feed';
 
 export const DEFAULT_STORE_TITLE =
-  'Ecom-Growth-Agent — Headless E-commerce & GMC Growth Architect';
+  'AeroThor — Official US & UK Direct Store | Fast Tracked Shipping';
 export const DEFAULT_STORE_DESCRIPTION =
-  'Elite CTO/CMO architecture for zero-cost headless B2C e-commerce, Google Merchant Center RSS 2.0 feeds, dropshipping supplier CSV ingestion with live progress, and automated catalog syndication.';
+  'Shop verified AeroThor performance essentials, tech accessories, and lifestyle gear. Free 3-7 business day US & UK tracked shipping and 30-day money-back guarantee.';
 
 /**
  * Generates an optimal SEO Meta Title (target 30–60 chars) when a custom seo_title is not set
@@ -91,25 +91,34 @@ export function generateProductPageMetadata(
   product: GmcProduct,
   baseUrl?: string
 ): GeneratedProductPageMetadata {
-  const origin = (
+  const rawOrigin =
     baseUrl ||
     (typeof window !== 'undefined' ? window.location.origin : '') ||
-    'https://aerothor.vercel.app'
-  ).replace(/\/+$/, '');
+    'https://aerothor.vercel.app';
+  const origin =
+    rawOrigin.includes('.run.app') ||
+    rawOrigin.includes('e-commerce-dropshiping-store.vercel.app') ||
+    rawOrigin.includes('aerothor.com')
+      ? 'https://aerothor.vercel.app'
+      : rawOrigin.replace(/\/+$/, '');
 
   const seoTitle = resolveProductSeoTitle(product);
   const seoDescription = resolveProductSeoDescription(product);
   const canonicalUrl = `${origin}/product/${encodeURIComponent(product.id)}`;
   const numericPrice = (product.sale_price || product.price || '0.00')
     .replace(/[^0-9.]/g, '') || '0.00';
+  const shipPrice =
+    product.isFreeShipping === false && (product.shippingCost ?? 0) > 0
+      ? Number(product.shippingCost).toFixed(2)
+      : '0.00';
 
   const jsonLd = {
     '@context': 'https://schema.org/',
     '@type': 'Product',
-    name: seoTitle,
-    alternateName: product.title,
+    name: product.title,
+    alternateName: seoTitle,
     image: [product.image_link],
-    description: seoDescription,
+    description: product.description || seoDescription,
     sku: product.id,
     mpn: product.mpn || product.id,
     ...(product.gtin ? { gtin13: product.gtin } : {}),
@@ -122,31 +131,74 @@ export function generateProductPageMetadata(
       url: canonicalUrl,
       priceCurrency: 'USD',
       price: numericPrice,
+      priceValidUntil: '2027-12-31',
       availability:
         product.availability === 'out_of_stock'
           ? 'https://schema.org/OutOfStock'
           : 'https://schema.org/InStock',
       itemCondition: 'https://schema.org/NewCondition',
-      shippingDetails: {
-        '@type': 'OfferShippingDetails',
-        shippingRate: {
-          '@type': 'MonetaryAmount',
-          value: '0.00',
-          currency: 'USD',
-        },
-        deliveryTime: {
-          '@type': 'ShippingDeliveryTime',
-          transitTime: {
-            '@type': 'QuantitativeValue',
-            minValue: 3,
-            maxValue: 7,
-            unitCode: 'DAY',
+      shippingDetails: [
+        {
+          '@type': 'OfferShippingDetails',
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: 'US',
+          },
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            value: shipPrice,
+            currency: 'USD',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 1,
+              maxValue: 2,
+              unitCode: 'DAY',
+            },
+            transitTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 3,
+              maxValue: 7,
+              unitCode: 'DAY',
+            },
           },
         },
-      },
+        {
+          '@type': 'OfferShippingDetails',
+          shippingDestination: {
+            '@type': 'DefinedRegion',
+            addressCountry: 'GB',
+          },
+          shippingRate: {
+            '@type': 'MonetaryAmount',
+            value: shipPrice,
+            currency: 'USD',
+          },
+          deliveryTime: {
+            '@type': 'ShippingDeliveryTime',
+            handlingTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 1,
+              maxValue: 2,
+              unitCode: 'DAY',
+            },
+            transitTime: {
+              '@type': 'QuantitativeValue',
+              minValue: 3,
+              maxValue: 7,
+              unitCode: 'DAY',
+            },
+          },
+        },
+      ],
       hasMerchantReturnPolicy: {
         '@type': 'MerchantReturnPolicy',
+        applicableCountry: ['US', 'GB'],
+        returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
         merchantReturnDays: 30,
+        returnMethod: 'https://schema.org/ReturnByMail',
         returnFees: 'https://schema.org/FreeReturn',
       },
     },
@@ -193,6 +245,14 @@ export function applyProductMetadataToDocumentHead(product: GmcProduct | null): 
   if (typeof document === 'undefined') return;
 
   if (!product) {
+    // If we are currently on a /product/:id route waiting for catalog hydration, DO NOT overwrite server-injected canonical or JSON-LD!
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname.replace(/\/+$/, '');
+      if (/^\/products?\/[^/]+$/i.test(currentPath)) {
+        return;
+      }
+    }
+
     document.title = DEFAULT_STORE_TITLE;
     upsertMetaTag('name', 'description', DEFAULT_STORE_DESCRIPTION);
     upsertMetaTag('property', 'og:title', DEFAULT_STORE_TITLE);
@@ -203,7 +263,8 @@ export function applyProductMetadataToDocumentHead(product: GmcProduct | null): 
 
     const canonicalEl = document.getElementById('canonical-link') as HTMLLinkElement | null;
     if (canonicalEl && typeof window !== 'undefined') {
-      canonicalEl.href = `${window.location.origin}/`;
+      const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
+      canonicalEl.href = `https://aerothor.vercel.app${currentPath === '/' ? '/' : currentPath}`;
     }
 
     const existingJsonLd = document.getElementById('product-jsonld');
@@ -213,7 +274,7 @@ export function applyProductMetadataToDocumentHead(product: GmcProduct | null): 
     return;
   }
 
-  const meta = generateProductPageMetadata(product);
+  const meta = generateProductPageMetadata(product, 'https://aerothor.vercel.app');
   document.title = meta.title;
   upsertMetaTag('name', 'description', meta.description);
   upsertMetaTag('property', 'og:title', meta.openGraph.title);

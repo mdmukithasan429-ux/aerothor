@@ -147,7 +147,7 @@ async function getProductWithVariants(idOrSku: string) {
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
   const product = await getProductWithVariants(id);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://e-commerce-dropshiping-store.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aerothor.vercel.app';
   const displayPrice = (product.salePrice ?? product.price).toFixed(2);
 
   const seoTitle =
@@ -190,7 +190,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 export default async function ProductDetailsPage({ params }: ProductPageProps) {
   const { id } = await params;
   const product = await getProductWithVariants(id);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://e-commerce-dropshiping-store.vercel.app';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://aerothor.vercel.app';
 
   const jsonLd = {
     '@context': 'https://schema.org/',

@@ -8,7 +8,7 @@ const GA_MEASUREMENT_ID =
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ||
-      'https://e-commerce-dropshiping-store.vercel.app'
+      'https://aerothor.vercel.app'
   ),
   title: 'AeroThor — Minimalist Performance Essentials for High-Velocity Commuters',
   description:
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: 'AeroThor — Minimalist Performance Essentials',
     description:
       'Direct US & UK domestic warehouse dispatch with real-time tracking and 30-day free returns.',
-    url: 'https://e-commerce-dropshiping-store.vercel.app',
+    url: 'https://aerothor.vercel.app',
     siteName: 'AeroThor Official Store',
     images: [
       {

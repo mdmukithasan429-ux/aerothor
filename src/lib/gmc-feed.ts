@@ -159,25 +159,8 @@ export function resolveCanonicalProductLink(
   storeBaseUrl: string = CANONICAL_STORE_URL
 ): string {
   const cleanBase = (storeBaseUrl || CANONICAL_STORE_URL).replace(/\/+$/, '');
-  const rawLink = (product.link || '').trim();
   const encodedId = encodeURIComponent(product.id);
-
-  if (!rawLink) {
-    return `${cleanBase}/product/${encodedId}`;
-  }
-
-  // Rewrite legacy/unverified domains to the verified Merchant Center store domain
-  if (
-    rawLink.includes('aerothor.com') ||
-    rawLink.includes('example-store.com') ||
-    rawLink.includes('my-store.com') ||
-    rawLink.includes('e-commerce-dropshiping-store.vercel.app') ||
-    rawLink.includes('.run.app')
-  ) {
-    return `${cleanBase}/product/${encodedId}`;
-  }
-
-  return rawLink;
+  return `${cleanBase}/product/${encodedId}`;
 }
 
 /**
@@ -200,6 +183,7 @@ export function buildGmcXmlFeed(products: GmcProduct[], channelMeta?: ChannelMet
   const normalizedChannelLink =
     rawChannelLink.includes('example-store.com') ||
     rawChannelLink.includes('aerothor.com') ||
+    rawChannelLink.includes('aerocommerce-global.com') ||
     rawChannelLink.includes('e-commerce-dropshiping-store.vercel.app') ||
     rawChannelLink.includes('.run.app')
       ? CANONICAL_STORE_URL
@@ -234,27 +218,25 @@ export function buildGmcXmlFeed(products: GmcProduct[], channelMeta?: ChannelMet
       .map((url) => `      <g:additional_image_link>${escapeXml(url.trim())}</g:additional_image_link>`)
       .join('\n');
 
-    const effectiveShipping = (item.shipping && item.shipping.length > 0)
-      ? item.shipping
-      : [
-          {
-            country: 'US',
-            service: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? 'Standard Tracked Shipping' : 'Free Standard Shipping',
-            price: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? `${(item.shippingCost ?? 0).toFixed(2)} USD` : '0.00 USD',
-          },
-          {
-            country: 'GB',
-            service: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? 'Standard Tracked Shipping' : 'Free Standard Shipping',
-            price: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? `${(item.shippingCost ?? 0).toFixed(2)} GBP` : '0.00 GBP',
-          },
-        ];
+    const itemCurrencyMatch = (item.price || 'USD').trim().match(/([A-Z]{3})$/);
+    const itemCurrency = itemCurrencyMatch ? itemCurrencyMatch[1] : 'USD';
+    const isPaidShip = item.isFreeShipping === false && (item.shippingCost ?? 0) > 0;
+    const shipRateStr = isPaidShip
+      ? `${Number(item.shippingCost).toFixed(2)} ${itemCurrency}`
+      : `0.00 ${itemCurrency}`;
+    const shipServiceStr = isPaidShip ? 'Standard Tracked Shipping' : 'Free Standard Shipping';
 
-    const shippingLines = effectiveShipping
+    const targetCountries = ['US', 'GB', 'CA', 'AU'];
+    const shippingLines = targetCountries
       .map(
-        (ship) => `      <g:shipping>
-        <g:country>${escapeXml(ship.country)}</g:country>
-        <g:service>${escapeXml(ship.service)}</g:service>
-        <g:price>${escapeXml(ship.price)}</g:price>
+        (countryCode) => `      <g:shipping>
+        <g:country>${escapeXml(countryCode)}</g:country>
+        <g:service>${escapeXml(shipServiceStr)}</g:service>
+        <g:price>${escapeXml(shipRateStr)}</g:price>
+        <g:min_handling_time>1</g:min_handling_time>
+        <g:max_handling_time>2</g:max_handling_time>
+        <g:min_transit_time>3</g:min_transit_time>
+        <g:max_transit_time>7</g:max_transit_time>
       </g:shipping>`
       )
       .join('\n');
@@ -270,7 +252,8 @@ ${additionalImages ? `${additionalImages}\n` : ''}      <g:condition>${escapeXml
       <g:price>${escapeXml(item.price)}</g:price>
 ${item.sale_price ? `      <g:sale_price>${escapeXml(item.sale_price)}</g:sale_price>\n` : ''}      <g:brand>${escapeXml(item.brand)}</g:brand>
 ${item.gtin ? `      <g:gtin>${escapeXml(item.gtin)}</g:gtin>\n` : ''}${item.mpn ? `      <g:mpn>${escapeXml(item.mpn)}</g:mpn>\n` : ''}      <g:identifier_exists>${item.identifier_exists === false ? 'no' : 'yes'}</g:identifier_exists>
-${item.google_product_category ? `      <g:google_product_category>${escapeXml(item.google_product_category)}</g:google_product_category>\n` : ''}${item.product_type ? `      <g:product_type>${escapeXml(item.product_type)}</g:product_type>\n` : ''}${shippingLines ? `${shippingLines}\n` : ''}    </item>`;
+${item.google_product_category ? `      <g:google_product_category>${escapeXml(item.google_product_category)}</g:google_product_category>\n` : ''}${item.product_type ? `      <g:product_type>${escapeXml(item.product_type)}</g:product_type>\n` : ''}      <g:shipping_weight>0.45 kg</g:shipping_weight>
+${shippingLines ? `${shippingLines}\n` : ''}    </item>`;
   });
 
   return `<?xml version="1.0" encoding="UTF-8"?>

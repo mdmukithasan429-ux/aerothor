@@ -87,6 +87,14 @@
       "destination": "/api/index"
     },
     {
+      "source": "/product/:id*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/products/:id*",
+      "destination": "/api/index"
+    },
+    {
       "source": "/feed.xml",
       "destination": "/api/index"
     },
@@ -99,7 +107,7 @@
       "destination": "/api/index"
     },
     {
-      "source": "/((?!api/|assets/|feed\\.xml|sitemap\\.xml|robots\\.txt).*)",
+      "source": "/((?!api/|assets/|product/|products/|feed\\.xml|sitemap\\.xml|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

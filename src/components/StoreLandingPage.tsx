@@ -166,8 +166,49 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [quickViewProduct, setQuickViewProduct] = useState<GmcProduct | null>(null);
-  const [fullPdpProduct, setFullPdpProduct] = useState<GmcProduct | null>(null);
+  const [fullPdpProduct, setFullPdpProduct] = useState<GmcProduct | null>(() => {
+    if (typeof window !== 'undefined' && (window as any).__INITIAL_PRODUCT__) {
+      return (window as any).__INITIAL_PRODUCT__ as GmcProduct;
+    }
+    return null;
+  });
+  const [copiedProductId, setCopiedProductId] = useState<string | null>(null);
   const [activePolicyModal, setActivePolicyModal] = useState<'shipping' | 'refund' | 'privacy' | 'terms' | null>(null);
+
+  const openProductLinkPage = (product: GmcProduct) => {
+    trackViewItem(product);
+    setQuickViewProduct(null);
+    setFullPdpProduct(product);
+    try {
+      const targetUrl = `/product/${encodeURIComponent(product.id)}`;
+      if (window.location.pathname !== targetUrl) {
+        window.history.pushState({ productId: product.id }, '', targetUrl);
+      }
+    } catch {
+      // ignore in restricted iframe contexts
+    }
+  };
+
+  const closeProductLinkPage = () => {
+    setFullPdpProduct(null);
+    try {
+      if (/^\/products?\/[^/]+/i.test(window.location.pathname)) {
+        window.history.pushState({}, '', '/');
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleCopyProductLink = (product: GmcProduct, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const canonicalUrl = `https://aerothor.vercel.app/product/${encodeURIComponent(product.id)}`;
+    navigator.clipboard?.writeText(canonicalUrl).catch(() => {});
+    setCopiedProductId(product.id);
+    window.setTimeout(() => {
+      setCopiedProductId((prev) => (prev === product.id ? null : prev));
+    }, 2000);
+  };
 
   // Express Checkout Drawer State
   const [isExpressCheckoutOpen, setIsExpressCheckoutOpen] = useState(false);
@@ -243,40 +284,50 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
   // Automatically resolve and open Product Detail Page when visiting /product/:id, /products/:slug, or ?product=:id
   useEffect(() => {
     if (!products || products.length === 0) return;
-    try {
-      const pathname = window.location.pathname.replace(/\/+$/, '');
-      const urlParams = new URLSearchParams(window.location.search);
-      let targetKey = urlParams.get('product') || urlParams.get('sku') || '';
+    const resolveFromLocation = () => {
+      try {
+        const pathname = window.location.pathname.replace(/\/+$/, '');
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetKey = urlParams.get('product') || urlParams.get('sku') || '';
 
-      if (!targetKey) {
-        const match = pathname.match(/^\/products?\/([^/]+)$/i);
-        if (match && match[1]) {
-          targetKey = decodeURIComponent(match[1]);
+        if (!targetKey) {
+          const match = pathname.match(/^\/products?\/([^/]+)$/i);
+          if (match && match[1]) {
+            targetKey = decodeURIComponent(match[1]);
+          }
         }
+
+        if (!targetKey) {
+          return;
+        }
+        const norm = targetKey.trim().toLowerCase();
+
+        const matched = products.find((p) => {
+          const idMatch = (p.id || '').toLowerCase() === norm;
+          const mpnMatch = (p.mpn || '').toLowerCase() === norm;
+          const cjSkuMatch = (p.cj_sku || '').toLowerCase() === norm;
+          const slugTitle = (p.title || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+          const slugMatch =
+            Boolean(slugTitle) &&
+            (slugTitle === norm || slugTitle.startsWith(norm) || norm.startsWith(slugTitle.slice(0, 40)));
+          const linkMatch = (p.link || '').toLowerCase().endsWith(`/${norm}`);
+          return idMatch || mpnMatch || cjSkuMatch || slugMatch || linkMatch;
+        });
+
+        if (matched) {
+          setFullPdpProduct(matched);
+        }
+      } catch {
+        // ignore URL parsing errors
       }
+    };
 
-      if (!targetKey) return;
-      const norm = targetKey.trim().toLowerCase();
-
-      const matched = products.find((p) => {
-        const idMatch = (p.id || '').toLowerCase() === norm;
-        const mpnMatch = (p.mpn || '').toLowerCase() === norm;
-        const cjSkuMatch = (p.cj_sku || '').toLowerCase() === norm;
-        const slugTitle = (p.title || '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-        const slugMatch = slugTitle === norm || slugTitle.startsWith(norm) || norm.startsWith(slugTitle.slice(0, 40));
-        const linkMatch = (p.link || '').toLowerCase().endsWith(`/${norm}`);
-        return idMatch || mpnMatch || cjSkuMatch || slugMatch || linkMatch;
-      });
-
-      if (matched && (!fullPdpProduct || fullPdpProduct.id !== matched.id)) {
-        setFullPdpProduct(matched);
-      }
-    } catch {
-      // ignore URL parsing errors
-    }
+    resolveFromLocation();
+    window.addEventListener('popstate', resolveFromLocation);
+    return () => window.removeEventListener('popstate', resolveFromLocation);
   }, [products]);
 
   // Keep active modal product in sync with latest catalog edits (including SEO meta title/description updates)
@@ -711,10 +762,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     {/* Image Frame */}
                     <div
                       className="relative aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer"
-                      onClick={() => {
-                        trackViewItem(p);
-                        setQuickViewProduct(p);
-                      }}
+                      onClick={() => openProductLinkPage(p)}
                     >
                       <img
                         src={displayImage}
@@ -772,10 +820,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       </div>
 
                       <h3
-                        onClick={() => {
-                          trackViewItem(p);
-                          setQuickViewProduct(p);
-                        }}
+                        onClick={() => openProductLinkPage(p)}
                         className={`text-base font-semibold text-white transition-colors cursor-pointer line-clamp-2 min-h-[2.75rem] leading-snug ${
                           isAffiliate ? 'group-hover:text-amber-300' : 'group-hover:text-emerald-300'
                         }`}
@@ -788,24 +833,22 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       </p>
 
                       <div className="pt-1 flex items-center justify-between gap-2 text-[11px]">
-                        <span className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-slate-300 font-mono">
-                          {isAffiliate
-                            ? 'Partner Merchant Fulfilled'
-                            : Array.isArray(p.variants) && p.variants.length > 0
-                            ? `${p.variants.length} Options (Size / Color)`
-                            : '3 Sizes · 2 Colors'}
-                        </span>
                         <button
                           type="button"
-                          onClick={() => {
-                            trackViewItem(p);
-                            setFullPdpProduct(p);
-                          }}
+                          onClick={(e) => handleCopyProductLink(p, e)}
+                          className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-300 font-mono transition-colors cursor-pointer"
+                          title={`Copy Product Link: https://aerothor.vercel.app/product/${p.id}`}
+                        >
+                          {copiedProductId === p.id ? '✓ Link Copied' : 'Copy Product Link'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openProductLinkPage(p)}
                           className={`font-semibold underline underline-offset-2 cursor-pointer ${
                             isAffiliate ? 'text-amber-400 hover:text-amber-300' : 'text-emerald-400 hover:text-emerald-300'
                           }`}
                         >
-                          {isAffiliate ? 'Deal Details' : 'Select Variant'}
+                          {isAffiliate ? 'Deal Details' : 'Product Link Page →'}
                         </button>
                       </div>
                     </div>
@@ -1197,7 +1240,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
         </div>
       )}
 
-      {/* Full Product Detail Modal (Dynamic Variant Selector + Admin SEO Inspector) */}
+      {/* Full Product Detail Modal / Dedicated Product Link Page (/product/:id) */}
       {fullPdpProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
           <div className="w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl relative my-4 sm:my-8">
@@ -1210,15 +1253,48 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                   {fullPdpProduct.title}
                 </span>
               </div>
-              <button
-                onClick={() => setFullPdpProduct(null)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 shrink-0"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyProductLink(fullPdpProduct, e)}
+                  className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] transition-colors cursor-pointer"
+                >
+                  {copiedProductId === fullPdpProduct.id ? '✓ Copied URL' : 'Copy Product URL'}
+                </button>
+                <button
+                  onClick={closeProductLinkPage}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 shrink-0"
+                  title="Back to Store Catalog"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="p-4 sm:p-6 space-y-6 max-h-[80vh] overflow-y-auto">
+              {/* Canonical Product Link Bar */}
+              <div className="p-2.5 px-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px]">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span className="text-slate-400 shrink-0">Canonical Product Link:</span>
+                  <a
+                    href={`https://aerothor.vercel.app/product/${encodeURIComponent(fullPdpProduct.id)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-emerald-400 hover:underline truncate select-all"
+                  >
+                    https://aerothor.vercel.app/product/{encodeURIComponent(fullPdpProduct.id)}
+                  </a>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyProductLink(fullPdpProduct, e)}
+                  className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-2 shrink-0 text-left sm:text-right cursor-pointer"
+                >
+                  {copiedProductId === fullPdpProduct.id ? 'Copied to Clipboard!' : 'Copy Link'}
+                </button>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="aspect-[4/3] sm:aspect-square bg-slate-900 rounded-xl overflow-hidden p-4 border border-slate-800 flex items-center justify-center relative">
                   <img
@@ -1247,7 +1323,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     </span>
                     <h2 className="text-xl font-bold text-white mt-1">{fullPdpProduct.title}</h2>
                     <p className="text-slate-400 font-mono text-[11px] mt-0.5">
-                      Variant SKU: <span className="text-emerald-400">{selectedVariant?.sku || fullPdpProduct.id}</span>
+                      Product ID: <span className="text-emerald-400">{fullPdpProduct.id}</span> · Variant SKU: <span className="text-slate-300">{selectedVariant?.sku || fullPdpProduct.id}</span>
                     </p>
                   </div>
 

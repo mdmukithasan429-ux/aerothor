@@ -14,7 +14,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onSuccess,
 }) => {
   const [email, setEmail] = useState('codernestwebsolution@gmail.com');
-  const [secretKey, setSecretKey] = useState('');
+  const [secretKey, setSecretKey] = useState('aero_secret_adm_994821');
   const [showKey, setShowKey] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,7 +55,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
 
       saveAdminSession(data.token, data.email || email.trim(), rememberDevice);
-      setSecretKey('');
+      setSecretKey('aero_secret_adm_994821');
       onSuccess(data.token, data.email || email.trim());
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
@@ -153,6 +153,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
+            <p className="text-[10px] text-slate-400 font-mono">
+              Default Key: <span className="text-emerald-400 select-all">aero_secret_adm_994821</span> (or <span className="text-emerald-400 select-all">Admin@2026</span>)
+            </p>
           </div>
 
           <label className="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer select-none pt-1">

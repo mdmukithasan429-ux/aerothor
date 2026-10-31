@@ -26,12 +26,23 @@ import {
 function resolveInitialTabFromPath(): WorkspaceTab {
   if (typeof window === 'undefined') return 'storefront';
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
-  if (pathname === '/return-policy') return 'return_policy';
+  if (pathname === '/return-policy' || pathname === '/policies/refund' || pathname === '/policies/return') {
+    return 'return_policy';
+  }
   if (pathname === '/affiliates' || pathname === '/deals') return 'affiliates';
   if (pathname === '/track-order') return 'track_order';
   if (pathname === '/admin/orders') return 'admin_orders';
   if (pathname === '/admin') return 'admin_inventory';
   return 'storefront';
+}
+
+function isPublicTab(tab: WorkspaceTab): boolean {
+  return (
+    tab === 'storefront' ||
+    tab === 'affiliates' ||
+    tab === 'track_order' ||
+    tab === 'return_policy'
+  );
 }
 
 function mapTabToPathname(tab: WorkspaceTab): string {
@@ -55,7 +66,14 @@ function mapTabToPathname(tab: WorkspaceTab): string {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => resolveInitialTabFromPath());
-  const [products, setProducts] = useState<GmcProduct[]>(INITIAL_PRODUCTS);
+  const [products, setProducts] = useState<GmcProduct[]>(() => {
+    if (typeof window !== 'undefined' && (window as any).__INITIAL_PRODUCT__) {
+      const initProd = (window as any).__INITIAL_PRODUCT__ as GmcProduct;
+      const filtered = INITIAL_PRODUCTS.filter((p) => p.id.toLowerCase() !== initProd.id.toLowerCase());
+      return [initProd, ...filtered];
+    }
+    return INITIAL_PRODUCTS;
+  });
   const [externalCategory, setExternalCategory] = useState<string | null>(null);
   const [trackingQueryPrefill, setTrackingQueryPrefill] = useState<string>('');
 
@@ -93,8 +111,7 @@ export default function App() {
   useEffect(() => {
     const onPopState = () => {
       const nextTab = resolveInitialTabFromPath();
-      const isPublic = nextTab === 'storefront' || nextTab === 'affiliates' || nextTab === 'track_order';
-      if (!isPublic && !getAdminSession().isAuthenticated) {
+      if (!isPublicTab(nextTab) && !getAdminSession().isAuthenticated) {
         setPendingAdminTab(nextTab);
         setIsAdminLoginModalOpen(true);
         setActiveTab('storefront');
@@ -110,7 +127,7 @@ export default function App() {
   useEffect(() => {
     const session = getAdminSession();
     const initialTab = resolveInitialTabFromPath();
-    const isAdminRoute = initialTab !== 'storefront' && initialTab !== 'affiliates' && initialTab !== 'track_order';
+    const isAdminRoute = !isPublicTab(initialTab);
 
     if (session.isAuthenticated && session.token) {
       fetch('/api/admin/auth/verify', {
