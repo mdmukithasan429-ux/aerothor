@@ -203,6 +203,8 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
       ALTER TABLE products DROP CONSTRAINT IF EXISTS products_slug_key;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title TEXT;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description TEXT;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type VARCHAR(64) DEFAULT 'dropshipping';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS affiliate_url TEXT;
 
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -246,6 +248,9 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
         mpn: row.mpn || row.sku,
         identifier_exists: true,
         product_type: row.product_type || 'Lifestyle & Tech',
+        productType: row.product_type === 'affiliate' ? 'affiliate' : 'dropshipping',
+        affiliateUrl: row.affiliate_url || undefined,
+        affiliate_url: row.affiliate_url || undefined,
         cj_pid: row.cj_pid || undefined,
         wholesale_price: row.cost_price ? Number(row.cost_price) : undefined,
         source: row.cj_pid ? 'cj_live' : undefined,
@@ -304,7 +309,6 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
       const placeholders: string[] = [];
 
       chunk.forEach((p, idx) => {
-        const base = idx * 15;
         const numPrice = parseFloat(String(p.price || '0').replace(/[^0-9.]/g, '')) || 0;
         const numSale = p.sale_price
           ? parseFloat(String(p.sale_price).replace(/[^0-9.]/g, '')) || null
@@ -315,9 +319,12 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
         const cjPid = p.cj_pid ? String(p.cj_pid).trim().slice(0, 240) : null;
         const seoTitle = p.seo_title ? String(p.seo_title).trim() : null;
         const seoDesc = p.seo_description ? String(p.seo_description).trim() : null;
+        const modelType = p.productType === 'affiliate' ? 'affiliate' : 'dropshipping';
+        const affiliateUrl = p.affiliateUrl || p.affiliate_url || null;
 
+        const base = idx * 16;
         placeholders.push(
-          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15})`
+          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15}, $${base + 16})`
         );
         values.push(
           sku,
@@ -332,15 +339,16 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
           p.availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
           String(p.image_link || ''),
           String(p.mpn || sku).slice(0, 60),
-          String(p.product_type || 'Home & Lifestyle').slice(0, 240),
+          modelType,
           seoTitle,
-          seoDesc
+          seoDesc,
+          affiliateUrl
         );
       });
 
       await pool.query(
         `INSERT INTO products (
-          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type, seo_title, seo_description
+          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type, seo_title, seo_description, affiliate_url
         ) VALUES ${placeholders.join(', ')}
         ON CONFLICT (sku) DO UPDATE SET
           cj_pid = COALESCE(EXCLUDED.cj_pid, products.cj_pid),
@@ -357,6 +365,7 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
           product_type = EXCLUDED.product_type,
           seo_title = EXCLUDED.seo_title,
           seo_description = EXCLUDED.seo_description,
+          affiliate_url = EXCLUDED.affiliate_url,
           updated_at = NOW()`,
         values
       );

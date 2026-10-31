@@ -813,9 +813,16 @@ app.post('/api/feed/refresh', (req, res) => {
   }
 });
 
-// Products catalog query & batch sync API
-app.get('/api/products', (_req, res) => {
-  res.status(200).json({ count: currentCatalog.length, products: currentCatalog });
+// Products catalog query & batch sync API (supports ?type=dropshipping or ?type=affiliate)
+app.get('/api/products', (req, res) => {
+  const typeFilter = typeof req.query.type === 'string' ? req.query.type.toLowerCase().trim() : '';
+  const filtered =
+    typeFilter === 'affiliate'
+      ? currentCatalog.filter((p) => p.productType === 'affiliate')
+      : typeFilter === 'dropshipping'
+      ? currentCatalog.filter((p) => p.productType !== 'affiliate')
+      : currentCatalog;
+  res.status(200).json({ count: filtered.length, products: filtered });
 });
 
 // Debounced Storefront Product Search API (/api/products/search)
@@ -823,6 +830,7 @@ app.get('/api/products/search', (req, res) => {
   try {
     const rawQuery = typeof req.query.q === 'string' ? req.query.q : '';
     const category = typeof req.query.category === 'string' ? req.query.category : 'All';
+    const typeFilter = typeof req.query.type === 'string' ? req.query.type.toLowerCase().trim() : '';
     const limitParam = req.query.limit ? parseInt(String(req.query.limit), 10) : 0;
 
     const normalizedQuery = rawQuery.trim().toLowerCase();
@@ -830,6 +838,10 @@ app.get('/api/products/search', (req, res) => {
 
     const matchedProducts = currentCatalog.filter((p: any) => {
       if (p.status === 'archived' || p.isVisible === false) return false;
+
+      // Filter by product model type if requested
+      if (typeFilter === 'affiliate' && p.productType !== 'affiliate') return false;
+      if (typeFilter === 'dropshipping' && p.productType === 'affiliate') return false;
 
       const titleLower = (p.title || '').toLowerCase();
       const descLower = (p.description || '').toLowerCase();

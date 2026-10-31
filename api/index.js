@@ -999,8 +999,69 @@ var INITIAL_PRODUCTS = [
     mpn: "AP-CORDURA-28L",
     condition: "new",
     identifier_exists: true,
+    productType: "dropshipping",
     google_product_category: "Luggage & Bags > Backpacks",
     product_type: "Bags & Luggage > Everyday Carry Backpacks"
+  },
+  {
+    id: "AFF-ANKER-QI2-01",
+    title: "Anker MagGo 3-in-1 Foldable Qi2 15W Ultra-Fast Wireless Charging Station",
+    description: "Official Apple 15W Qi2 fast magnetic charging station with Wireless PowerIQ. Foldable aerospace hinge charges iPhone, Apple Watch Ultra, and AirPods simultaneously. Available directly on Amazon with Prime next-day delivery.",
+    link: "https://example-store.com/product/AFF-ANKER-QI2-01",
+    image_link: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80",
+    price: "109.99 USD",
+    sale_price: "89.99 USD",
+    availability: "in_stock",
+    brand: "Anker",
+    gtin: "0194644171822",
+    mpn: "ANKER-MAGGO-QI2",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B0CF54LK5R?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B0CF54LK5R?tag=aerothor-20",
+    google_product_category: "Electronics > Electronics Accessories > Power Adapters & Chargers",
+    product_type: "Amazon Partner Deal > MagSafe Chargers"
+  },
+  {
+    id: "AFF-STANLEY-TUMBLER-02",
+    title: "Stanley IceFlow Stainless Steel 30oz Straw Tumbler \u2014 Cold for 12 Hours",
+    description: "Double-wall vacuum insulation keeps iced drinks cold for up to 2 days. Features leak-resistant Flip Straw 2.0, ergonomic folding handle, and car cup-holder compatible base. Verified authentic Stanley on Amazon.",
+    link: "https://example-store.com/product/AFF-STANLEY-TUMBLER-02",
+    image_link: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=800&q=80",
+    price: "45.00 USD",
+    sale_price: "38.00 USD",
+    availability: "in_stock",
+    brand: "Stanley 1913",
+    gtin: "0041604391209",
+    mpn: "STANLEY-ICEFLOW-30",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B09J9H4W6Y?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B09J9H4W6Y?tag=aerothor-20",
+    google_product_category: "Home & Garden > Kitchen & Dining > Tableware > Drinkware > Tumblers",
+    product_type: "Amazon Partner Deal > Drinkware & Vessels"
+  },
+  {
+    id: "AFF-OSPREY-PACK-03",
+    title: "Osprey Daylite Plus Commuter Travel Pack 20L \u2014 Ergonomic Breathable Harness",
+    description: "Everyday urban commuter pack with padded interior laptop sleeve and dual stretch-mesh side water bottle pockets. Built with bluesign-approved recycled polyester. Direct partner deal via AliExpress & Amazon.",
+    link: "https://example-store.com/product/AFF-OSPREY-PACK-03",
+    image_link: "https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&w=800&q=80",
+    price: "75.00 USD",
+    sale_price: "64.95 USD",
+    availability: "in_stock",
+    brand: "Osprey",
+    gtin: "0845136098231",
+    mpn: "OSPREY-DAYLITE-20",
+    condition: "new",
+    identifier_exists: true,
+    productType: "affiliate",
+    affiliateUrl: "https://www.amazon.com/dp/B08LP1N6F6?tag=aerothor-20",
+    affiliate_url: "https://www.amazon.com/dp/B08LP1N6F6?tag=aerothor-20",
+    google_product_category: "Luggage & Bags > Backpacks",
+    product_type: "Partner Deal > EDC Travel Bags"
   }
 ];
 
@@ -1107,6 +1168,8 @@ async function initSupabasePostgresCatalog(currentCatalog2) {
       ALTER TABLE products DROP CONSTRAINT IF EXISTS products_slug_key;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title TEXT;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description TEXT;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type VARCHAR(64) DEFAULT 'dropshipping';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS affiliate_url TEXT;
 
       CREATE TABLE IF NOT EXISTS orders (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1148,6 +1211,9 @@ async function initSupabasePostgresCatalog(currentCatalog2) {
         mpn: row.mpn || row.sku,
         identifier_exists: true,
         product_type: row.product_type || "Lifestyle & Tech",
+        productType: row.product_type === "affiliate" ? "affiliate" : "dropshipping",
+        affiliateUrl: row.affiliate_url || void 0,
+        affiliate_url: row.affiliate_url || void 0,
         cj_pid: row.cj_pid || void 0,
         wholesale_price: row.cost_price ? Number(row.cost_price) : void 0,
         source: row.cj_pid ? "cj_live" : void 0,
@@ -1191,7 +1257,6 @@ async function syncCatalogToPostgres(products) {
       const values = [];
       const placeholders = [];
       chunk.forEach((p, idx) => {
-        const base = idx * 15;
         const numPrice = parseFloat(String(p.price || "0").replace(/[^0-9.]/g, "")) || 0;
         const numSale = p.sale_price ? parseFloat(String(p.sale_price).replace(/[^0-9.]/g, "")) || null : null;
         const numCost = p.wholesale_price ? Number(p.wholesale_price) : Number((numPrice * 0.4).toFixed(2));
@@ -1200,8 +1265,11 @@ async function syncCatalogToPostgres(products) {
         const cjPid = p.cj_pid ? String(p.cj_pid).trim().slice(0, 240) : null;
         const seoTitle = p.seo_title ? String(p.seo_title).trim() : null;
         const seoDesc = p.seo_description ? String(p.seo_description).trim() : null;
+        const modelType = p.productType === "affiliate" ? "affiliate" : "dropshipping";
+        const affiliateUrl = p.affiliateUrl || p.affiliate_url || null;
+        const base = idx * 16;
         placeholders.push(
-          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15})`
+          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15}, $${base + 16})`
         );
         values.push(
           sku,
@@ -1216,14 +1284,15 @@ async function syncCatalogToPostgres(products) {
           p.availability === "out_of_stock" ? "out_of_stock" : "in_stock",
           String(p.image_link || ""),
           String(p.mpn || sku).slice(0, 60),
-          String(p.product_type || "Home & Lifestyle").slice(0, 240),
+          modelType,
           seoTitle,
-          seoDesc
+          seoDesc,
+          affiliateUrl
         );
       });
       await pool.query(
         `INSERT INTO products (
-          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type, seo_title, seo_description
+          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type, seo_title, seo_description, affiliate_url
         ) VALUES ${placeholders.join(", ")}
         ON CONFLICT (sku) DO UPDATE SET
           cj_pid = COALESCE(EXCLUDED.cj_pid, products.cj_pid),
@@ -1240,6 +1309,7 @@ async function syncCatalogToPostgres(products) {
           product_type = EXCLUDED.product_type,
           seo_title = EXCLUDED.seo_title,
           seo_description = EXCLUDED.seo_description,
+          affiliate_url = EXCLUDED.affiliate_url,
           updated_at = NOW()`,
         values
       );
@@ -2151,18 +2221,23 @@ app.post("/api/feed/refresh", (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-app.get("/api/products", (_req, res) => {
-  res.status(200).json({ count: currentCatalog.length, products: currentCatalog });
+app.get("/api/products", (req, res) => {
+  const typeFilter = typeof req.query.type === "string" ? req.query.type.toLowerCase().trim() : "";
+  const filtered = typeFilter === "affiliate" ? currentCatalog.filter((p) => p.productType === "affiliate") : typeFilter === "dropshipping" ? currentCatalog.filter((p) => p.productType !== "affiliate") : currentCatalog;
+  res.status(200).json({ count: filtered.length, products: filtered });
 });
 app.get("/api/products/search", (req, res) => {
   try {
     const rawQuery = typeof req.query.q === "string" ? req.query.q : "";
     const category = typeof req.query.category === "string" ? req.query.category : "All";
+    const typeFilter = typeof req.query.type === "string" ? req.query.type.toLowerCase().trim() : "";
     const limitParam = req.query.limit ? parseInt(String(req.query.limit), 10) : 0;
     const normalizedQuery = rawQuery.trim().toLowerCase();
     const queryTokens = normalizedQuery ? normalizedQuery.split(/\s+/).filter(Boolean) : [];
     const matchedProducts = currentCatalog.filter((p) => {
       if (p.status === "archived" || p.isVisible === false) return false;
+      if (typeFilter === "affiliate" && p.productType !== "affiliate") return false;
+      if (typeFilter === "dropshipping" && p.productType === "affiliate") return false;
       const titleLower = (p.title || "").toLowerCase();
       const descLower = (p.description || "").toLowerCase();
       const skuLower = (p.id || "").toLowerCase();

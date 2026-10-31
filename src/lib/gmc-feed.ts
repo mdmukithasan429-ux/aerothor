@@ -34,6 +34,9 @@ export interface GmcProduct {
   source?: 'cj_live' | 'supplier_api' | 'manual' | 'seed' | 'cj_batch';
   seo_title?: string;
   seo_description?: string;
+  productType?: 'dropshipping' | 'affiliate';
+  affiliateUrl?: string;
+  affiliate_url?: string;
   variants?: ProductVariantOption[];
   shipping?: {
     country: string;

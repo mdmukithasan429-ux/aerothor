@@ -25,6 +25,8 @@ model Product {
   additionalImgs Json             @default("[]") @map("additional_images")
   seoTitle       String?          @map("seo_title")
   seoDescription String?          @map("seo_description") @db.Text
+  productType    String           @default("dropshipping") @map("product_type") @db.VarChar(64)
+  affiliateUrl   String?          @map("affiliate_url") @db.Text
   isVisible      Boolean          @default(true) @map("is_visible")
   variants       ProductVariant[]
   createdAt      DateTime         @default(now()) @map("created_at")
@@ -33,6 +35,7 @@ model Product {
   @@index([sku])
   @@index([cjPid])
   @@index([slug])
+  @@index([productType])
   @@map("products")
 }
 
