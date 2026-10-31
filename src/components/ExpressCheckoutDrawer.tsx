@@ -85,7 +85,15 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
     return sum + rawPrice * item.quantity;
   }, 0);
 
-  const shippingCost = formData.shippingMethod === 'express' ? 7.99 : 0.0;
+  const nonFreeItems = items.filter(
+    (it) => it.product.isFreeShipping === false && (it.product.shippingCost ?? 0) > 0
+  );
+  const baseStandardShipping =
+    nonFreeItems.length === 0
+      ? 0.0
+      : Math.max(...nonFreeItems.map((it) => it.product.shippingCost ?? 0));
+
+  const shippingCost = formData.shippingMethod === 'express' ? baseStandardShipping + 7.99 : baseStandardShipping;
   const estimatedTax = 0.0; // 0 tax or included in price to adhere to GMC transparency guidelines
   const total = subtotal + shippingCost + estimatedTax;
 
@@ -615,8 +623,8 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Domestic Shipping ({formData.country})</span>
-                  <span className="text-emerald-400">
-                    {shippingCost === 0 ? 'FREE' : `$${shippingCost.toFixed(2)} USD`}
+                  <span className="text-emerald-400 font-semibold font-mono">
+                    {shippingCost === 0 ? 'Shipping: $0.00 (Free)' : `$${shippingCost.toFixed(2)} USD`}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">

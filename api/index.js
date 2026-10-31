@@ -371,7 +371,19 @@ function buildGmcXmlFeed(products, channelMeta) {
   };
   const xmlItems = products.map((item) => {
     const additionalImages = (item.additional_image_link || []).filter((url) => Boolean(url && url.trim())).map((url) => `      <g:additional_image_link>${escapeXml(url.trim())}</g:additional_image_link>`).join("\n");
-    const shippingLines = (item.shipping || []).map(
+    const effectiveShipping = item.shipping && item.shipping.length > 0 ? item.shipping : [
+      {
+        country: "US",
+        service: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? "Standard Tracked Shipping" : "Free Standard Shipping",
+        price: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? `${(item.shippingCost ?? 0).toFixed(2)} USD` : "0.00 USD"
+      },
+      {
+        country: "GB",
+        service: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? "Standard Tracked Shipping" : "Free Standard Shipping",
+        price: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? `${(item.shippingCost ?? 0).toFixed(2)} GBP` : "0.00 GBP"
+      }
+    ];
+    const shippingLines = effectiveShipping.map(
       (ship) => `      <g:shipping>
         <g:country>${escapeXml(ship.country)}</g:country>
         <g:service>${escapeXml(ship.service)}</g:service>
@@ -2633,7 +2645,7 @@ app.get("/api/admin/auth/verify", (req, res) => {
     authenticated: true
   });
 });
-app.post("/api/admin/products", (req, res) => {
+app.post(["/api/admin/products", "/api/admin/product"], (req, res) => {
   if (!validateAdminBearer(req, res)) return;
   try {
     if (Array.isArray(req.body.products)) {
@@ -2642,6 +2654,8 @@ app.post("/api/admin/products", (req, res) => {
         const sku2 = String(item.sku || `SKU-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`).trim();
         const rawSeoTitle = item.seoTitle ?? item.seo_title;
         const rawSeoDesc = item.seoDescription ?? item.seo_description;
+        const isFree2 = item.isFreeShipping !== void 0 ? Boolean(item.isFreeShipping) : true;
+        const shipCost = isFree2 ? 0 : Number(item.shippingCost) || 0;
         return {
           id: sku2,
           title: String(item.title || "Product").trim().slice(0, 150),
@@ -2657,6 +2671,10 @@ app.post("/api/admin/products", (req, res) => {
           mpn: item.mpn || sku2,
           identifier_exists: true,
           product_type: item.product_type || "Lifestyle & Travel",
+          productType: item.productType || "dropshipping",
+          affiliateUrl: item.affiliateUrl || item.affiliate_url || void 0,
+          isFreeShipping: isFree2,
+          shippingCost: shipCost,
           source: "manual",
           seo_title: rawSeoTitle ? String(rawSeoTitle).trim().slice(0, 120) : void 0,
           seo_description: rawSeoDesc ? String(rawSeoDesc).trim().slice(0, 320) : void 0
@@ -2686,6 +2704,11 @@ app.post("/api/admin/products", (req, res) => {
       condition = "new",
       gtin,
       mpn,
+      productType = "dropshipping",
+      affiliateUrl,
+      affiliate_url,
+      isFreeShipping = true,
+      shippingCost = 0,
       seoTitle,
       seo_title,
       seoDescription,
@@ -2697,6 +2720,8 @@ app.post("/api/admin/products", (req, res) => {
     const resolvedSeoTitle = seoTitle ?? seo_title ? String(seoTitle ?? seo_title).trim().slice(0, 120) : void 0;
     const resolvedSeoDesc = seoDescription ?? seo_description ? String(seoDescription ?? seo_description).trim().slice(0, 320) : void 0;
     const numPrice = parseFloat(String(price));
+    const isFree = Boolean(isFreeShipping);
+    const resolvedShipCost = isFree ? 0 : Number(shippingCost) || 0;
     const newProduct = {
       id: String(sku).trim(),
       title: String(title).trim().slice(0, 150),
@@ -2712,6 +2737,10 @@ app.post("/api/admin/products", (req, res) => {
       mpn: mpn || String(sku).trim(),
       identifier_exists: true,
       product_type: "Home & Travel",
+      productType: productType || "dropshipping",
+      affiliateUrl: affiliateUrl || affiliate_url || void 0,
+      isFreeShipping: isFree,
+      shippingCost: resolvedShipCost,
       source: "manual",
       seo_title: resolvedSeoTitle,
       seo_description: resolvedSeoDesc
@@ -2727,7 +2756,7 @@ app.post("/api/admin/products", (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-app.patch("/api/admin/products", (req, res) => {
+app.patch(["/api/admin/products", "/api/admin/product"], (req, res) => {
   if (!validateAdminBearer(req, res)) return;
   try {
     if (Array.isArray(req.body.items)) {
@@ -2747,6 +2776,10 @@ app.patch("/api/admin/products", (req, res) => {
           price: item.price !== void 0 ? `${parseFloat(String(item.price)).toFixed(2)} USD` : existing2.price,
           sale_price: item.salePrice !== void 0 ? item.salePrice ? `${parseFloat(String(item.salePrice)).toFixed(2)} USD` : void 0 : existing2.sale_price,
           availability: item.availability !== void 0 ? item.availability === "out_of_stock" ? "out_of_stock" : "in_stock" : item.stockQuantity !== void 0 ? item.stockQuantity > 0 ? "in_stock" : "out_of_stock" : existing2.availability,
+          productType: item.productType !== void 0 ? item.productType : existing2.productType,
+          affiliateUrl: item.affiliateUrl !== void 0 ? item.affiliateUrl : existing2.affiliateUrl,
+          isFreeShipping: item.isFreeShipping !== void 0 ? Boolean(item.isFreeShipping) : existing2.isFreeShipping,
+          shippingCost: item.shippingCost !== void 0 ? item.isFreeShipping ? 0 : Number(item.shippingCost) || 0 : existing2.shippingCost,
           seo_title: rawSeoTitle2 !== void 0 ? String(rawSeoTitle2).trim() ? String(rawSeoTitle2).trim().slice(0, 120) : void 0 : existing2.seo_title,
           seo_description: rawSeoDesc2 !== void 0 ? String(rawSeoDesc2).trim() ? String(rawSeoDesc2).trim().slice(0, 320) : void 0 : existing2.seo_description
         };
@@ -2771,6 +2804,11 @@ app.patch("/api/admin/products", (req, res) => {
       availability,
       title,
       description,
+      productType,
+      affiliateUrl,
+      affiliate_url,
+      isFreeShipping,
+      shippingCost,
       seoTitle,
       seo_title,
       seoDescription,
@@ -2787,6 +2825,8 @@ app.patch("/api/admin/products", (req, res) => {
     const existing = currentCatalog[existingIndex];
     const rawSeoTitle = seoTitle !== void 0 ? seoTitle : seo_title;
     const rawSeoDesc = seoDescription !== void 0 ? seoDescription : seo_description;
+    const resolvedIsFree = isFreeShipping !== void 0 ? Boolean(isFreeShipping) : existing.isFreeShipping ?? true;
+    const resolvedShippingCost = resolvedIsFree ? 0 : shippingCost !== void 0 ? Number(shippingCost) || 0 : existing.shippingCost ?? 0;
     const updated = {
       ...existing,
       title: title ? String(title).slice(0, 150) : existing.title,
@@ -2794,6 +2834,10 @@ app.patch("/api/admin/products", (req, res) => {
       price: price !== void 0 ? `${parseFloat(String(price)).toFixed(2)} USD` : existing.price,
       sale_price: salePrice !== void 0 ? salePrice ? `${parseFloat(String(salePrice)).toFixed(2)} USD` : void 0 : existing.sale_price,
       availability: availability !== void 0 ? availability === "out_of_stock" ? "out_of_stock" : "in_stock" : stockQuantity !== void 0 ? stockQuantity > 0 ? "in_stock" : "out_of_stock" : existing.availability,
+      productType: productType !== void 0 ? productType : existing.productType,
+      affiliateUrl: affiliateUrl || affiliate_url || existing.affiliateUrl,
+      isFreeShipping: resolvedIsFree,
+      shippingCost: resolvedShippingCost,
       seo_title: rawSeoTitle !== void 0 ? String(rawSeoTitle).trim() ? String(rawSeoTitle).trim().slice(0, 120) : void 0 : existing.seo_title,
       seo_description: rawSeoDesc !== void 0 ? String(rawSeoDesc).trim() ? String(rawSeoDesc).trim().slice(0, 320) : void 0 : existing.seo_description
     };
@@ -3391,7 +3435,23 @@ app.post("/api/checkout", async (req, res) => {
       };
     });
     const subtotal = orderItems.reduce((sum, it) => sum + it.price * it.quantity, 0);
-    const shippingFee = shippingMethod === "express" ? 7.99 : 0;
+    const nonFreeItems = orderItems.filter((item) => {
+      const match = currentCatalog.find(
+        (c) => c.id.toLowerCase() === item.sku.toLowerCase() || c.sku?.toLowerCase() === item.sku.toLowerCase()
+      );
+      const isFree = item.isFreeShipping !== void 0 ? Boolean(item.isFreeShipping) : match?.isFreeShipping ?? true;
+      const cost = item.shippingCost !== void 0 ? Number(item.shippingCost) : Number(match?.shippingCost || 0);
+      return !isFree && cost > 0;
+    });
+    const calculatedShippingCost = nonFreeItems.length === 0 ? 0 : Math.max(
+      ...nonFreeItems.map((item) => {
+        const match = currentCatalog.find(
+          (c) => c.id.toLowerCase() === item.sku.toLowerCase() || c.sku?.toLowerCase() === item.sku.toLowerCase()
+        );
+        return Number(item.shippingCost !== void 0 ? item.shippingCost : match?.shippingCost || 0);
+      })
+    );
+    const shippingFee = shippingMethod === "express" ? calculatedShippingCost + 7.99 : calculatedShippingCost;
     const totalAmount = Number((subtotal + shippingFee).toFixed(2));
     const orderId = `ORD-2026-${Math.floor(1e5 + Math.random() * 9e5)}`;
     const trackingNumber = country === "GB" ? `RM-48-${Math.floor(1e7 + Math.random() * 9e7)}GB` : `9400 1118 9956 ${Math.floor(1e3 + Math.random() * 9e3)} 00`;
@@ -3424,6 +3484,7 @@ app.post("/api/checkout", async (req, res) => {
           }
         };
       });
+      const standardShippingCents = Math.round(calculatedShippingCost * 100);
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         payment_method_types: ["card"],
@@ -3437,8 +3498,8 @@ app.post("/api/checkout", async (req, res) => {
           {
             shipping_rate_data: {
               type: "fixed_amount",
-              fixed_amount: { amount: 0, currency: normalizedCurrency },
-              display_name: "Standard Domestic Dispatch (US/UK Warehouse)",
+              fixed_amount: { amount: standardShippingCents, currency: normalizedCurrency },
+              display_name: standardShippingCents === 0 ? "Free Domestic Tracked Shipping (3-7 Business Days)" : `Standard Tracked Shipping ($${calculatedShippingCost.toFixed(2)})`,
               delivery_estimate: {
                 minimum: { unit: "business_day", value: 3 },
                 maximum: { unit: "business_day", value: 7 }
@@ -3448,7 +3509,7 @@ app.post("/api/checkout", async (req, res) => {
           {
             shipping_rate_data: {
               type: "fixed_amount",
-              fixed_amount: { amount: 799, currency: normalizedCurrency },
+              fixed_amount: { amount: standardShippingCents + 799, currency: normalizedCurrency },
               display_name: "Priority Express Airway (2-3 Business Days)",
               delivery_estimate: {
                 minimum: { unit: "business_day", value: 2 },
@@ -3462,6 +3523,8 @@ app.post("/api/checkout", async (req, res) => {
           orderNumber: orderId,
           targetMarket: country,
           shippingMethod,
+          isFreeShipping: String(calculatedShippingCost === 0),
+          shippingCost: String(calculatedShippingCost),
           purchasedSkus: orderItems.map((i) => i.sku).join(","),
           purchasedSkusJson: JSON.stringify(orderItems).slice(0, 490)
         },

@@ -947,7 +947,11 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
             <div className="pt-4 border-t border-slate-800 space-y-3">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">Domestic Shipping (US/UK)</span>
-                <span className="text-emerald-400 font-semibold font-mono">FREE (Tracked 48h)</span>
+                <span className="text-emerald-400 font-semibold font-mono">
+                  {cart.some((it) => it.product.isFreeShipping === false && (it.product.shippingCost ?? 0) > 0)
+                    ? `$${Math.max(...cart.map((it) => (it.product.isFreeShipping === false ? it.product.shippingCost ?? 0 : 0))).toFixed(2)} USD`
+                    : 'Shipping: $0.00 (Free)'}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm font-bold text-white">
                 <span>Subtotal</span>

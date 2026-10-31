@@ -5,6 +5,7 @@ export type WorkspaceTab =
   | 'storefront'
   | 'affiliates'
   | 'track_order'
+  | 'return_policy'
   | 'admin_inventory'
   | 'admin_orders'
   | 'gmc_feed'

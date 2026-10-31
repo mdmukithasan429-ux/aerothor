@@ -261,7 +261,9 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Domestic Tracked Delivery</span>
-                  <span className="text-emerald-400">FREE</span>
+                  <span className="text-emerald-400 font-semibold font-mono">
+                    {shippingCost === 0 ? 'Shipping: $0.00 (Free)' : `$${shippingCost.toFixed(2)} USD`}
+                  </span>
                 </div>
                 <div className="border-t border-slate-800 pt-2 flex justify-between font-bold text-sm text-white font-sans">
                   <span>Total</span>

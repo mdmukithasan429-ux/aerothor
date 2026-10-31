@@ -14,6 +14,7 @@ import {
   X,
   Clock,
   Shield,
+  Download,
 } from 'lucide-react';
 import { getAdminAuthHeaders } from '../lib/admin-auth';
 import { OrderStatusType, TrackedOrderResult } from './OrderTrackingPage';
@@ -215,6 +216,66 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
     setTimeout(() => setCopiedId(null), 1800);
   };
 
+  const handleExportOrdersToCsv = () => {
+    const targetOrders = filteredOrders.length > 0 ? filteredOrders : orders;
+    if (targetOrders.length === 0) {
+      showToast('No orders available to export.', 'error');
+      return;
+    }
+
+    const headers = [
+      'Order Number',
+      'Order Date (UTC)',
+      'Customer Name',
+      'Customer Email',
+      'Order Status',
+      'Currency',
+      'Total Amount ($)',
+      'Destination Country',
+      'Destination City',
+      'Carrier',
+      'Tracking Code',
+    ];
+
+    const escapeCsvField = (field: unknown): string => {
+      if (field === null || field === undefined) return '""';
+      const str = String(field).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = targetOrders.map((ord) => [
+      escapeCsvField(ord.orderNumber || ord.id || ''),
+      escapeCsvField(ord.createdAt ? new Date(ord.createdAt).toISOString() : new Date().toISOString()),
+      escapeCsvField(ord.customerName || 'Verified Customer'),
+      escapeCsvField(ord.customerEmail || ''),
+      escapeCsvField(ord.status || 'Paid - Ready for CJ Fulfill'),
+      escapeCsvField(ord.currency || 'USD'),
+      escapeCsvField(Number(ord.totalAmount || 0).toFixed(2)),
+      escapeCsvField(ord.shippingCountry || 'US'),
+      escapeCsvField(ord.shippingCity || ''),
+      escapeCsvField(ord.carrier || 'USPS Priority Mail'),
+      escapeCsvField(ord.trackingCode || (ord as any).trackingNumber || ''),
+    ]);
+
+    const csvContent = [
+      headers.map(escapeCsvField).join(','),
+      ...rows.map((r) => r.join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.href = url;
+    link.setAttribute('download', `aerothor-orders-accounting-${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    showToast(`Exported ${targetOrders.length} orders to CSV for accounting.`);
+  };
+
   return (
     <div className="space-y-6 pb-16">
       {toast && (
@@ -254,6 +315,14 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          <button
+            type="button"
+            onClick={handleExportOrdersToCsv}
+            className="px-3.5 py-2 bg-slate-950 hover:bg-slate-800 text-emerald-300 border border-emerald-500/40 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Export Orders to CSV</span>
+          </button>
           <button
             type="button"
             onClick={fetchOrders}

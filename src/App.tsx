@@ -13,6 +13,7 @@ import { AiChatWorkspace } from './components/AiChatWorkspace';
 import { CreativeStudioWorkspace } from './components/CreativeStudioWorkspace';
 import { AdminInventoryDashboard } from './components/AdminInventoryDashboard';
 import { AdminLoginModal } from './components/AdminLoginModal';
+import { ReturnPolicyView } from './components/ReturnPolicyView';
 import { INITIAL_PRODUCTS } from './server/seed-data';
 import { GmcProduct } from './lib/gmc-feed';
 import { trackPageView } from './lib/analytics';
@@ -25,6 +26,7 @@ import {
 function resolveInitialTabFromPath(): WorkspaceTab {
   if (typeof window === 'undefined') return 'storefront';
   const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (pathname === '/return-policy') return 'return_policy';
   if (pathname === '/affiliates' || pathname === '/deals') return 'affiliates';
   if (pathname === '/track-order') return 'track_order';
   if (pathname === '/admin/orders') return 'admin_orders';
@@ -36,6 +38,8 @@ function mapTabToPathname(tab: WorkspaceTab): string {
   switch (tab) {
     case 'storefront':
       return '/';
+    case 'return_policy':
+      return '/return-policy';
     case 'affiliates':
       return '/affiliates';
     case 'track_order':
@@ -151,9 +155,14 @@ export default function App() {
       .catch((err) => console.warn('[Product Hydration Non-Fatal]:', err));
   }, []);
 
-  // Guard tab navigation: only '/' (storefront) and '/track-order' (track_order) are public
+  // Guard tab navigation: public storefront, tracking, affiliates, and return policy require no admin auth
   const handleProtectedTabChange = (nextTab: WorkspaceTab) => {
-    if (nextTab === 'storefront' || nextTab === 'track_order') {
+    if (
+      nextTab === 'storefront' ||
+      nextTab === 'track_order' ||
+      nextTab === 'affiliates' ||
+      nextTab === 'return_policy'
+    ) {
       setActiveTab(nextTab);
       return;
     }
@@ -286,6 +295,13 @@ export default function App() {
           />
         )}
 
+        {effectiveTab === 'return_policy' && (
+          <ReturnPolicyView
+            onBackToStore={() => setActiveTab('storefront')}
+            onNavigateToTracking={() => setActiveTab('track_order')}
+          />
+        )}
+
         {effectiveTab === 'admin_inventory' && isAdminAuthenticated && (
           <AdminInventoryDashboard
             products={products}
@@ -401,7 +417,13 @@ export default function App() {
                 Track Your Order (/track-order)
               </button>
               <span>·</span>
-              <span className="hover:text-slate-200 cursor-pointer">30-Day Return Policy</span>
+              <button
+                type="button"
+                onClick={() => setActiveTab('return_policy')}
+                className="text-emerald-400 hover:text-emerald-300 font-semibold cursor-pointer"
+              >
+                Return Policy (/return-policy)
+              </button>
               <span>·</span>
               <span className="hover:text-slate-200 cursor-pointer">Privacy &amp; Security</span>
               <span>·</span>

@@ -48,6 +48,7 @@ import {
   Sparkles,
   Activity,
   FileCode,
+  Download,
 } from 'lucide-react';
 
 interface AdminInventoryDashboardProps {
@@ -120,6 +121,8 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     mpn: '',
     productType: 'dropshipping' as 'dropshipping' | 'affiliate',
     affiliateUrl: '',
+    isFreeShipping: true,
+    shippingCost: 0,
   });
 
   // Dedicated SEO Meta Editor Section State
@@ -318,6 +321,8 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           seoDescription: newProductForm.seoDescription.trim() || undefined,
           productType: newProductForm.productType,
           affiliateUrl: newProductForm.productType === 'affiliate' ? newProductForm.affiliateUrl.trim() : undefined,
+          isFreeShipping: Boolean(newProductForm.isFreeShipping),
+          shippingCost: newProductForm.isFreeShipping ? 0 : Number(newProductForm.shippingCost) || 0,
         }),
       });
 
@@ -348,6 +353,8 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
         mpn: '',
         productType: 'dropshipping',
         affiliateUrl: '',
+        isFreeShipping: true,
+        shippingCost: 0,
       });
     } catch (err: any) {
       showToast(err.message, 'error');
@@ -1042,6 +1049,77 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     }
   };
 
+  const handleExportOrdersToCsv = async () => {
+    try {
+      const res = await fetch('/api/orders', {
+        headers: {
+          Authorization: `Bearer ${adminToken.trim()}`,
+        },
+      });
+      const data = await res.json();
+      const orderList: any[] = Array.isArray(data?.orders) ? data.orders : [];
+
+      if (orderList.length === 0) {
+        showToast('No orders available to export.', 'error');
+        return;
+      }
+
+      const headers = [
+        'Order Number',
+        'Order Date (UTC)',
+        'Customer Name',
+        'Customer Email',
+        'Order Status',
+        'Currency',
+        'Total Amount ($)',
+        'Destination Country',
+        'Destination City',
+        'Carrier',
+        'Tracking Code',
+      ];
+
+      const escapeCsvField = (field: unknown): string => {
+        if (field === null || field === undefined) return '""';
+        const str = String(field).replace(/"/g, '""');
+        return `"${str}"`;
+      };
+
+      const rows = orderList.map((ord) => [
+        escapeCsvField(ord.orderNumber || ord.id || ''),
+        escapeCsvField(ord.createdAt ? new Date(ord.createdAt).toISOString() : new Date().toISOString()),
+        escapeCsvField(ord.customerName || 'Verified Customer'),
+        escapeCsvField(ord.customerEmail || ''),
+        escapeCsvField(ord.status || 'Paid - Ready for CJ Fulfill'),
+        escapeCsvField(ord.currency || 'USD'),
+        escapeCsvField(Number(ord.totalAmount || 0).toFixed(2)),
+        escapeCsvField(ord.shippingCountry || 'US'),
+        escapeCsvField(ord.shippingCity || ''),
+        escapeCsvField(ord.carrier || 'USPS Priority Mail'),
+        escapeCsvField(ord.trackingCode || ord.trackingNumber || ''),
+      ]);
+
+      const csvContent = [
+        headers.map(escapeCsvField).join(','),
+        ...rows.map((r) => r.join(',')),
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const timestamp = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.setAttribute('download', `aerothor-orders-accounting-${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast(`Exported ${orderList.length} orders to CSV for accounting!`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to export orders to CSV', 'error');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Feedback */}
@@ -1087,6 +1165,15 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleExportOrdersToCsv}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-slate-950 border border-emerald-500/40 rounded-lg hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
+              title="Download current order data as a CSV file for accounting"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Export Orders to CSV</span>
+            </button>
+
             <button
               onClick={handlePurgeMessyCatalog}
               disabled={isPurgingCatalog}
@@ -2315,7 +2402,7 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                         </span>
                       </td>
 
-                      {/* Price */}
+                      {/* Price & Shipping */}
                       <td className="p-3.5 font-mono">
                         <div>
                           <span className="font-bold text-white">{p.price}</span>
@@ -2324,6 +2411,19 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                               Sale: {p.sale_price}
                             </div>
                           )}
+                          <div className="mt-1">
+                            {p.isFreeShipping !== false ? (
+                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 font-sans font-semibold border border-emerald-500/30">
+                                <Truck className="w-2.5 h-2.5" />
+                                <span>Free Shipping</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 font-sans font-semibold border border-amber-500/30">
+                                <Truck className="w-2.5 h-2.5" />
+                                <span>+${Number(p.shippingCost || 0).toFixed(2)} Ship</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
 
@@ -2629,6 +2729,68 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                       onChange={(e) => setNewProductForm({ ...newProductForm, affiliateUrl: e.target.value })}
                       placeholder="https://www.amazon.com/dp/B000000000?tag=aerothor-20"
                       className="w-full bg-slate-950 border border-amber-500/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-amber-400 font-mono text-[11px]"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Modern Free Shipping Setting Toggle */}
+              <div className="p-3 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Free Shipping Setting</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">
+                      {newProductForm.isFreeShipping
+                        ? '100% Free Shipping active (displays $0.00 Free in cart & checkout)'
+                        : 'Custom flat-rate postage charged to customer on Stripe'}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={newProductForm.isFreeShipping}
+                    onClick={() =>
+                      setNewProductForm((prev) => ({
+                        ...prev,
+                        isFreeShipping: !prev.isFreeShipping,
+                        shippingCost: !prev.isFreeShipping ? 0 : prev.shippingCost || 4.99,
+                      }))
+                    }
+                    className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
+                      newProductForm.isFreeShipping ? 'bg-emerald-500' : 'bg-slate-700'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        newProductForm.isFreeShipping ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {!newProductForm.isFreeShipping && (
+                  <div className="pt-2 border-t border-slate-800">
+                    <label className="block text-[11px] font-semibold text-amber-300 mb-1">
+                      Shipping Cost ($ USD)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={newProductForm.shippingCost}
+                      onChange={(e) =>
+                        setNewProductForm({
+                          ...newProductForm,
+                          shippingCost: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      placeholder="4.99"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-white font-mono text-xs focus:outline-none focus:border-emerald-500"
                     />
                   </div>
                 )}

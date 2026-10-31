@@ -37,6 +37,10 @@ export interface GmcProduct {
   productType?: 'dropshipping' | 'affiliate';
   affiliateUrl?: string;
   affiliate_url?: string;
+  isFreeShipping?: boolean;
+  is_free_shipping?: boolean;
+  shippingCost?: number;
+  shipping_cost?: number;
   variants?: ProductVariantOption[];
   shipping?: {
     country: string;
@@ -161,7 +165,22 @@ export function buildGmcXmlFeed(products: GmcProduct[], channelMeta?: ChannelMet
       .map((url) => `      <g:additional_image_link>${escapeXml(url.trim())}</g:additional_image_link>`)
       .join('\n');
 
-    const shippingLines = (item.shipping || [])
+    const effectiveShipping = (item.shipping && item.shipping.length > 0)
+      ? item.shipping
+      : [
+          {
+            country: 'US',
+            service: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? 'Standard Tracked Shipping' : 'Free Standard Shipping',
+            price: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? `${(item.shippingCost ?? 0).toFixed(2)} USD` : '0.00 USD',
+          },
+          {
+            country: 'GB',
+            service: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? 'Standard Tracked Shipping' : 'Free Standard Shipping',
+            price: item.isFreeShipping === false && (item.shippingCost ?? 0) > 0 ? `${(item.shippingCost ?? 0).toFixed(2)} GBP` : '0.00 GBP',
+          },
+        ];
+
+    const shippingLines = effectiveShipping
       .map(
         (ship) => `      <g:shipping>
         <g:country>${escapeXml(ship.country)}</g:country>

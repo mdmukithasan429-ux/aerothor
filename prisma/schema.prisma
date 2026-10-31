@@ -27,6 +27,8 @@ model Product {
   seoDescription String?          @map("seo_description") @db.Text
   productType    String           @default("dropshipping") @map("product_type") @db.VarChar(64)
   affiliateUrl   String?          @map("affiliate_url") @db.Text
+  isFreeShipping Boolean          @default(true) @map("is_free_shipping")
+  shippingCost   Float            @default(0) @map("shipping_cost")
   isVisible      Boolean          @default(true) @map("is_visible")
   variants       ProductVariant[]
   createdAt      DateTime         @default(now()) @map("created_at")

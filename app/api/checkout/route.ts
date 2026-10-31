@@ -89,6 +89,44 @@ export async function POST(req: NextRequest) {
       },
     }));
 
+    // Calculate accurate shipping cost based on items' isFreeShipping and shippingCost
+    const nonFreeItems = items.filter(
+      (item: any) => item.isFreeShipping === false && Number(item.shippingCost) > 0
+    );
+    const calculatedShippingCost =
+      nonFreeItems.length === 0
+        ? 0
+        : Math.max(...nonFreeItems.map((item: any) => Number(item.shippingCost) || 0));
+    const standardShippingAmountCents = Math.round(calculatedShippingCost * 100);
+
+    const shippingOptions: Stripe.Checkout.SessionCreateParams.ShippingOption[] = [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: standardShippingAmountCents, currency: normalizedCurrency },
+          display_name:
+            standardShippingAmountCents === 0
+              ? 'Free Domestic Tracked Shipping (3-7 Business Days)'
+              : `Standard Tracked Shipping ($${calculatedShippingCost.toFixed(2)})`,
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: 3 },
+            maximum: { unit: 'business_day', value: 7 },
+          },
+        },
+      },
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: standardShippingAmountCents + 799, currency: normalizedCurrency },
+          display_name: 'Priority Express Airway (2-3 Business Days)',
+          delivery_estimate: {
+            minimum: { unit: 'business_day', value: 2 },
+            maximum: { unit: 'business_day', value: 3 },
+          },
+        },
+      },
+    ];
+
     // Supports Cards, Apple Pay, and Google Pay automatically via Stripe Checkout
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -99,34 +137,13 @@ export async function POST(req: NextRequest) {
       shipping_address_collection: {
         allowed_countries: ['US', 'GB', 'CA', 'AU'],
       },
-      shipping_options: [
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: { amount: 0, currency: normalizedCurrency },
-            display_name: 'Free Domestic Tracked Shipping (3-7 Business Days)',
-            delivery_estimate: {
-              minimum: { unit: 'business_day', value: 3 },
-              maximum: { unit: 'business_day', value: 7 },
-            },
-          },
-        },
-        {
-          shipping_rate_data: {
-            type: 'fixed_amount',
-            fixed_amount: { amount: 799, currency: normalizedCurrency },
-            display_name: 'Priority Express Airway (2-3 Business Days)',
-            delivery_estimate: {
-              minimum: { unit: 'business_day', value: 2 },
-              maximum: { unit: 'business_day', value: 3 },
-            },
-          },
-        },
-      ],
+      shipping_options: shippingOptions,
       metadata: {
         orderNumber,
         targetMarket: country,
         shippingMethod,
+        isFreeShipping: String(calculatedShippingCost === 0),
+        shippingCost: String(calculatedShippingCost),
         purchasedSkus: sanitizedItems.map((i) => i.sku).join(','),
         purchasedSkusJson: JSON.stringify(sanitizedItems).slice(0, 490),
       },
