@@ -213,7 +213,20 @@ export function buildGmcXmlFeed(products: GmcProduct[], channelMeta?: ChannelMet
       'Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max',
   };
 
-  const xmlItems = products.map((item) => {
+  // Strictly deduplicate items by case-insensitive g:id and exclude external affiliate-only items
+  const seenIds = new Set<string>();
+  const uniqueStoreProducts = products.filter((item) => {
+    if (!item || !item.id) return false;
+    if (item.productType === 'affiliate' || item.id.toUpperCase().startsWith('AFF-')) {
+      return false;
+    }
+    const normalizedId = item.id.trim().toUpperCase();
+    if (seenIds.has(normalizedId)) return false;
+    seenIds.add(normalizedId);
+    return true;
+  });
+
+  const xmlItems = uniqueStoreProducts.map((item) => {
     const canonicalLink = resolveCanonicalProductLink(item, normalizedChannelLink);
     const cleanTitle = cleanMerchantTitle(item.title);
     const additionalImages = (item.additional_image_link || [])

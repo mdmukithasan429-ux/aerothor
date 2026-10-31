@@ -94,7 +94,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
   };
 
   const handleCopyUrl = () => {
-    const fullUrl = `${window.location.origin}/api/feed.xml`;
+    const fullUrl = 'https://aerothor.vercel.app/api/feed.xml';
     navigator.clipboard.writeText(fullUrl);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
@@ -110,7 +110,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
     price: '49.99 USD',
     sale_price: '',
     availability: 'in_stock',
-    brand: 'AeroCommerce',
+    brand: 'AeroThor',
     gtin: '',
     mpn: '',
     condition: 'new',
@@ -137,7 +137,11 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
   }, [products]);
 
   const generatedXml = useMemo(() => {
-    return buildGmcXmlFeed(products);
+    return buildGmcXmlFeed(products, {
+      title: 'AeroThor Global Store — Official GMC Product Feed',
+      link: 'https://aerothor.vercel.app',
+      description: 'Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max',
+    });
   }, [products]);
 
   const handleCopyXml = () => {
@@ -167,11 +171,11 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
       id: newId,
       title: 'New High-CRP Product - 2-Day Shipping',
       description: 'Engineered for exceptional longevity and performance. Precision manufacturing for US/UK customers.',
-      link: `https://example-store.com/products/${newId.toLowerCase()}`,
+      link: `https://aerothor.vercel.app/product/${newId}`,
       image_link: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
       price: '59.00 USD',
       availability: 'in_stock',
-      brand: 'AeroCommerce',
+      brand: 'AeroThor',
       gtin: '098765432101',
       condition: 'new',
       identifier_exists: true,
