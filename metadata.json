@@ -1,0 +1,6 @@
+{
+  "name": "Ecom-Growth-Agent — Headless E-commerce & GMC Growth Architect",
+  "description": "Elite CTO/CMO architecture for zero-cost headless B2C e-commerce, Google Merchant Center RSS 2.0 feeds, dropshipping supplier CSV ingestion with live progress, and automated catalog syndication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

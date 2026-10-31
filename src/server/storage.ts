@@ -1,0 +1,856 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import pg from 'pg';
+import dotenv from 'dotenv';
+import { GmcProduct } from '../lib/gmc-feed';
+import { INITIAL_PRODUCTS } from './seed-data';
+import {
+  buildDefaultVariantsForProduct,
+  groupDuplicateVariantsIntoParentProducts,
+} from '../lib/api-integrations';
+
+dotenv.config({ path: '.env.local' });
+dotenv.config();
+
+const BUNDLED_DATA_DIR = path.resolve(process.cwd(), 'data');
+const BUNDLED_DB_FILE_PATH = path.join(BUNDLED_DATA_DIR, 'catalog-db.json');
+const BUNDLED_ORDERS_FILE_PATH = path.join(BUNDLED_DATA_DIR, 'orders-db.json');
+
+const RUNTIME_DATA_DIR = process.env.VERCEL
+  ? path.join(os.tmpdir(), 'aerothor-data')
+  : BUNDLED_DATA_DIR;
+const DB_FILE_PATH = path.join(RUNTIME_DATA_DIR, 'catalog-db.json');
+const ORDERS_FILE_PATH = path.join(RUNTIME_DATA_DIR, 'orders-db.json');
+
+export interface PersistedDatabaseState {
+  updatedAt: string;
+  products: GmcProduct[];
+}
+
+export interface OrderLineItem {
+  sku: string;
+  cjPid?: string;
+  cjVid?: string;
+  cjSku?: string;
+  title: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+export type OrderFulfillmentStatus =
+  | 'Paid - Ready for CJ Fulfill'
+  | 'Pending'
+  | 'Processing'
+  | 'Shipped'
+  | 'Delivered';
+
+export interface PersistedOrder {
+  id: string;
+  orderNumber?: string;
+  trackingCode?: string;
+  status?: OrderFulfillmentStatus;
+  purchasedSkus?: string[];
+  stripeSessionId: string;
+  cjOrderId?: string;
+  cjOrderStatus: 'submitted_to_cj' | 'pending_cj_balance' | 'awaiting_fulfillment' | 'fulfilled' | 'local_inventory';
+  cjApiMessage?: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingZip: string;
+  shippingCountry: string;
+  shippingMethod: string;
+  paymentMethod: string;
+  totalAmount: number;
+  currency: string;
+  paymentStatus: 'paid' | 'pending';
+  trackingNumber: string;
+  carrier: string;
+  estimatedDelivery: string;
+  items: OrderLineItem[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
+let pgPool: pg.Pool | null = null;
+
+function getPostgresPool(): pg.Pool | null {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl || dbUrl.includes('db.supabase.co:5432/postgres?pgbouncer=true') || dbUrl.includes('[YOUR-PASSWORD]')) {
+    return null;
+  }
+  if (!pgPool) {
+    pgPool = new pg.Pool({
+      connectionString: dbUrl,
+      ssl: { rejectUnauthorized: false },
+      max: 3,
+      connectionTimeoutMillis: 3500,
+      query_timeout: 4000,
+      statement_timeout: 4000,
+      idleTimeoutMillis: 10000,
+    });
+    pgPool.on('error', (err) => {
+      console.warn('[Postgres Pool Background Error]:', err.message);
+    });
+  }
+  return pgPool;
+}
+
+function slugify(title: string, sku: string): string {
+  const cleanSku = sku.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60);
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 150);
+  return `${base || 'product'}-${cleanSku}`.slice(0, 240);
+}
+
+/**
+ * Helper to identify synthetic bulk-generated filler products vs real CJ / custom / seed products
+ */
+export function isSyntheticBatchProduct(p: GmcProduct): boolean {
+  return /^CJ-(HOME|FIT|TRVL|TECH)-\d{5}$/i.test(p.id);
+}
+
+/**
+ * Ensures real CJ Marketplace products always appear FIRST at the top of the catalog,
+ * followed by custom/seed products, and synthetic 1000-product filler items last.
+ */
+export function prioritizeRealProductsFirst(products: GmcProduct[]): GmcProduct[] {
+  const seen = new Set<string>();
+  const realCjProducts: GmcProduct[] = [];
+  const customAndSeedProducts: GmcProduct[] = [];
+  const syntheticBatch: GmcProduct[] = [];
+
+  for (const p of products) {
+    const key = String(p.id || '').trim().toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+
+    const withVariants: GmcProduct = {
+      ...p,
+      variants:
+        Array.isArray(p.variants) && p.variants.length > 0
+          ? p.variants
+          : buildDefaultVariantsForProduct(p),
+    };
+
+    if (isSyntheticBatchProduct(withVariants)) {
+      syntheticBatch.push(withVariants);
+    } else if (
+      withVariants.source === 'cj_live' ||
+      Boolean(withVariants.cj_pid) ||
+      key.startsWith('cj-')
+    ) {
+      realCjProducts.push(withVariants);
+    } else {
+      customAndSeedProducts.push(withVariants);
+    }
+  }
+
+  return [...realCjProducts, ...customAndSeedProducts, ...syntheticBatch];
+}
+
+/**
+ * Ensures PostgreSQL tables (`products`, `orders`, `inventory_sync_logs`) exist on Supabase
+ * and merges catalog between Supabase PostgreSQL and local disk cache without losing newly added products.
+ */
+export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]): Promise<GmcProduct[]> {
+  const prioritizedLocal = prioritizeRealProductsFirst(currentCatalog);
+  const pool = getPostgresPool();
+  if (!pool) return prioritizedLocal;
+
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        sku VARCHAR(255) UNIQUE NOT NULL,
+        cj_pid VARCHAR(255),
+        title VARCHAR(255) NOT NULL,
+        description TEXT NOT NULL,
+        slug VARCHAR(255) NOT NULL,
+        brand VARCHAR(128) DEFAULT 'AeroCommerce',
+        cost_price NUMERIC(10, 2) DEFAULT 0.00,
+        price NUMERIC(10, 2) NOT NULL,
+        sale_price NUMERIC(10, 2),
+        currency VARCHAR(3) DEFAULT 'USD',
+        stock_quantity INT DEFAULT 99,
+        availability VARCHAR(20) DEFAULT 'in_stock',
+        condition VARCHAR(20) DEFAULT 'new',
+        warehouse_country VARCHAR(2) DEFAULT 'US',
+        fulfillment_days_min INT DEFAULT 3,
+        fulfillment_days_max INT DEFAULT 7,
+        main_image_url TEXT NOT NULL,
+        additional_images JSONB DEFAULT '[]'::jsonb,
+        gtin VARCHAR(32),
+        mpn VARCHAR(64),
+        google_category VARCHAR(255),
+        product_type VARCHAR(255),
+        seo_title TEXT,
+        seo_description TEXT,
+        status VARCHAR(20) DEFAULT 'active',
+        is_visible BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      ALTER TABLE products DROP CONSTRAINT IF EXISTS products_slug_key;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_title TEXT;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS seo_description TEXT;
+
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        stripe_session_id VARCHAR(255) UNIQUE NOT NULL,
+        customer_email VARCHAR(255),
+        customer_name VARCHAR(255),
+        shipping_country VARCHAR(255) DEFAULT 'US',
+        total_amount NUMERIC(10, 2) NOT NULL,
+        currency VARCHAR(3) DEFAULT 'USD',
+        payment_status VARCHAR(32) DEFAULT 'pending',
+        items_json JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS inventory_sync_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        synced_at TIMESTAMPTZ DEFAULT NOW(),
+        products_scanned INT NOT NULL,
+        products_updated INT NOT NULL,
+        status VARCHAR(20) DEFAULT 'success',
+        error_message TEXT
+      );
+    `);
+
+    const { rows } = await pool.query('SELECT * FROM products ORDER BY updated_at DESC, created_at DESC');
+
+    if (rows.length > 0) {
+      const dbProducts: GmcProduct[] = rows.map((row: any) => ({
+        id: row.sku,
+        title: row.title,
+        description: row.description,
+        link: `${process.env.APP_URL || 'https://my-store.com'}/product/${row.sku}`,
+        image_link: row.main_image_url,
+        price: `${Number(row.price).toFixed(2)} ${row.currency || 'USD'}`,
+        sale_price: row.sale_price ? `${Number(row.sale_price).toFixed(2)} ${row.currency || 'USD'}` : undefined,
+        availability: row.availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
+        brand: row.brand || 'AeroCommerce',
+        condition: row.condition || 'new',
+        gtin: row.gtin || undefined,
+        mpn: row.mpn || row.sku,
+        identifier_exists: true,
+        product_type: row.product_type || 'Lifestyle & Tech',
+        cj_pid: row.cj_pid || undefined,
+        wholesale_price: row.cost_price ? Number(row.cost_price) : undefined,
+        source: row.cj_pid ? 'cj_live' : undefined,
+        seo_title: row.seo_title || undefined,
+        seo_description: row.seo_description || undefined,
+      }));
+
+      // Merge local disk products (e.g. recently synced CJ items) with DB products so nothing is lost
+      const merged = prioritizeRealProductsFirst([...prioritizedLocal, ...dbProducts]);
+      savePersistedCatalogToDiskOnly(merged);
+
+      // If local had items not yet in Postgres, push them up
+      if (merged.length > dbProducts.length) {
+        syncCatalogToPostgres(merged).catch((e) => console.warn('[Postgres Merge Sync]:', e.message));
+      }
+
+      console.log(`[Supabase PostgreSQL] Synchronized ${merged.length} products with live database.`);
+      return merged;
+    } else if (prioritizedLocal.length > 0) {
+      await syncCatalogToPostgres(prioritizedLocal);
+      console.log(`[Supabase PostgreSQL] Seeded ${prioritizedLocal.length} products into live database.`);
+    }
+  } catch (err: any) {
+    console.warn('[Supabase PostgreSQL Init Warning]:', err.message);
+  }
+
+  return prioritizedLocal;
+}
+
+/**
+ * Syncs a list of products into Supabase PostgreSQL using safe deduplicated batched upserts
+ */
+export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<void> {
+  const pool = getPostgresPool();
+  if (!pool) return;
+
+  try {
+    if (products.length === 0) {
+      return;
+    }
+
+    // Deduplicate by lowercase SKU within the batch so ON CONFLICT never hits the same row twice
+    const uniqueMap = new Map<string, GmcProduct>();
+    for (const p of products) {
+      const key = String(p.id || '').trim().toLowerCase();
+      if (key && !uniqueMap.has(key)) {
+        uniqueMap.set(key, p);
+      }
+    }
+    const dedupedProducts = Array.from(uniqueMap.values());
+
+    const chunkSize = 80;
+    for (let i = 0; i < dedupedProducts.length; i += chunkSize) {
+      const chunk = dedupedProducts.slice(i, i + chunkSize);
+      const values: any[] = [];
+      const placeholders: string[] = [];
+
+      chunk.forEach((p, idx) => {
+        const base = idx * 15;
+        const numPrice = parseFloat(String(p.price || '0').replace(/[^0-9.]/g, '')) || 0;
+        const numSale = p.sale_price
+          ? parseFloat(String(p.sale_price).replace(/[^0-9.]/g, '')) || null
+          : null;
+        const numCost = p.wholesale_price ? Number(p.wholesale_price) : Number((numPrice * 0.4).toFixed(2));
+        const sku = String(p.id || '').trim().slice(0, 240);
+        const title = String(p.title || 'Product').trim().slice(0, 240);
+        const cjPid = p.cj_pid ? String(p.cj_pid).trim().slice(0, 240) : null;
+        const seoTitle = p.seo_title ? String(p.seo_title).trim() : null;
+        const seoDesc = p.seo_description ? String(p.seo_description).trim() : null;
+
+        placeholders.push(
+          `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7}, $${base + 8}, $${base + 9}, $${base + 10}, $${base + 11}, $${base + 12}, $${base + 13}, $${base + 14}, $${base + 15})`
+        );
+        values.push(
+          sku,
+          cjPid,
+          title,
+          String(p.description || title),
+          slugify(title, sku),
+          String(p.brand || 'AeroThor').slice(0, 120),
+          numCost,
+          numPrice,
+          numSale,
+          p.availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
+          String(p.image_link || ''),
+          String(p.mpn || sku).slice(0, 60),
+          String(p.product_type || 'Home & Lifestyle').slice(0, 240),
+          seoTitle,
+          seoDesc
+        );
+      });
+
+      await pool.query(
+        `INSERT INTO products (
+          sku, cj_pid, title, description, slug, brand, cost_price, price, sale_price, availability, main_image_url, mpn, product_type, seo_title, seo_description
+        ) VALUES ${placeholders.join(', ')}
+        ON CONFLICT (sku) DO UPDATE SET
+          cj_pid = COALESCE(EXCLUDED.cj_pid, products.cj_pid),
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          slug = EXCLUDED.slug,
+          brand = EXCLUDED.brand,
+          cost_price = EXCLUDED.cost_price,
+          price = EXCLUDED.price,
+          sale_price = EXCLUDED.sale_price,
+          availability = EXCLUDED.availability,
+          main_image_url = EXCLUDED.main_image_url,
+          mpn = EXCLUDED.mpn,
+          product_type = EXCLUDED.product_type,
+          seo_title = EXCLUDED.seo_title,
+          seo_description = EXCLUDED.seo_description,
+          updated_at = NOW()`,
+        values
+      );
+    }
+  } catch (err: any) {
+    console.warn('[Supabase Sync Warning]:', err.message);
+  }
+}
+
+export async function deleteSkusFromPostgres(skus: string[]): Promise<void> {
+  const pool = getPostgresPool();
+  if (!pool || skus.length === 0) return;
+
+  try {
+    const lowerSkus = skus.map((s) => s.trim().toLowerCase());
+    await pool.query('DELETE FROM products WHERE LOWER(sku) = ANY($1)', [lowerSkus]);
+  } catch (err: any) {
+    console.warn('[Supabase Delete Warning]:', err.message);
+  }
+}
+
+function savePersistedCatalogToDiskOnly(products: GmcProduct[]): void {
+  const payload: PersistedDatabaseState = {
+    updatedAt: new Date().toISOString(),
+    products,
+  };
+  const serialized = JSON.stringify(payload, null, 2);
+
+  try {
+    if (!fs.existsSync(RUNTIME_DATA_DIR)) {
+      fs.mkdirSync(RUNTIME_DATA_DIR, { recursive: true });
+    }
+    const tempFile = `${DB_FILE_PATH}.tmp`;
+    fs.writeFileSync(tempFile, serialized, 'utf-8');
+    fs.renameSync(tempFile, DB_FILE_PATH);
+  } catch (err) {
+    try {
+      const fallbackDir = path.join(os.tmpdir(), 'aerothor-data');
+      if (!fs.existsSync(fallbackDir)) {
+        fs.mkdirSync(fallbackDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(fallbackDir, 'catalog-db.json'), serialized, 'utf-8');
+    } catch (fallbackErr) {
+      console.warn('[Storage] Disk write skipped (read-only environment):', (fallbackErr as Error).message);
+    }
+  }
+}
+
+export function loadPersistedCatalog(): GmcProduct[] {
+  try {
+    const candidatePaths = [
+      DB_FILE_PATH,
+      BUNDLED_DB_FILE_PATH,
+      path.join(os.tmpdir(), 'aerothor-data', 'catalog-db.json'),
+    ];
+
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        const raw = fs.readFileSync(candidate, 'utf-8');
+        const parsed = JSON.parse(raw) as PersistedDatabaseState;
+        if (parsed && Array.isArray(parsed.products) && parsed.products.length > 0) {
+          return prioritizeRealProductsFirst(parsed.products);
+        }
+      }
+    }
+
+    savePersistedCatalogToDiskOnly(INITIAL_PRODUCTS);
+    return [...INITIAL_PRODUCTS];
+  } catch (err) {
+    console.warn('[Storage] Failed to read catalog-db.json, falling back to INITIAL_PRODUCTS:', err);
+    return [...INITIAL_PRODUCTS];
+  }
+}
+
+/**
+ * Atomically writes the current catalog to disk AND syncs asynchronously to Supabase PostgreSQL.
+ */
+export function savePersistedCatalog(products: GmcProduct[], changedSubset?: GmcProduct[]): void {
+  const ordered = prioritizeRealProductsFirst(products);
+  savePersistedCatalogToDiskOnly(ordered);
+  const toSync = changedSubset && changedSubset.length > 0 ? changedSubset : ordered;
+  syncCatalogToPostgres(toSync).catch((err) =>
+    console.warn('[Background Postgres Sync Error]:', err.message)
+  );
+}
+
+/**
+ * Mirrors Prisma's `createMany({ data, skipDuplicates: true })` behavior on both disk and Supabase PostgreSQL.
+ * Places real CJ / custom products at the top of the catalog.
+ */
+export function createManySkipDuplicates(
+  currentCatalog: GmcProduct[],
+  incomingProducts: GmcProduct[]
+): { insertedCount: number; skippedDuplicatesCount: number; catalog: GmcProduct[] } {
+  const existingIds = new Set(currentCatalog.map((p) => p.id.toLowerCase()));
+  const newUniqueProducts: GmcProduct[] = [];
+  let skippedDuplicatesCount = 0;
+
+  for (const item of incomingProducts) {
+    const normalizedId = String(item.id || '').trim().toLowerCase();
+    if (!normalizedId) continue;
+    if (existingIds.has(normalizedId)) {
+      skippedDuplicatesCount++;
+      continue;
+    }
+    existingIds.add(normalizedId);
+    newUniqueProducts.push(item);
+  }
+
+  const updatedCatalog = prioritizeRealProductsFirst([...newUniqueProducts, ...currentCatalog]);
+  savePersistedCatalogToDiskOnly(updatedCatalog);
+
+  if (newUniqueProducts.length > 0) {
+    syncCatalogToPostgres(newUniqueProducts).catch((err) =>
+      console.warn('[Background Postgres Bulk Insert Error]:', err.message)
+    );
+  }
+
+  return {
+    insertedCount: newUniqueProducts.length,
+    skippedDuplicatesCount,
+    catalog: updatedCatalog,
+  };
+}
+
+/**
+ * PHASE 2: Bulk Delete / Purge the messy catalog from both Disk and PostgreSQL
+ */
+export async function purgeCatalogFromStorage(keepCoreSeed = false): Promise<GmcProduct[]> {
+  const nextCatalog = keepCoreSeed ? prioritizeRealProductsFirst([...INITIAL_PRODUCTS]) : [];
+  savePersistedCatalogToDiskOnly(nextCatalog);
+
+  const pool = getPostgresPool();
+  if (pool) {
+    try {
+      await pool.query('TRUNCATE TABLE products RESTART IDENTITY CASCADE');
+      if (keepCoreSeed && nextCatalog.length > 0) {
+        await syncCatalogToPostgres(nextCatalog);
+      }
+    } catch (err: any) {
+      console.warn('[Postgres Catalog Purge Warning]:', err.message);
+    }
+  }
+
+  return nextCatalog;
+}
+
+/**
+ * PHASE 2: Deduplicate & Group 1,656+ duplicate variant rows into Parent Products with `variants` arrays
+ */
+export async function deduplicateAndGroupCatalogVariants(
+  currentCatalog: GmcProduct[]
+): Promise<{
+  catalog: GmcProduct[];
+  beforeCount: number;
+  afterCount: number;
+  duplicatesMergedCount: number;
+  syntheticRemovedCount: number;
+}> {
+  const beforeCount = currentCatalog.length;
+
+  // Strip synthetic CJ-HOME-00001 / CJ-TECH-00002 filler rows if real products exist
+  const nonSynthetic = currentCatalog.filter((p) => !isSyntheticBatchProduct(p));
+  const baseList = nonSynthetic.length > 0 ? nonSynthetic : currentCatalog;
+  const syntheticRemovedCount = beforeCount - baseList.length;
+
+  const { groupedProducts, duplicatesMergedCount } =
+    groupDuplicateVariantsIntoParentProducts(baseList);
+
+  const prioritized = prioritizeRealProductsFirst(groupedProducts);
+  savePersistedCatalogToDiskOnly(prioritized);
+
+  const pool = getPostgresPool();
+  if (pool) {
+    try {
+      await pool.query('TRUNCATE TABLE products RESTART IDENTITY CASCADE');
+      await syncCatalogToPostgres(prioritized);
+    } catch (err: any) {
+      console.warn('[Postgres Deduplicate Sync Warning]:', err.message);
+    }
+  }
+
+  return {
+    catalog: prioritized,
+    beforeCount,
+    afterCount: prioritized.length,
+    duplicatesMergedCount: duplicatesMergedCount + syntheticRemovedCount,
+    syntheticRemovedCount,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// REAL ORDERS PERSISTENCE (Disk + Supabase PostgreSQL `orders` table)
+// ---------------------------------------------------------------------------
+
+const INITIAL_SEED_ORDERS: PersistedOrder[] = [
+  {
+    id: 'ORD-2026-884120',
+    orderNumber: 'ORD-2026-884120',
+    trackingCode: '940011189956482100',
+    trackingNumber: '940011189956482100',
+    status: 'Shipped',
+    stripeSessionId: 'cs_live_a1b2c3d4e5f6',
+    cjOrderId: 'CJ2026102899412',
+    cjOrderStatus: 'submitted_to_cj',
+    cjApiMessage: 'Dispatched from US Domestic Warehouse via USPS Priority',
+    customerName: 'Alex Vance',
+    customerEmail: 'alex.vance@example.com',
+    customerPhone: '+1 (555) 234-5678',
+    shippingAddress: '742 Evergreen Terrace',
+    shippingCity: 'Springfield',
+    shippingState: 'OR',
+    shippingZip: '97477',
+    shippingCountry: 'US',
+    shippingMethod: 'express',
+    paymentMethod: 'card',
+    totalAmount: 114.98,
+    currency: 'USD',
+    paymentStatus: 'paid',
+    carrier: 'USPS Priority Mail',
+    estimatedDelivery: '2 to 3 Business Days',
+    items: [
+      {
+        sku: 'AERO-TI-FLASK-01',
+        title: 'AeroThor Grade-1 Titanium Vacuum Commuter Flask (750ml)',
+        price: 54.0,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80',
+      },
+      {
+        sku: 'AERO-QI2-DOCK-02',
+        title: 'AeroThor 3-in-1 Qi2 Magnetic Foldable Travel Charging Station',
+        price: 60.98,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=800&q=80',
+      },
+    ],
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+  },
+  {
+    id: 'ORD-2026-773019',
+    orderNumber: 'ORD-2026-773019',
+    trackingCode: 'RM4899201844GB',
+    trackingNumber: 'RM4899201844GB',
+    status: 'Processing',
+    stripeSessionId: 'cs_live_f9e8d7c6b5a4',
+    cjOrderId: 'CJ2026102911204',
+    cjOrderStatus: 'submitted_to_cj',
+    cjApiMessage: 'Order verified & being packed at UK Warehouse',
+    customerName: 'Eleanor Sterling',
+    customerEmail: 'eleanor.s@example.co.uk',
+    customerPhone: '+44 20 7946 0921',
+    shippingAddress: '71-75 Shelton Street, Covent Garden',
+    shippingCity: 'London',
+    shippingState: 'LDN',
+    shippingZip: 'WC2H 9JQ',
+    shippingCountry: 'GB',
+    shippingMethod: 'free',
+    paymentMethod: 'apple_pay',
+    totalAmount: 148.0,
+    currency: 'GBP',
+    paymentStatus: 'paid',
+    carrier: 'Royal Mail Tracked 48',
+    estimatedDelivery: '3 to 5 Business Days',
+    items: [
+      {
+        sku: 'AERO-MERINO-HOOD-03',
+        title: 'AeroThor 100% Australian Merino Thermal Travel Hoodie',
+        price: 148.0,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80',
+      },
+    ],
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+  },
+  {
+    id: 'ORD-2026-651904',
+    orderNumber: 'ORD-2026-651904',
+    trackingCode: '940011189956901122',
+    trackingNumber: '940011189956901122',
+    status: 'Delivered',
+    stripeSessionId: 'cs_live_123456789abc',
+    cjOrderId: 'CJ2026102488301',
+    cjOrderStatus: 'fulfilled',
+    cjApiMessage: 'Delivered to front desk / reception',
+    customerName: 'Marcus Chen',
+    customerEmail: 'm.chen@example.com',
+    customerPhone: '+1 (415) 890-4412',
+    shippingAddress: '450 Mission St',
+    shippingCity: 'San Francisco',
+    shippingState: 'CA',
+    shippingZip: '94105',
+    shippingCountry: 'US',
+    shippingMethod: 'express',
+    paymentMethod: 'card',
+    totalAmount: 89.0,
+    currency: 'USD',
+    paymentStatus: 'paid',
+    carrier: 'USPS Priority Mail',
+    estimatedDelivery: 'Delivered',
+    items: [
+      {
+        sku: 'AERO-CARBON-PACK-04',
+        title: 'AeroThor Weatherproof Ballistic Nylon Daypack 24L',
+        price: 89.0,
+        quantity: 1,
+        image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80',
+      },
+    ],
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    updatedAt: new Date(Date.now() - 86400000).toISOString(),
+  },
+];
+
+export function normalizeOrderRecord(raw: any): PersistedOrder {
+  const id = String(raw.orderNumber || raw.id || `ORD-2026-${Math.floor(100000 + Math.random() * 900000)}`).trim();
+  const tracking = String(raw.trackingCode ?? raw.trackingNumber ?? '').trim();
+  const validStatuses: OrderFulfillmentStatus[] = [
+    'Paid - Ready for CJ Fulfill',
+    'Pending',
+    'Processing',
+    'Shipped',
+    'Delivered',
+  ];
+  let resolvedStatus: OrderFulfillmentStatus = 'Paid - Ready for CJ Fulfill';
+  if (validStatuses.includes(raw.status)) {
+    resolvedStatus = raw.status;
+  } else if (raw.cjOrderStatus === 'fulfilled') {
+    resolvedStatus = 'Delivered';
+  } else if (raw.cjOrderStatus === 'submitted_to_cj' && tracking) {
+    resolvedStatus = 'Shipped';
+  } else if (raw.cjOrderStatus === 'awaiting_fulfillment') {
+    resolvedStatus = 'Paid - Ready for CJ Fulfill';
+  }
+
+  const purchasedSkus: string[] = Array.isArray(raw.purchasedSkus)
+    ? raw.purchasedSkus
+    : Array.isArray(raw.items)
+    ? raw.items.map((it: any) => String(it.sku || it.id || '').trim()).filter(Boolean)
+    : [];
+
+  return {
+    ...raw,
+    id,
+    orderNumber: id,
+    trackingCode: tracking,
+    trackingNumber: tracking,
+    status: resolvedStatus,
+    purchasedSkus,
+    updatedAt: raw.updatedAt || raw.createdAt || new Date().toISOString(),
+  };
+}
+
+export function loadPersistedOrders(): PersistedOrder[] {
+  try {
+    const candidatePaths = [
+      ORDERS_FILE_PATH,
+      BUNDLED_ORDERS_FILE_PATH,
+      path.join(os.tmpdir(), 'aerothor-data', 'orders-db.json'),
+    ];
+
+    for (const candidate of candidatePaths) {
+      if (fs.existsSync(candidate)) {
+        const raw = fs.readFileSync(candidate, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizeOrderRecord);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Orders Storage] Failed to read orders-db.json:', err);
+  }
+  return INITIAL_SEED_ORDERS.map(normalizeOrderRecord);
+}
+
+function saveOrdersToDisk(orders: PersistedOrder[]): void {
+  const serialized = JSON.stringify(orders, null, 2);
+  try {
+    if (!fs.existsSync(RUNTIME_DATA_DIR)) {
+      fs.mkdirSync(RUNTIME_DATA_DIR, { recursive: true });
+    }
+    const tempFile = `${ORDERS_FILE_PATH}.tmp`;
+    fs.writeFileSync(tempFile, serialized, 'utf-8');
+    fs.renameSync(tempFile, ORDERS_FILE_PATH);
+  } catch (err) {
+    try {
+      const fallbackDir = path.join(os.tmpdir(), 'aerothor-data');
+      if (!fs.existsSync(fallbackDir)) {
+        fs.mkdirSync(fallbackDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(fallbackDir, 'orders-db.json'), serialized, 'utf-8');
+    } catch (fallbackErr) {
+      console.warn('[Orders Storage] Disk write skipped (read-only environment):', (fallbackErr as Error).message);
+    }
+  }
+}
+
+export async function savePersistedOrder(order: PersistedOrder): Promise<PersistedOrder[]> {
+  const normalized = normalizeOrderRecord(order);
+  const existing = loadPersistedOrders();
+  const nextOrders = [
+    normalized,
+    ...existing.filter(
+      (o) =>
+        o.id.toLowerCase() !== normalized.id.toLowerCase() &&
+        (o.orderNumber || '').toLowerCase() !== (normalized.orderNumber || '').toLowerCase()
+    ),
+  ];
+  saveOrdersToDisk(nextOrders);
+
+  const pool = getPostgresPool();
+  if (pool) {
+    try {
+      await pool.query(
+        `INSERT INTO orders (
+          stripe_session_id, customer_email, customer_name, shipping_country, total_amount, currency, payment_status, items_json
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        ON CONFLICT (stripe_session_id) DO UPDATE SET
+          payment_status = EXCLUDED.payment_status,
+          items_json = EXCLUDED.items_json,
+          updated_at = NOW()`,
+        [
+          normalized.stripeSessionId || normalized.id,
+          normalized.customerEmail,
+          normalized.customerName,
+          (normalized.shippingCountry || 'US').slice(0, 2),
+          normalized.totalAmount,
+          (normalized.currency || 'USD').toUpperCase().slice(0, 3),
+          normalized.paymentStatus,
+          JSON.stringify(normalized),
+        ]
+      );
+    } catch (err: any) {
+      console.warn('[Supabase Order Save Warning]:', err.message);
+    }
+  }
+
+  return nextOrders;
+}
+
+export async function initOrdersFromPostgres(): Promise<PersistedOrder[]> {
+  const localOrders = loadPersistedOrders();
+  const pool = getPostgresPool();
+  if (!pool) return localOrders;
+
+  try {
+    const { rows } = await pool.query('SELECT * FROM orders ORDER BY created_at DESC LIMIT 200');
+    const dbOrders: PersistedOrder[] = [];
+
+    for (const row of rows) {
+      const data = row.items_json;
+      if (data && typeof data === 'object' && !Array.isArray(data) && data.id) {
+        dbOrders.push(data as PersistedOrder);
+      } else if (Array.isArray(data)) {
+        dbOrders.push({
+          id: `ORD-${String(row.id).slice(0, 8).toUpperCase()}`,
+          stripeSessionId: row.stripe_session_id,
+          cjOrderStatus: 'awaiting_fulfillment',
+          customerName: row.customer_name || 'Verified Customer',
+          customerEmail: row.customer_email || 'customer@example.com',
+          customerPhone: '+1 (555) 019-2834',
+          shippingAddress: 'Domestic Fulfillment Address',
+          shippingCity: 'Wilmington',
+          shippingState: 'DE',
+          shippingZip: '19801',
+          shippingCountry: row.shipping_country || 'US',
+          shippingMethod: 'free',
+          paymentMethod: 'card',
+          totalAmount: Number(row.total_amount) || 0,
+          currency: row.currency || 'USD',
+          paymentStatus: row.payment_status === 'paid' ? 'paid' : 'pending',
+          trackingNumber: `USPS-${String(row.id).slice(0, 10).toUpperCase()}`,
+          carrier: 'USPS Priority Mail',
+          estimatedDelivery: '3 to 5 Business Days',
+          items: data,
+          createdAt: row.created_at ? new Date(row.created_at).toISOString() : new Date().toISOString(),
+        });
+      }
+    }
+
+    const map = new Map<string, PersistedOrder>();
+    for (const o of [...localOrders, ...dbOrders]) {
+      if (!map.has(o.id)) {
+        map.set(o.id, o);
+      }
+    }
+    const merged = Array.from(map.values());
+    saveOrdersToDisk(merged);
+    return merged;
+  } catch (err: any) {
+    console.warn('[Supabase Orders Load Warning]:', err.message);
+    return localOrders;
+  }
+}
