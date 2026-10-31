@@ -74,6 +74,15 @@ function resolveProductImage(rawUrl?: string): string {
   return cleaned.startsWith('https://') || cleaned.startsWith('/') ? cleaned : FALLBACK_PRODUCT_IMAGE;
 }
 
+function formatVariantPriceAmount(val?: string | number): string {
+  if (val === undefined || val === null) return '0.00';
+  if (typeof val === 'number') {
+    return Number.isFinite(val) ? val.toFixed(2) : '0.00';
+  }
+  const parsed = parseFloat(String(val).replace(/[^0-9.]/g, ''));
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : '0.00';
+}
+
 function filterCatalogLocally(
   items: GmcProduct[],
   query: string,
@@ -225,8 +234,8 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
       id: variant.sku || baseProduct.id,
       cj_vid: variant.cj_vid || baseProduct.cj_vid,
       title: `${baseProduct.title} (${variant.size} · ${variant.color})`,
-      price: `${variant.price.toFixed(2)} USD`,
-      sale_price: variant.sale_price ? `${variant.sale_price.toFixed(2)} USD` : undefined,
+      price: `${formatVariantPriceAmount(variant.price)} USD`,
+      sale_price: variant.sale_price ? `${formatVariantPriceAmount(variant.sale_price)} USD` : undefined,
       image_link: variant.image_link || baseProduct.image_link,
     };
   };
@@ -1133,13 +1142,13 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     <span className="text-xl font-extrabold font-mono text-emerald-400">
                       $
                       {selectedVariant
-                        ? (selectedVariant.sale_price || selectedVariant.price).toFixed(2)
+                        ? formatVariantPriceAmount(selectedVariant.sale_price || selectedVariant.price)
                         : (quickViewProduct.sale_price || quickViewProduct.price).replace(/[^0-9.]/g, '')}{' '}
                       USD
                     </span>
                     {selectedVariant?.sale_price && (
                       <span className="text-xs font-mono line-through text-slate-500">
-                        ${selectedVariant.price.toFixed(2)} USD
+                        ${formatVariantPriceAmount(selectedVariant.price)} USD
                       </span>
                     )}
                   </div>
@@ -1247,13 +1256,13 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     <span className="text-2xl font-extrabold text-emerald-400 font-mono">
                       $
                       {selectedVariant
-                        ? (selectedVariant.sale_price || selectedVariant.price).toFixed(2)
+                        ? formatVariantPriceAmount(selectedVariant.sale_price || selectedVariant.price)
                         : (fullPdpProduct.sale_price || fullPdpProduct.price).replace(/[^0-9.]/g, '')}{' '}
                       USD
                     </span>
                     {selectedVariant?.sale_price && (
                       <span className="text-sm font-mono line-through text-slate-500">
-                        ${selectedVariant.price.toFixed(2)} USD
+                        ${formatVariantPriceAmount(selectedVariant.price)} USD
                       </span>
                     )}
                   </div>
@@ -1340,7 +1349,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       <span>
                         Buy Now — $
                         {selectedVariant
-                          ? (selectedVariant.sale_price || selectedVariant.price).toFixed(2)
+                          ? formatVariantPriceAmount(selectedVariant.sale_price || selectedVariant.price)
                           : (fullPdpProduct.sale_price || fullPdpProduct.price).replace(/[^0-9.]/g, '')}{' '}
                         USD
                       </span>
