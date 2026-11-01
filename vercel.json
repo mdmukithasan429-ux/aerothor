@@ -97,6 +97,10 @@
       "destination": "/api/index"
     },
     {
+      "source": "/deals/:country*",
+      "destination": "/api/index"
+    },
+    {
       "source": "/feed.xml",
       "destination": "/api/index"
     },
@@ -109,7 +113,7 @@
       "destination": "/api/index"
     },
     {
-      "source": "/((?!api/|assets/|product/|products/|feed\\.xml|sitemap\\.xml|robots\\.txt).*)",
+      "source": "/((?!api/|assets/|product/|products/|deals/|feed\\.xml|sitemap\\.xml|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]

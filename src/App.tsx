@@ -55,6 +55,19 @@ function resolveInitialRegionSlugFromPath(): string | null {
   const params = new URLSearchParams(window.location.search);
   const queryRegion = params.get('region') || params.get('country');
   if (queryRegion) return queryRegion.trim().toLowerCase();
+
+  try {
+    const slugCookie = document.cookie.match(/(?:^|;\s*)aero_geo_slug=([^;]+)/);
+    if (slugCookie?.[1]) {
+      return decodeURIComponent(slugCookie[1]).trim().toLowerCase();
+    }
+    const countryCookie = document.cookie.match(/(?:^|;\s*)aero_geo_country=([^;]+)/);
+    if (countryCookie?.[1]) {
+      return decodeURIComponent(countryCookie[1]).trim().toLowerCase();
+    }
+  } catch {
+    // ignore cookie parse error
+  }
   return null;
 }
 

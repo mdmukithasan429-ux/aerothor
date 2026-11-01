@@ -80,10 +80,22 @@ app.use((req, res, next) => {
     (req.headers['cf-ipcountry'] as string) ||
     'US';
   const region = getRegionOrDefault(headerCountry);
+  const bannerText = `Free 48h Dispatch to ${region.countryNameWithArticle}`;
 
   res.setHeader('x-user-country', region.isoCode);
   res.setHeader('x-user-region-slug', region.slug);
-  res.setHeader('x-geo-dispatch-banner', `Free 48h Dispatch to ${region.countryNameWithArticle}`);
+  res.setHeader('x-user-currency', region.currencyCode);
+  res.setHeader('x-user-hreflang', region.hreflang);
+  res.setHeader('x-geo-dispatch-banner', bannerText);
+
+  const cookieAttrs = 'Path=/; Max-Age=2592000; SameSite=Lax';
+  res.append('Set-Cookie', `aero_geo_country=${encodeURIComponent(region.isoCode)}; ${cookieAttrs}`);
+  res.append('Set-Cookie', `aero_geo_slug=${encodeURIComponent(region.slug)}; ${cookieAttrs}`);
+  res.append('Set-Cookie', `aero_geo_banner=${encodeURIComponent(bannerText)}; ${cookieAttrs}`);
+
+  if (req.path === '/deals' || req.path === '/deals/') {
+    req.url = `/deals/${region.slug}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`;
+  }
   next();
 });
 
