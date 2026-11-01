@@ -197,7 +197,8 @@ function parseCookieHeader(cookieHeader: string | null, name: string): string | 
 
 export function middleware(request: Request): Response {
   try {
-    const url = new URL(request.url);
+    const host = request.headers.get('host') || 'aerothor.vercel.app';
+    const url = new URL(request.url, `https://${host}`);
     const pathname = url.pathname.replace(/\/+$/, '') || '/';
 
     // 1. Check explicit query param (?region= or ?country=), then Vercel's `x-vercel-ip-country` header, then cookie
