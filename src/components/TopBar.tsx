@@ -1,5 +1,6 @@
 import React from 'react';
-import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag, Zap, Settings } from 'lucide-react';
+import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag, Zap, Settings, Globe } from 'lucide-react';
+import { TARGET_REGIONS, getRegionOrDefault } from '../lib/i18n-regions';
 
 export type WorkspaceTab =
   | 'storefront'
@@ -28,6 +29,8 @@ interface TopBarProps {
   onOpenAdminLogin: () => void;
   onAdminLogout: () => void;
   onSelectStoreCategory?: (category: string) => void;
+  activeRegionSlug?: string | null;
+  onSelectRegionSlug?: (slug: string) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -40,8 +43,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenAdminLogin,
   onAdminLogout,
   onSelectStoreCategory,
+  activeRegionSlug,
+  onSelectRegionSlug,
 }) => {
   const showAdminNavigation = isAdminAuthenticated && !isCustomerPreviewMode;
+  const activeGeoRegion = getRegionOrDefault(activeRegionSlug || 'us');
 
   const handleCustomerCategoryClick = (category: string) => {
     if (activeTab !== 'storefront') {
@@ -60,6 +66,52 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800">
+      {/* Geo-Routed Regional Dispatch Notification Bar (Middleware Personalized) */}
+      <div className="bg-slate-900/95 border-b border-slate-800/80 px-4 py-1.5 text-[11px] text-slate-300">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span>{activeGeoRegion.flag}</span>
+            <span className="font-semibold text-emerald-400">
+              Free 48h Dispatch to {activeGeoRegion.countryNameWithArticle}
+            </span>
+            <span className="hidden md:inline text-slate-600">·</span>
+            <span className="hidden md:inline text-slate-400">
+              Carrier: {activeGeoRegion.carrierName} ({activeGeoRegion.transitDays})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="text-[10px] text-slate-400 hidden sm:inline items-center gap-1">
+              <Globe className="w-3 h-3 inline text-emerald-400 mr-1" />
+              10-Country Deals:
+            </span>
+            {TARGET_REGIONS.map((region) => {
+              const isSelected = activeGeoRegion.slug === region.slug && activeTab === 'affiliates';
+              return (
+                <button
+                  key={region.slug}
+                  type="button"
+                  onClick={() => {
+                    if (onSelectRegionSlug) {
+                      onSelectRegionSlug(region.slug);
+                    }
+                    onTabChange('affiliates');
+                  }}
+                  className={`px-1.5 py-0.5 rounded font-mono text-[10px] transition-colors cursor-pointer ${
+                    isSelected
+                      ? 'bg-emerald-400 text-slate-950 font-bold'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                  title={`${region.localizedDealsH1} (/deals/${region.slug})`}
+                >
+                  {region.flag} {region.isoCode}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* Admin Preview Banner if Admin is previewing Customer View */}
       {isAdminAuthenticated && isCustomerPreviewMode && (
         <div className="bg-emerald-950/90 border-b border-emerald-500/30 px-4 py-1.5 text-[11px] text-emerald-200 flex items-center justify-between">

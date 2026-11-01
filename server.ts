@@ -9,6 +9,14 @@ import { executeEcomChat, executeImageGeneration } from './src/server/gemini-api
 import { GmcProduct, escapeXml, CANONICAL_STORE_URL } from './src/lib/gmc-feed';
 import { generateProductPageMetadata } from './src/lib/seo-metadata';
 import {
+  TARGET_REGIONS,
+  getRegionOrDefault,
+  findRegionBySlugOrIso,
+  buildProductHreflangAlternates,
+  buildDealsHreflangAlternates,
+  buildRegionalDealsJsonLd,
+} from './src/lib/i18n-regions';
+import {
   SAMPLE_CJ_RAW_PRODUCTS,
   mapCjProductToGmc,
   mapGenericApiProductToGmc,
@@ -51,7 +59,7 @@ const PORT = Number(process.env.PORT) || 3000;
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-// Security HTTP Headers Middleware (Iframe-compatible for preview + hardened for production)
+// Security HTTP Headers & Geo-Routing Middleware (Iframe-compatible for preview + hardened for production)
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
@@ -59,6 +67,23 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
   res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+
+  const queryCountry =
+    typeof req.query.region === 'string'
+      ? req.query.region
+      : typeof req.query.country === 'string'
+      ? req.query.country
+      : null;
+  const headerCountry =
+    queryCountry ||
+    (req.headers['x-vercel-ip-country'] as string) ||
+    (req.headers['cf-ipcountry'] as string) ||
+    'US';
+  const region = getRegionOrDefault(headerCountry);
+
+  res.setHeader('x-user-country', region.isoCode);
+  res.setHeader('x-user-region-slug', region.slug);
+  res.setHeader('x-geo-dispatch-banner', `Free 48h Dispatch to ${region.countryNameWithArticle}`);
   next();
 });
 
@@ -1054,7 +1079,7 @@ app.get(['/api/feed.xml', '/feed.xml'], (req, res) => {
   }
 });
 
-// 1b. Dynamic SEO Sitemap XML API (/api/sitemap.xml & /sitemap.xml)
+// 1b. Dynamic SEO Sitemap XML API (/api/sitemap.xml & /sitemap.xml) with 10-Country Programmatic URLs & Hreflang
 app.get(['/api/sitemap.xml', '/sitemap.xml'], (_req, res) => {
   try {
     const baseUrl = getCanonicalBaseUrl();
@@ -1063,6 +1088,11 @@ app.get(['/api/sitemap.xml', '/sitemap.xml'], (_req, res) => {
     const staticRoutes = [
       { path: '', changefreq: 'daily', priority: '1.0' },
       { path: '/deals', changefreq: 'daily', priority: '0.9' },
+      ...TARGET_REGIONS.map((r) => ({
+        path: `/deals/${r.slug}`,
+        changefreq: 'daily',
+        priority: '0.95',
+      })),
       { path: '/affiliates', changefreq: 'weekly', priority: '0.8' },
       { path: '/return-policy', changefreq: 'monthly', priority: '0.7' },
       { path: '/policies/shipping', changefreq: 'monthly', priority: '0.6' },
@@ -1076,15 +1106,21 @@ app.get(['/api/sitemap.xml', '/sitemap.xml'], (_req, res) => {
       { path: '/?category=CJ%20Marketplace', changefreq: 'daily', priority: '0.85' },
     ];
 
+    const dealsHreflangXml = TARGET_REGIONS.map(
+      (r) =>
+        `\n    <xhtml:link rel="alternate" hreflang="${r.hreflang}" href="${escapeXml(`${baseUrl}/deals/${r.slug}`)}" />`
+    ).join('');
+
     const staticUrlsXml = staticRoutes
-      .map(
-        (route) => `  <url>
+      .map((route) => {
+        const isDealsRoute = route.path === '/deals' || route.path.startsWith('/deals/');
+        return `  <url>
     <loc>${escapeXml(`${baseUrl}${route.path}`)}</loc>
     <lastmod>${nowIso}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>
-  </url>`
-      )
+    <priority>${route.priority}</priority>${isDealsRoute ? dealsHreflangXml : ''}
+  </url>`;
+      })
       .join('\n');
 
     const activeProducts = currentCatalog.filter(
@@ -1101,19 +1137,27 @@ app.get(['/api/sitemap.xml', '/sitemap.xml'], (_req, res) => {
       <image:title>${escapeXml(product.title)}</image:title>
     </image:image>`
           : '';
+        const productHreflangXml = TARGET_REGIONS.map((r) => {
+          const altHref =
+            r.slug === 'us'
+              ? productUrl
+              : `${productUrl}?region=${r.slug}`;
+          return `\n    <xhtml:link rel="alternate" hreflang="${r.hreflang}" href="${escapeXml(altHref)}" />`;
+        }).join('');
 
         return `  <url>
     <loc>${escapeXml(productUrl)}</loc>
     <lastmod>${nowIso}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>${priority}</priority>${imageExtensionXml}
+    <priority>${priority}</priority>${imageExtensionXml}${productHreflangXml}
   </url>`;
       })
       .join('\n');
 
     const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
 ${staticUrlsXml}
 ${productUrlsXml}
 </urlset>`;
@@ -3670,7 +3714,7 @@ export function ensureCatalogInitialized(): Promise<void> {
   return initPromise;
 }
 
-// SSR Dynamic SEO & JSON-LD Injection for /product/:id and /products/:id
+// SSR Dynamic SEO, 10-Country Hreflang & JSON-LD Injection for /product/:id and /products/:id
 app.get(['/product/:id', '/products/:id'], (req, res, next) => {
   try {
     const rawId = decodeURIComponent(req.params.id || '').trim().toLowerCase();
@@ -3696,17 +3740,34 @@ app.get(['/product/:id', '/products/:id'], (req, res, next) => {
     }
     if (!html) return next();
 
-    const meta = generateProductPageMetadata(product, getCanonicalBaseUrl());
-    const safeTitle = escapeXml(meta.title);
+    const baseUrl = getCanonicalBaseUrl();
+    const queryRegion =
+      typeof req.query.region === 'string'
+        ? req.query.region
+        : typeof req.query.country === 'string'
+        ? req.query.country
+        : (req.headers['x-vercel-ip-country'] as string) || null;
+    const region = findRegionBySlugOrIso(queryRegion);
+    const meta = generateProductPageMetadata(product, baseUrl);
+
+    const localizedTitle = region
+      ? `Buy ${product.title} - ${region.fastShippingKeyword} | AeroThor`
+      : meta.title;
+    const safeTitle = escapeXml(localizedTitle);
     const safeDesc = escapeXml(meta.description);
     const safeCanonical = escapeXml(meta.canonicalUrl);
     const safeImage = escapeXml(meta.openGraph.image || '');
     const jsonLdString = JSON.stringify(meta.jsonLd);
 
+    const hreflangLinks = Object.entries(buildProductHreflangAlternates(product.id, baseUrl))
+      .map(([lang, url]) => `    <link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(url)}" />`)
+      .join('\n');
+
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
     const injectedHeadTags = `
     <meta name="description" content="${safeDesc}" />
     <link id="canonical-link" rel="canonical" href="${safeCanonical}" />
+${hreflangLinks}
     <meta property="og:title" content="${safeTitle}" />
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:url" content="${safeCanonical}" />
@@ -3718,6 +3779,64 @@ app.get(['/product/:id', '/products/:id'], (req, res, next) => {
     <meta name="twitter:image" content="${safeImage}" />
     <script id="product-jsonld" type="application/ld+json">${jsonLdString}</script>
     <script>window.__INITIAL_PRODUCT__ = ${JSON.stringify(product)};</script>`;
+
+    html = html.replace('</head>', `${injectedHeadTags}\n  </head>`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.status(200).send(html);
+  } catch {
+    return next();
+  }
+});
+
+// SSR Programmatic Country-Targeted SEO Landing Pages (/deals/:country)
+app.get('/deals/:country', (req, res, next) => {
+  try {
+    const region = findRegionBySlugOrIso(req.params.country);
+    if (!region) return next();
+
+    const templateCandidates = [
+      path.resolve(process.cwd(), 'data', 'index-template.html'),
+      path.resolve(process.cwd(), 'dist', 'index.html'),
+      path.resolve(process.cwd(), 'index.html'),
+    ];
+    let html = '';
+    for (const candidate of templateCandidates) {
+      if (fs.existsSync(candidate)) {
+        html = fs.readFileSync(candidate, 'utf-8');
+        break;
+      }
+    }
+    if (!html) return next();
+
+    const baseUrl = getCanonicalBaseUrl();
+    const canonicalUrl = `${baseUrl}/deals/${region.slug}`;
+    const safeTitle = escapeXml(
+      `${region.localizedDealsH1} | Fast Dispatch & Amazon.${region.amazonDomain.replace(/^amazon\./, '')} Deals`
+    );
+    const safeDesc = escapeXml(region.localizedDealsSubtitle);
+    const regionalJsonLd = buildRegionalDealsJsonLd(
+      region,
+      currentCatalog.slice(0, 24),
+      baseUrl
+    );
+    const hreflangLinks = Object.entries(buildDealsHreflangAlternates(baseUrl))
+      .map(
+        ([lang, url]) =>
+          `    <link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(url)}" />`
+      )
+      .join('\n');
+
+    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
+    const injectedHeadTags = `
+    <meta name="description" content="${safeDesc}" />
+    <link id="canonical-link" rel="canonical" href="${escapeXml(canonicalUrl)}" />
+${hreflangLinks}
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:url" content="${escapeXml(canonicalUrl)}" />
+    <meta property="og:type" content="website" />
+    <script id="regional-deals-jsonld" type="application/ld+json">${JSON.stringify(regionalJsonLd)}</script>
+    <script>window.__INITIAL_REGION_SLUG__ = ${JSON.stringify(region.slug)};</script>`;
 
     html = html.replace('</head>', `${injectedHeadTags}\n  </head>`);
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

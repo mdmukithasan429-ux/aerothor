@@ -1,7 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { GmcProduct } from '../lib/gmc-feed';
+import React, { useState, useMemo, useEffect } from 'react';
+import { GmcProduct, CANONICAL_STORE_URL } from '../lib/gmc-feed';
 import {
-  ExternalLink,
   Search,
   Sparkles,
   ShieldCheck,
@@ -12,26 +11,43 @@ import {
   CheckCircle2,
   X,
   Compass,
+  Globe,
+  Truck,
 } from 'lucide-react';
 import { formatPriceForDisplay } from '../lib/currency';
+import {
+  TARGET_REGIONS,
+  findRegionBySlugOrIso,
+  formatRegionalPrice,
+  localizeAmazonAffiliateUrl,
+  buildRegionalDealsJsonLd,
+} from '../lib/i18n-regions';
 
 interface AffiliatesPageProps {
   products: GmcProduct[];
   onNavigateToStorefront: () => void;
   onSelectCategory?: (category: string) => void;
+  selectedRegionSlug?: string | null;
+  onSelectRegionSlug?: (slug: string | null) => void;
 }
 
 export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
   products,
   onNavigateToStorefront,
+  selectedRegionSlug,
+  onSelectRegionSlug,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPartnerCategory, setSelectedPartnerCategory] = useState<string>('All');
-  const [selectedQuickViewProduct, setSelectedQuickViewProduct] = useState<GmcProduct | null>(null);
 
-  // Filter strictly for affiliate products
+  const activeRegion = useMemo(
+    () => findRegionBySlugOrIso(selectedRegionSlug) || null,
+    [selectedRegionSlug]
+  );
+
+  // Filter for affiliate products (and when in programmatic country mode, include top dropshipping products if affiliate list is small)
   const affiliateProducts = useMemo(() => {
-    return products.filter((p) => {
+    const strictAffiliates = products.filter((p) => {
       const isAff =
         p.productType === 'affiliate' ||
         Boolean(p.affiliateUrl) ||
@@ -39,7 +55,46 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
         p.id.toLowerCase().startsWith('aff-');
       return isAff;
     });
-  }, [products]);
+
+    if (activeRegion && strictAffiliates.length < 12) {
+      const nonAffiliates = products.filter(
+        (p) => !strictAffiliates.some((a) => a.id === p.id)
+      );
+      return [...strictAffiliates, ...nonAffiliates.slice(0, 24 - strictAffiliates.length)];
+    }
+
+    return strictAffiliates;
+  }, [products, activeRegion]);
+
+  // Synchronize document <head> title, canonical, and localized CollectionPage JSON-LD when viewing /deals/[country]
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!activeRegion) return;
+
+    const pageTitle = `${activeRegion.localizedDealsH1} | Fast Dispatch & Amazon.${activeRegion.amazonDomain.replace(/^amazon\./, '')} Deals`;
+    document.title = pageTitle;
+
+    const canonicalEl = document.getElementById('canonical-link') as HTMLLinkElement | null;
+    if (canonicalEl) {
+      canonicalEl.href = `${CANONICAL_STORE_URL}/deals/${activeRegion.slug}`;
+    }
+
+    let scriptEl = document.getElementById('regional-deals-jsonld') as HTMLScriptElement | null;
+    if (!scriptEl) {
+      scriptEl = document.createElement('script');
+      scriptEl.id = 'regional-deals-jsonld';
+      scriptEl.type = 'application/ld+json';
+      document.head.appendChild(scriptEl);
+    }
+    scriptEl.textContent = JSON.stringify(
+      buildRegionalDealsJsonLd(activeRegion, affiliateProducts.slice(0, 24), CANONICAL_STORE_URL)
+    );
+
+    return () => {
+      const existing = document.getElementById('regional-deals-jsonld');
+      if (existing) existing.remove();
+    };
+  }, [activeRegion, affiliateProducts]);
 
   const categories = useMemo(() => {
     const list = new Set<string>();
@@ -59,7 +114,8 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
     return affiliateProducts.filter((p) => {
       const matchesCategory =
         selectedPartnerCategory === 'All' ||
-        (p.product_type && p.product_type.toLowerCase().includes(selectedPartnerCategory.toLowerCase()));
+        (p.product_type &&
+          p.product_type.toLowerCase().includes(selectedPartnerCategory.toLowerCase()));
 
       if (!matchesCategory) return false;
       if (!q) return true;
@@ -69,32 +125,119 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
     });
   }, [affiliateProducts, searchQuery, selectedPartnerCategory]);
 
+  const handleCountryClick = (slug: string | null) => {
+    if (onSelectRegionSlug) {
+      onSelectRegionSlug(slug);
+    }
+    try {
+      const nextPath = slug ? `/deals/${slug}` : '/affiliates';
+      if (window.location.pathname !== nextPath) {
+        window.history.pushState({}, '', nextPath);
+      }
+    } catch {
+      // ignore in restricted iframe contexts
+    }
+  };
+
   return (
     <div className="space-y-8 pb-16">
-      {/* Hero Header with Warm Amber Affiliate Branding */}
+      {/* 10-Country Programmatic SEO Landing Page Switcher (/deals/[country]) */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs text-slate-300">
+          <Globe className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span className="font-semibold text-white">
+            Amazon Associates 10-Country Programmatic SEO Pages:
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => handleCountryClick(null)}
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              !activeRegion
+                ? 'bg-amber-500 text-slate-950 font-bold'
+                : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+            }`}
+          >
+            Global All
+          </button>
+          {TARGET_REGIONS.map((region) => {
+            const isSelected = activeRegion?.slug === region.slug;
+            return (
+              <button
+                key={region.slug}
+                type="button"
+                onClick={() => handleCountryClick(region.slug)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                  isSelected
+                    ? 'bg-emerald-400 text-slate-950 font-bold shadow-sm'
+                    : 'bg-slate-950 text-slate-300 hover:text-white border border-slate-800'
+                }`}
+                title={`${region.localizedDealsH1} (/deals/${region.slug})`}
+              >
+                {region.flag} {region.countryName}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Hero Header (Localized when a country `/deals/[country]` is active) */}
       <section className="relative overflow-hidden rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-950 p-6 sm:p-10 lg:p-12 shadow-2xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 h-72 w-72 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 -mb-10 -ml-10 h-64 w-64 rounded-full bg-orange-600/10 blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-semibold tracking-wide">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-mono text-amber-300">
             <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            <span>Curated Partner Deals &amp; Verified Merchant Links</span>
+            {activeRegion ? (
+              <span>
+                {activeRegion.flag} {activeRegion.countryName.toUpperCase()} STOREFRONT ({activeRegion.hreflang}) · CURRENCY: {activeRegion.currencyCode} ({activeRegion.currencySymbol}) · {activeRegion.amazonDomain.toUpperCase()}
+              </span>
+            ) : (
+              <span>Curated Partner Deals &amp; Verified Merchant Links (10 Active Regions)</span>
+            )}
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
-            Exclusive <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400">Affiliate Deals</span> &amp; Market Drops
+            {activeRegion ? (
+              activeRegion.localizedDealsH1
+            ) : (
+              <>
+                Exclusive{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-orange-400">
+                  Affiliate Deals
+                </span>{' '}
+                &amp; Market Drops
+              </>
+            )}
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-            Hand-selected everyday carry, pro audio, and expedition accessories from authorized global retail partners like Amazon and AliExpress. Click any deal to buy directly from official certified merchants.
+            {activeRegion
+              ? activeRegion.localizedDealsSubtitle
+              : 'Hand-selected everyday carry, pro audio, and expedition accessories from authorized global retail partners across 10 Amazon Associates marketplaces (US, UK, Canada, France, Germany, Italy, Netherlands, Poland, Spain, and Sweden).'}
           </p>
+
+          {activeRegion && (
+            <div className="flex flex-wrap items-center gap-4 text-xs text-emerald-300 font-medium pt-1">
+              <span className="inline-flex items-center gap-1.5">
+                <Truck className="w-3.5 h-3.5 text-emerald-400" />
+                {activeRegion.dispatchBannerText} ({activeRegion.carrierName})
+              </span>
+              <span className="text-slate-600">·</span>
+              <span className="font-mono text-slate-300">
+                Canonical: /deals/{activeRegion.slug}
+              </span>
+            </div>
+          )}
 
           {/* FTC Disclosure Notice */}
           <div className="flex items-start gap-2.5 p-3.5 rounded-xl border border-amber-500/20 bg-amber-950/30 text-xs text-amber-200/90 leading-snug">
             <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <span>
-              <strong>Affiliate Disclosure:</strong> When you purchase through links on this page, we may earn an affiliate commission at no extra cost to you. Pricing and stock availability are maintained in real-time by partner storefronts.
+              <strong>Affiliate Disclosure:</strong> When you purchase through links on this page, we may earn an affiliate commission via{' '}
+              {activeRegion ? `Amazon (${activeRegion.amazonDomain})` : 'Amazon Associates'} at no extra cost to you.
             </span>
           </div>
 
@@ -160,6 +303,7 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
           <span>
             Showing <strong className="text-amber-400">{filteredDeals.length}</strong> of{' '}
             {affiliateProducts.length} partner deals
+            {activeRegion ? ` for ${activeRegion.countryName} (${activeRegion.currencyCode})` : ''}
           </span>
           <span className="flex items-center gap-1.5 text-amber-300/80">
             <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
@@ -168,7 +312,7 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
         </div>
       </section>
 
-      {/* Affiliate Product Grid with Distinct Amber Badges & Theme */}
+      {/* Affiliate Product Grid */}
       <section>
         {filteredDeals.length === 0 ? (
           <div className="p-12 text-center rounded-2xl border border-slate-800 bg-slate-900/50 space-y-3">
@@ -190,10 +334,28 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filteredDeals.map((product) => {
-              const targetUrl =
-                product.affiliateUrl ||
-                product.affiliate_url ||
-                `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`;
+              const targetUrl = activeRegion
+                ? localizeAmazonAffiliateUrl(
+                    product.affiliateUrl || product.affiliate_url,
+                    product.title,
+                    activeRegion
+                  )
+                : product.affiliateUrl ||
+                  product.affiliate_url ||
+                  `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`;
+
+              const displaySalePrice = activeRegion
+                ? formatRegionalPrice(product.sale_price || product.price, activeRegion).formatted
+                : formatPriceForDisplay(product.sale_price || product.price);
+
+              const displayRegularPrice = activeRegion
+                ? formatRegionalPrice(
+                    (parseFloat(
+                      String(product.price || '39.99').replace(/[^0-9.]/g, '')
+                    ) || 39.99) * 1.25,
+                    activeRegion
+                  ).formatted
+                : formatPriceForDisplay(product.price);
 
               return (
                 <article
@@ -210,23 +372,10 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
 
-                      {/* CLEAR DISTINCT AFFILIATE BADGE */}
-                      <div className="absolute top-3 left-3 flex flex-col gap-1 items-start">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider shadow-md">
-                          <Tag className="w-3 h-3 fill-current" />
-                          Affiliate Deal
-                        </span>
-                        {product.sale_price && (
-                          <span className="px-2 py-0.5 rounded bg-orange-600 text-white text-[9px] font-bold tracking-wide">
-                            LIMITED DISCOUNT
-                          </span>
-                        )}
-                      </div>
-
                       {/* Partner Merchant Identifier */}
-                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-slate-950/80 backdrop-blur-sm border border-amber-500/30 text-[10px] font-mono text-amber-300 flex items-center gap-1">
+                      <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-slate-950/85 backdrop-blur-sm border border-amber-500/30 text-[10px] font-mono text-amber-300 flex items-center gap-1">
                         <Compass className="w-3 h-3 text-amber-400" />
-                        Amazon Partner
+                        {activeRegion ? activeRegion.amazonDomain : 'Amazon Partner'}
                       </span>
                     </div>
 
@@ -234,10 +383,10 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
                     <div className="p-4 space-y-2">
                       <div className="flex items-center justify-between gap-2 text-xs">
                         <span className="font-semibold text-amber-400 uppercase tracking-wider text-[11px] truncate">
-                          {product.brand || 'Partner Brand'}
+                          {product.brand || 'AeroThor'}
                         </span>
                         <span className="text-slate-400 font-mono text-[10px]">
-                          {product.id}
+                          {activeRegion ? activeRegion.isoCode : product.id}
                         </span>
                       </div>
 
@@ -252,7 +401,11 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
                       {/* Distinct Feature Tag */}
                       <div className="pt-1 flex items-center gap-1.5 text-[11px] text-slate-400">
                         <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                        <span className="truncate">Prime Shipping Eligible via Amazon</span>
+                        <span className="truncate">
+                          {activeRegion
+                            ? `${activeRegion.dispatchBannerText}`
+                            : 'Prime Shipping Eligible via Amazon'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -261,23 +414,19 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
                   <div className="p-4 pt-3 border-t border-slate-800 bg-slate-950/60 mt-auto space-y-3">
                     <div className="flex items-baseline justify-between gap-2">
                       <div className="font-mono tabular-nums">
-                        {product.sale_price ? (
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-base font-extrabold text-amber-400">
-                              {formatPriceForDisplay(product.sale_price)}
-                            </span>
-                            <span className="text-xs text-slate-500 line-through">
-                              {formatPriceForDisplay(product.price)}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-base font-extrabold text-white">
-                            {formatPriceForDisplay(product.price)}
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-base font-extrabold text-amber-400">
+                            {displaySalePrice}
                           </span>
-                        )}
+                          {(product.sale_price || activeRegion) && (
+                            <span className="text-xs text-slate-500 line-through">
+                              {displayRegularPrice}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-[10px] font-mono text-amber-300/80 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                        Verified Deal
+                      <span className="text-[10px] font-mono text-emerald-400">
+                        In Stock
                       </span>
                     </div>
 
@@ -285,10 +434,14 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
                     <a
                       href={targetUrl}
                       target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 active:from-amber-500 active:to-orange-600 text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation group/btn"
+                      rel="noopener noreferrer sponsored"
+                      className="w-full py-2.5 px-3 bg-[#FF9900] hover:bg-[#e68a00] text-slate-950 font-extrabold text-xs rounded-xl transition-all shadow-md shadow-amber-500/20 flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation group/btn"
                     >
-                      <span>Buy on Amazon / View Deal</span>
+                      <span>
+                        {activeRegion
+                          ? `Buy on ${activeRegion.amazonDomain}`
+                          : 'Buy on Amazon / View Deal'}
+                      </span>
                       <ArrowUpRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                     </a>
                   </div>

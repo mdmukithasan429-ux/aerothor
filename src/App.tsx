@@ -31,13 +31,31 @@ function resolveInitialTabFromPath(): WorkspaceTab {
   if (pathname === '/return-policy' || pathname === '/policies/refund' || pathname === '/policies/return') {
     return 'return_policy';
   }
-  if (pathname === '/affiliates' || pathname === '/deals') return 'affiliates';
+  if (pathname === '/affiliates' || pathname === '/deals' || pathname.startsWith('/deals/')) {
+    return 'affiliates';
+  }
   if (pathname === '/track-order') return 'track_order';
   if (pathname === '/admin/orders') return 'admin_orders';
   if (pathname === '/admin/settings') return 'admin_settings';
   if (pathname === '/admin/affiliate-sync' || pathname === '/admin/auto-sync') return 'affiliate_auto_sync';
   if (pathname === '/admin') return 'admin_inventory';
   return 'storefront';
+}
+
+function resolveInitialRegionSlugFromPath(): string | null {
+  if (typeof window === 'undefined') return null;
+  if ((window as any).__INITIAL_REGION_SLUG__) {
+    return String((window as any).__INITIAL_REGION_SLUG__);
+  }
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (pathname.startsWith('/deals/')) {
+    const slug = pathname.replace(/^\/deals\//, '').split('/')[0].trim().toLowerCase();
+    return slug || null;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const queryRegion = params.get('region') || params.get('country');
+  if (queryRegion) return queryRegion.trim().toLowerCase();
+  return null;
 }
 
 function checkIsPublicTab(tab: WorkspaceTab): boolean {
@@ -91,6 +109,9 @@ export default function App() {
   });
   const [externalCategory, setExternalCategory] = useState<string | null>(null);
   const [trackingQueryPrefill, setTrackingQueryPrefill] = useState<string>('');
+  const [selectedRegionSlug, setSelectedRegionSlug] = useState<string | null>(() =>
+    resolveInitialRegionSlugFromPath()
+  );
 
   // Role-based Admin Authentication State (Default: Customer Mode for public visitors)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(
@@ -102,7 +123,10 @@ export default function App() {
 
   // Sync browser URL path and GA4 page_view when activeTab changes
   useEffect(() => {
-    const targetPath = mapTabToPathname(activeTab);
+    const targetPath =
+      activeTab === 'affiliates' && selectedRegionSlug
+        ? `/deals/${selectedRegionSlug}`
+        : mapTabToPathname(activeTab);
     try {
       const currentPathname = window.location.pathname.replace(/\/+$/, '') || '/';
       const isDirectProductUrl =
@@ -120,7 +144,7 @@ export default function App() {
       // ignore in restricted iframe contexts
     }
     trackPageView(window.location.pathname || targetPath, document.title);
-  }, [activeTab]);
+  }, [activeTab, selectedRegionSlug]);
 
   // Listen to browser Back/Forward navigation
   useEffect(() => {
@@ -302,6 +326,8 @@ export default function App() {
         }}
         onAdminLogout={handleAdminLogout}
         onSelectStoreCategory={(cat) => setExternalCategory(cat)}
+        activeRegionSlug={selectedRegionSlug}
+        onSelectRegionSlug={(slug) => setSelectedRegionSlug(slug)}
       />
 
       {/* Main Viewport Container */}
@@ -325,6 +351,8 @@ export default function App() {
               setExternalCategory(cat);
               setActiveTab('storefront');
             }}
+            selectedRegionSlug={selectedRegionSlug}
+            onSelectRegionSlug={(slug) => setSelectedRegionSlug(slug)}
           />
         )}
 
