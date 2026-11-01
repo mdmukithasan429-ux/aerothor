@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { TopBar, WorkspaceTab } from './components/TopBar';
 import { StoreLandingPage } from './components/StoreLandingPage';
 import { AffiliatesPage } from './components/AffiliatesPage';
@@ -557,6 +558,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <SpeedInsights />
     </div>
   );
 }
