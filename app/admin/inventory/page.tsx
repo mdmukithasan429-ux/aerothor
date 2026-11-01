@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Package,
   Search,
@@ -12,13 +12,19 @@ import {
   RefreshCw,
   CheckCircle2,
   AlertTriangle,
-  Plus,
+  Upload,
+  FileSpreadsheet,
+  Download,
+  X,
+  AlertCircle,
 } from 'lucide-react';
+import { parseProductCsv, validateCsvHeaders } from '../../../src/lib/csv-importer';
 
 export interface InventoryProduct {
   id: string;
   title: string;
   price: string | number;
+  sale_price?: string;
   category?: string;
   product_type?: string;
   google_product_category?: string;
@@ -26,9 +32,15 @@ export interface InventoryProduct {
   stockQuantity?: number;
   image_link?: string;
   productSource?: 'dropshipping' | 'affiliate';
+  productType?: 'dropshipping' | 'affiliate';
   affiliateUrl?: string;
   cjPid?: string;
 }
+
+const SAMPLE_CSV_TEMPLATE = `SKU,Title,Price,Sale Price,Category,Brand,Availability,Image URL,GTIN,Description,Type,Affiliate URL
+CSV-AERO-TUMB-01,Ultra-Light Titanium Insulated Tumbler 600ml,59.99,44.99,Home & Kitchen > Drinkware,AeroThor,in_stock,https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80,084123456001,Double-wall vacuum insulated Grade-1 titanium tumbler with leakproof magnetic lid.,dropshipping,
+CSV-AERO-QI2-02,Qi2 15W 3-in-1 Foldable MagSafe Travel Charger,79.99,59.99,Electronics > Charging Accessories,AeroThor,in_stock,https://images.unsplash.com/photo-1622445262464-84b1456045b6?auto=format&fit=crop&w=800&q=80,084123456002,Ultra-compact foldable wireless charging station for iPhone Apple Watch and AirPods.,dropshipping,
+AFF-AMZN-CSV-04,Sony WH-1000XM5 Wireless Noise Canceling Headphones,398.00,328.00,Electronics > Audio,Sony,in_stock,https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80,027242923799,Industry-leading noise cancellation with 8 microphones and 30-hour battery life.,affiliate,https://www.amazon.com/dp/B09XS7JWHH?tag=aerothor-20`;
 
 export default function AdminInventoryPage() {
   const [products, setProducts] = useState<InventoryProduct[]>([]);
@@ -38,6 +50,22 @@ export default function AdminInventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(15);
+
+  // Import CSV Modal State
+  const [isImportCsvModalOpen, setIsImportCsvModalOpen] = useState(false);
+  const [csvRawContent, setCsvRawContent] = useState<string>(SAMPLE_CSV_TEMPLATE);
+  const [csvFileName, setCsvFileName] = useState<string | null>('sample-supplier-catalog.csv');
+  const [isIngestingCsv, setIsIngestingCsv] = useState(false);
+  const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const csvHeaderValidation = useMemo(() => validateCsvHeaders(csvRawContent), [csvRawContent]);
+  const csvParseResult = useMemo(() => parseProductCsv(csvRawContent), [csvRawContent]);
 
   const fetchInventory = async () => {
     setLoading(true);
@@ -59,6 +87,56 @@ export default function AdminInventoryPage() {
     fetchInventory();
   }, []);
 
+  const handleCsvFileUpload = (file: File | undefined | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (typeof content === 'string') {
+        setCsvRawContent(content);
+        setCsvFileName(file.name);
+        showToast(`Loaded "${file.name}" for validation.`);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleConfirmCsvIngestion = async () => {
+    if (!csvHeaderValidation.isValid || csvParseResult.validProducts.length === 0) {
+      showToast('Please upload a valid CSV with required headers (SKU, Title, Price, Availability).', 'error');
+      return;
+    }
+
+    setIsIngestingCsv(true);
+    const itemsToIngest = csvParseResult.validProducts;
+
+    try {
+      const res = await fetch('/api/products/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: itemsToIngest }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to ingest CSV products');
+      }
+
+      if (Array.isArray(data.products)) {
+        setProducts(data.products);
+      } else {
+        setProducts((prev) => [...itemsToIngest, ...prev]);
+      }
+
+      showToast(`Imported ${itemsToIngest.length} products from CSV into inventory!`);
+      setIsImportCsvModalOpen(false);
+      setCurrentPage(1);
+    } catch (err: any) {
+      showToast(err.message || 'CSV ingestion failed', 'error');
+    } finally {
+      setIsIngestingCsv(false);
+    }
+  };
+
   // Extract unique categories dynamically from products
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -73,7 +151,8 @@ export default function AdminInventoryPage() {
   // Filter products by Type (Dropshipping vs Affiliate), Category, and Search Query
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      const source = p.productSource || (p.affiliateUrl ? 'affiliate' : 'dropshipping');
+      const source =
+        p.productSource || p.productType || (p.affiliateUrl ? 'affiliate' : 'dropshipping');
       if (selectedType !== 'all' && source !== selectedType) return false;
 
       if (selectedCategory !== 'ALL') {
@@ -108,26 +187,55 @@ export default function AdminInventoryPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">
+      {toast && (
+        <div
+          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-xl border shadow-2xl flex items-center gap-2 text-xs font-semibold ${
+            toast.type === 'success'
+              ? 'bg-emerald-950 text-emerald-300 border-emerald-800'
+              : 'bg-rose-950 text-rose-300 border-rose-800'
+          }`}
+        >
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-400" />
+          )}
+          <span>{toast.text}</span>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2.5">
               <Package className="w-6 h-6 text-emerald-400" />
-              ERP Product Inventory & Categorization
+              ERP Product Inventory &amp; Categorization
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Paginated catalog management for CJ Dropshipping & Affiliate products ({filteredProducts.length} matching of {products.length} total)
+              Paginated catalog management for CJ Dropshipping &amp; Affiliate products ({filteredProducts.length} matching of {products.length} total)
             </p>
           </div>
 
-          <button
-            onClick={fetchInventory}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
-            Refresh Catalog
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsImportCsvModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 text-xs font-bold shadow-md transition-colors cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              <span>Import CSV</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={fetchInventory}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-medium text-slate-200 transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-emerald-400' : ''}`} />
+              Refresh Catalog
+            </button>
+          </div>
         </div>
 
         {/* Filter Bar: Type Tabs + Category Dropdown + Search + Page Size */}
@@ -227,7 +335,9 @@ export default function AdminInventoryPage() {
                 ) : (
                   paginatedProducts.map((product) => {
                     const isAffiliate =
-                      product.productSource === 'affiliate' || Boolean(product.affiliateUrl);
+                      product.productSource === 'affiliate' ||
+                      product.productType === 'affiliate' ||
+                      Boolean(product.affiliateUrl);
                     const rawCat =
                       product.category ||
                       product.product_type ||
@@ -347,6 +457,111 @@ export default function AdminInventoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Import CSV Modal */}
+      {isImportCsvModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-3xl bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8">
+            <div className="p-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h3 className="text-sm font-bold text-white">Import Products from CSV</h3>
+                  <p className="text-[11px] text-slate-400">
+                    Upload a .csv file or edit rows below to batch-ingest products into inventory
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportCsvModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-900 border border-slate-800 rounded-xl">
+                <div>
+                  <p className="font-semibold text-white">Select Supplier or Affiliate CSV File</p>
+                  <p className="text-[11px] text-slate-400">
+                    Active file: <span className="font-mono text-emerald-400">{csvFileName}</span>
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => handleCsvFileUpload(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-lg flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Choose .CSV File</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const blob = new Blob([SAMPLE_CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = 'aerothor-product-template.csv';
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    }}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Sample CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1.5">
+                  CSV Data ({csvParseResult.validProducts.length} valid products parsed)
+                </label>
+                <textarea
+                  rows={6}
+                  value={csvRawContent}
+                  onChange={(e) => setCsvRawContent(e.target.value)}
+                  className="w-full p-3 bg-slate-900 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsImportCsvModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmCsvIngestion}
+                  disabled={!csvHeaderValidation.isValid || csvParseResult.validProducts.length === 0 || isIngestingCsv}
+                  className="px-5 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>
+                    {isIngestingCsv
+                      ? 'Ingesting...'
+                      : `Ingest ${csvParseResult.validProducts.length} Products`}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

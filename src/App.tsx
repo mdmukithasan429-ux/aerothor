@@ -351,6 +351,7 @@ export default function App() {
             onBatchUpdate={handleBatchUpdate}
             onBatchDelete={handleBatchDelete}
             onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
+            onIngestProducts={handleIngestProducts}
             onNavigateToTab={(t) => setActiveTab(t as any)}
           />
         )}

@@ -49,11 +49,20 @@ import {
   Activity,
   FileCode,
   Download,
+  Upload,
+  FileSpreadsheet,
   Zap,
   Link as LinkIcon,
   ShoppingBag,
 } from 'lucide-react';
 import { formatPriceForDisplay } from '../lib/currency';
+import { parseProductCsv, validateCsvHeaders } from '../lib/csv-importer';
+
+const SAMPLE_INVENTORY_CSV = `SKU,Title,Price,Sale Price,Category,Brand,Availability,Image URL,GTIN,Description,Type,Affiliate URL
+CSV-AERO-TUMB-01,Ultra-Light Titanium Insulated Tumbler 600ml,59.99,44.99,Home & Kitchen > Drinkware,AeroThor,in_stock,https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80,084123456001,Double-wall vacuum insulated Grade-1 titanium tumbler with leakproof magnetic lid.,dropshipping,
+CSV-AERO-QI2-02,Qi2 15W 3-in-1 Foldable MagSafe Travel Charger,79.99,59.99,Electronics > Charging Accessories,AeroThor,in_stock,https://images.unsplash.com/photo-1622445262464-84b1456045b6?auto=format&fit=crop&w=800&q=80,084123456002,Ultra-compact foldable wireless charging station for iPhone Apple Watch and AirPods.,dropshipping,
+CSV-AERO-PACK-03,Cordura 1000D Waterproof EDC Commuter Backpack,129.99,98.00,Luggage & Travel > Backpacks,AeroThor,in_stock,https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80,084123456003,Weatherproof ballistic nylon commuter pack with suspended 16-inch laptop compartment.,dropshipping,
+AFF-AMZN-CSV-04,Sony WH-1000XM5 Wireless Noise Canceling Headphones,398.00,328.00,Electronics > Audio,Sony,in_stock,https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80,027242923799,Industry-leading noise cancellation with 8 microphones and 30-hour battery life.,affiliate,https://www.amazon.com/dp/B09XS7JWHH?tag=aerothor-20`;
 
 interface AdminInventoryDashboardProps {
   products: GmcProduct[];
@@ -63,6 +72,7 @@ interface AdminInventoryDashboardProps {
   onBatchUpdate?: (updatedProducts: GmcProduct[]) => void;
   onBatchDelete?: (deletedIds: string[]) => void;
   onReplaceCatalog?: (nextCatalog: GmcProduct[]) => void;
+  onIngestProducts?: (newProducts: GmcProduct[], syncToBackend?: boolean) => void;
   onNavigateToTab?: (tab: string) => void;
 }
 
@@ -83,6 +93,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   onBatchUpdate,
   onBatchDelete,
   onReplaceCatalog,
+  onIngestProducts,
   onNavigateToTab,
 }) => {
   // Authentication & Bearer Token State
@@ -132,6 +143,18 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   // Amazon / Affiliate Product Modal State
   const [isAddAmazonModalOpen, setIsAddAmazonModalOpen] = useState(false);
   const [isSavingAmazonProduct, setIsSavingAmazonProduct] = useState(false);
+
+  // Import CSV Modal State
+  const [isImportCsvModalOpen, setIsImportCsvModalOpen] = useState(false);
+  const [csvRawContent, setCsvRawContent] = useState<string>(SAMPLE_INVENTORY_CSV);
+  const [csvFileName, setCsvFileName] = useState<string | null>('sample-supplier-catalog.csv');
+  const [isDraggingCsv, setIsDraggingCsv] = useState(false);
+  const [isIngestingCsv, setIsIngestingCsv] = useState(false);
+  const [showRawCsvEditor, setShowRawCsvEditor] = useState(false);
+  const csvFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const csvHeaderValidation = useMemo(() => validateCsvHeaders(csvRawContent), [csvRawContent]);
+  const csvParseResult = useMemo(() => parseProductCsv(csvRawContent), [csvRawContent]);
   const [amazonForm, setAmazonForm] = useState({
     urlOrAsin: '',
     title: '',
@@ -1359,6 +1382,91 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     }
   };
 
+  const handleCsvFileSelect = (file: File | undefined | null) => {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      showToast('Please select a valid .csv file', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      if (typeof content === 'string') {
+        setCsvRawContent(content);
+        setCsvFileName(file.name);
+        showToast(`Loaded "${file.name}" for pre-flight validation.`);
+      }
+    };
+    reader.onerror = () => {
+      showToast('Failed to read CSV file from disk', 'error');
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDownloadSampleCsv = () => {
+    const blob = new Blob([SAMPLE_INVENTORY_CSV], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'aerothor-product-import-template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('Downloaded sample CSV product template!');
+  };
+
+  const handleConfirmCsvIngestion = async () => {
+    if (!csvHeaderValidation.isValid || csvParseResult.validProducts.length === 0) {
+      showToast('Please provide a valid CSV with required headers (SKU, Title, Price, Availability).', 'error');
+      return;
+    }
+
+    setIsIngestingCsv(true);
+    const itemsToIngest = csvParseResult.validProducts;
+
+    try {
+      const res = await fetch('/api/products/bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken.trim()}`,
+        },
+        body: JSON.stringify({ products: itemsToIngest }),
+      });
+
+      const data = await res.json();
+      addLog(
+        'POST',
+        '/api/products/bulk (CSV Import)',
+        res.status,
+        `Ingested ${itemsToIngest.length} products from ${csvFileName || 'CSV upload'}`
+      );
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to ingest CSV products into inventory');
+      }
+
+      if (onIngestProducts) {
+        onIngestProducts(itemsToIngest, false);
+      } else if (Array.isArray(data.products) && onReplaceCatalog) {
+        onReplaceCatalog(data.products);
+      } else {
+        itemsToIngest.forEach((p) => onAddProduct(p));
+      }
+
+      showToast(
+        `Successfully imported ${itemsToIngest.length} products from CSV into inventory & GMC feed!`
+      );
+      setIsImportCsvModalOpen(false);
+      setCurrentPage(1);
+    } catch (err: any) {
+      showToast(err.message || 'CSV ingestion failed', 'error');
+    } finally {
+      setIsIngestingCsv(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Toast Feedback */}
@@ -1404,6 +1512,16 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsImportCsvModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 border border-emerald-300 rounded-lg transition-colors shadow-md cursor-pointer"
+              title="Upload and ingest a CSV file of products into the inventory"
+            >
+              <Upload className="w-3.5 h-3.5 text-slate-950" />
+              <span>Import CSV</span>
+            </button>
+
             <button
               onClick={handleExportOrdersToCsv}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-emerald-300 bg-slate-950 border border-emerald-500/40 rounded-lg hover:bg-slate-800 transition-colors shadow-sm cursor-pointer"
@@ -2568,6 +2686,15 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
               <span>Amazon &amp; Affiliates ({affiliateCount})</span>
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setIsImportCsvModalOpen(true)}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900/80 border border-emerald-500/40 rounded-lg transition-colors cursor-pointer shadow-sm"
+          >
+            <Upload className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Import CSV</span>
+          </button>
         </div>
 
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -3877,6 +4004,347 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* --------------------------------------------------------------------- */}
+      {/* IMPORT CSV PRODUCTS MODAL                                             */}
+      {/* --------------------------------------------------------------------- */}
+      {isImportCsvModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto animate-in fade-in">
+          <div className="w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden my-8">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-emerald-950/70 via-slate-900 to-slate-900 border-b border-slate-800 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0">
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base font-bold text-white">
+                      Import Products from CSV into Inventory
+                    </h3>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                      PapaParse + GMC Schema Validator
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Upload a supplier or affiliate <code className="text-emerald-400 font-mono">.csv</code> file to validate headers, preview parsed items, and batch-ingest directly into your catalog.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportCsvModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+                aria-label="Close Import CSV Modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 space-y-5 text-xs max-h-[78vh] overflow-y-auto">
+              {/* Step 1: File Dropzone & Template Controls */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDraggingCsv(true);
+                  }}
+                  onDragLeave={() => setIsDraggingCsv(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDraggingCsv(false);
+                    const droppedFile = e.dataTransfer.files?.[0];
+                    handleCsvFileSelect(droppedFile);
+                  }}
+                  onClick={() => csvFileInputRef.current?.click()}
+                  className={`lg:col-span-7 border-2 border-dashed rounded-xl p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+                    isDraggingCsv
+                      ? 'border-emerald-400 bg-emerald-950/30'
+                      : 'border-slate-700 hover:border-emerald-500/60 bg-slate-900/60 hover:bg-slate-900'
+                  }`}
+                >
+                  <input
+                    ref={csvFileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    onChange={(e) => handleCsvFileSelect(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                  <div className="w-10 h-10 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-2">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs font-bold text-white">
+                    Click to select a <span className="text-emerald-400">.CSV file</span> or drag &amp; drop here
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    Supports Dropshipping &amp; Amazon Affiliate CSV feeds (SKU, Title, Price, Availability, Image URL, Category)
+                  </p>
+                  {csvFileName && (
+                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-mono text-[11px]">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Active File: {csvFileName}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Actions & Header Status */}
+                <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-xl p-4 flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Pre-Flight Header Check
+                      </span>
+                      {csvHeaderValidation.isValid ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Headers Valid
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-400">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          Missing Headers
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {(['id', 'title', 'price', 'availability'] as const).map((field) => {
+                        const matched = csvHeaderValidation.matchedAliases[field];
+                        return (
+                          <div
+                            key={field}
+                            className={`px-2.5 py-1.5 rounded-lg border text-[11px] flex items-center justify-between ${
+                              matched
+                                ? 'bg-slate-950 border-emerald-500/30 text-slate-200'
+                                : 'bg-rose-950/30 border-rose-800/40 text-rose-300'
+                            }`}
+                          >
+                            <span className="uppercase font-mono font-semibold">{field}</span>
+                            <span className="font-mono text-[10px] text-emerald-400 truncate max-w-[90px]">
+                              {matched ? `✓ ${matched}` : 'Missing'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800">
+                    <button
+                      type="button"
+                      onClick={handleDownloadSampleCsv}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Template CSV</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCsvRawContent(SAMPLE_INVENTORY_CSV);
+                        setCsvFileName('sample-supplier-catalog.csv');
+                        showToast('Loaded sample CSV data!');
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Reset Sample</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowRawCsvEditor(!showRawCsvEditor)}
+                      className="w-full flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-lg font-medium text-[11px] transition-colors cursor-pointer"
+                    >
+                      <FileCode className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{showRawCsvEditor ? 'Hide Raw CSV Editor' : 'Paste / Edit Raw CSV Text'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Raw CSV Editor */}
+              {showRawCsvEditor && (
+                <div className="space-y-1.5 bg-slate-900/80 border border-slate-800 rounded-xl p-3.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[11px] font-bold text-slate-300">
+                      Raw CSV Content (Edit or paste rows directly)
+                    </label>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      Columns: SKU, Title, Price, Sale Price, Category, Brand, Availability, Image URL, GTIN, Description, Type, Affiliate URL
+                    </span>
+                  </div>
+                  <textarea
+                    rows={6}
+                    value={csvRawContent}
+                    onChange={(e) => {
+                      setCsvRawContent(e.target.value);
+                      setCsvFileName('custom-pasted.csv');
+                    }}
+                    placeholder="SKU,Title,Price,Availability..."
+                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg font-mono text-[11px] text-slate-200 focus:outline-none focus:border-emerald-500 leading-relaxed"
+                  />
+                </div>
+              )}
+
+              {/* Validation Errors / Warnings Banner */}
+              {!csvHeaderValidation.isValid && (
+                <div className="p-3 bg-rose-950/40 border border-rose-700/50 rounded-xl flex items-start gap-2.5 text-rose-200">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Missing Required CSV Headers</p>
+                    <p className="text-[11px] text-rose-300/90 mt-0.5">
+                      Your CSV must include columns for{' '}
+                      <code className="font-mono">SKU (or ID)</code>,{' '}
+                      <code className="font-mono">Title (or Name)</code>,{' '}
+                      <code className="font-mono">Price</code>, and{' '}
+                      <code className="font-mono">Availability (or Stock)</code>. Missing:{' '}
+                      <strong>{csvHeaderValidation.missingHeaders.join(', ')}</strong>
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Live Parsed Products Preview Table */}
+              <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+                <div className="px-4 py-3 bg-slate-950/70 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-emerald-400" />
+                    <span className="font-bold text-white">
+                      Parsed Products Preview ({csvParseResult.validProducts.length} ready to ingest)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 font-mono text-[11px]">
+                    <span className="text-slate-400">
+                      Total Rows: <strong className="text-white">{csvParseResult.totalRows}</strong>
+                    </span>
+                    <span className="text-emerald-400">
+                      Valid SKUs: <strong>{csvParseResult.validProducts.length}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {csvParseResult.validProducts.length === 0 ? (
+                  <div className="p-8 text-center text-slate-400">
+                    No valid product rows detected. Upload a valid CSV file or click &quot;Reset Sample&quot; above.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto max-h-64">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 bg-slate-950/40 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          <th className="py-2.5 px-3">Product / SKU</th>
+                          <th className="py-2.5 px-3">Brand &amp; Category</th>
+                          <th className="py-2.5 px-3">Type</th>
+                          <th className="py-2.5 px-3">Price</th>
+                          <th className="py-2.5 px-3">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 text-xs">
+                        {csvParseResult.validProducts.slice(0, 25).map((item, idx) => (
+                          <tr key={`${item.id}-${idx}`} className="hover:bg-slate-800/40">
+                            <td className="py-2.5 px-3">
+                              <div className="flex items-center gap-2.5">
+                                <img
+                                  src={item.image_link}
+                                  alt={item.title}
+                                  className="w-8 h-8 rounded object-cover bg-slate-800 border border-slate-700 shrink-0"
+                                  onError={(e: any) => {
+                                    e.target.src =
+                                      'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+                                  }}
+                                />
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-white truncate max-w-xs">{item.title}</p>
+                                  <p className="text-[10px] font-mono text-emerald-400">{item.id}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <p className="text-slate-200 font-medium">{item.brand}</p>
+                              <p className="text-[10px] text-slate-400 truncate max-w-[160px]">
+                                {item.product_type || 'General Merchandise'}
+                              </p>
+                            </td>
+                            <td className="py-2.5 px-3">
+                              {item.productType === 'affiliate' ? (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-950/80 text-amber-300 border border-amber-500/30">
+                                  Affiliate
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-950/80 text-indigo-300 border border-indigo-500/30">
+                                  Dropshipping
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 font-mono font-semibold text-emerald-400">
+                              {item.sale_price ? (
+                                <div>
+                                  <span>{item.sale_price}</span>
+                                  <span className="block text-[10px] text-slate-500 line-through">{item.price}</span>
+                                </div>
+                              ) : (
+                                item.price
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3">
+                              <span
+                                className={`inline-flex items-center gap-1 text-[10px] font-semibold ${
+                                  item.availability === 'in_stock' ? 'text-emerald-400' : 'text-amber-400'
+                                }`}
+                              >
+                                <CheckCircle2 className="w-3 h-3" />
+                                {item.availability}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="text-xs text-slate-400">
+                Ready to upsert{' '}
+                <strong className="text-emerald-400 font-mono">{csvParseResult.validProducts.length}</strong>{' '}
+                products into inventory &amp; trigger Google Merchant Center XML feed sync.
+              </div>
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsImportCsvModalOpen(false)}
+                  disabled={isIngestingCsv}
+                  className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmCsvIngestion}
+                  disabled={!csvHeaderValidation.isValid || csvParseResult.validProducts.length === 0 || isIngestingCsv}
+                  className="px-5 py-2 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs transition-all shadow-md disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center gap-1.5"
+                >
+                  {isIngestingCsv ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Ingesting CSV Products...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Ingest {csvParseResult.validProducts.length} Products into Inventory</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

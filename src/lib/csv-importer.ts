@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { GmcProduct, validateGmcProduct } from './gmc-feed';
+import { GmcProduct, validateGmcProduct, CANONICAL_STORE_URL } from './gmc-feed';
 
 export interface HeaderValidationResult {
   isValid: boolean;
@@ -136,7 +136,7 @@ export function parseProductCsv(csvContent: string): CsvParseResult {
       row['link'] ||
       row['url'] ||
       row['canonical_url'] ||
-      `https://example-store.com/products/${id.toLowerCase()}`
+      `${CANONICAL_STORE_URL}/product/${encodeURIComponent(id)}`
     ).trim();
 
     const image_link = (
@@ -144,7 +144,7 @@ export function parseProductCsv(csvContent: string): CsvParseResult {
       row['image_link'] ||
       row['image'] ||
       row['main_image'] ||
-      ''
+      'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80'
     ).trim();
 
     let additional_image_link: string[] | undefined = undefined;
@@ -155,12 +155,14 @@ export function parseProductCsv(csvContent: string): CsvParseResult {
 
     let price = (row['price'] || row['retail_price'] || row['unit_price'] || '').trim();
     if (price && !/\s+[A-Z]{3}$/.test(price)) {
-      price = `${price} USD`;
+      const numericPrice = parseFloat(price.replace(/[^0-9.]/g, ''));
+      price = Number.isFinite(numericPrice) ? `${numericPrice.toFixed(2)} USD` : `${price} USD`;
     }
 
     let sale_price = (row['sale_price'] || row['discount_price'] || '').trim();
     if (sale_price && !/\s+[A-Z]{3}$/.test(sale_price)) {
-      sale_price = `${sale_price} USD`;
+      const numericSale = parseFloat(sale_price.replace(/[^0-9.]/g, ''));
+      sale_price = Number.isFinite(numericSale) ? `${numericSale.toFixed(2)} USD` : `${sale_price} USD`;
     }
 
     const availabilityRaw = (
@@ -168,6 +170,7 @@ export function parseProductCsv(csvContent: string): CsvParseResult {
       row['stock_status'] ||
       row['stock'] ||
       row['quantity'] ||
+      row['stock_quantity'] ||
       'in_stock'
     ).trim().toLowerCase();
 
@@ -181,10 +184,16 @@ export function parseProductCsv(csvContent: string): CsvParseResult {
         ? 'preorder'
         : 'in_stock';
 
-    const brand = (row['brand'] || row['vendor'] || 'Store Exclusive').trim();
+    const brand = (row['brand'] || row['vendor'] || 'AeroThor').trim();
     const gtin = (row['gtin'] || row['upc'] || row['ean'] || row['barcode'] || '').trim() || undefined;
-    const mpn = (row['mpn'] || row['part_number'] || '').trim() || undefined;
+    const mpn = (row['mpn'] || row['part_number'] || id).trim() || undefined;
     const condition = (row['condition'] || 'new').trim().toLowerCase() as GmcProduct['condition'];
+    const affiliateUrl = (row['affiliate_url'] || row['affiliate_link'] || '').trim() || undefined;
+    const rawType = (row['type'] || row['fulfillment_type'] || '').trim().toLowerCase();
+    const productType: 'dropshipping' | 'affiliate' =
+      rawType === 'affiliate' || Boolean(affiliateUrl) || id.toLowerCase().startsWith('aff-')
+        ? 'affiliate'
+        : 'dropshipping';
 
     const product: GmcProduct = {
       id,
@@ -202,7 +211,10 @@ export function parseProductCsv(csvContent: string): CsvParseResult {
       condition: condition === 'refurbished' || condition === 'used' ? condition : 'new',
       identifier_exists: Boolean(gtin || mpn),
       google_product_category: (row['google_product_category'] || row['google_category'] || '').trim() || undefined,
-      product_type: (row['product_type'] || row['category'] || '').trim() || undefined,
+      product_type: (row['product_type'] || row['category'] || 'General Merchandise').trim() || undefined,
+      productType,
+      affiliateUrl,
+      source: 'manual',
     };
 
     const validationErrors = validateGmcProduct(product);
