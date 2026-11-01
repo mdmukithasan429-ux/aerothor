@@ -603,428 +603,6 @@ function generateProductPageMetadata(product, baseUrl) {
   };
 }
 
-// src/lib/i18n-regions.ts
-var TARGET_REGIONS = [
-  {
-    slug: "us",
-    isoCode: "US",
-    hreflang: "en-US",
-    countryName: "United States",
-    countryNameWithArticle: "the United States",
-    flag: "\u{1F1FA}\u{1F1F8}",
-    currencyCode: "USD",
-    currencySymbol: "$",
-    exchangeRateFromUsd: 1,
-    amazonDomain: "amazon.com",
-    amazonAssociateTag: "aerothor-20",
-    dispatchBannerText: "Free 48h Dispatch to the United States",
-    fastShippingKeyword: "Fast Shipping to US & North America",
-    carrierName: "USPS Priority Mail & UPS Ground",
-    transitDays: "2\u20135 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in the United States (2026)",
-    localizedDealsSubtitle: "Verified Amazon.com Prime deals and direct domestic warehouse dropshipping gear with 48-hour USPS tracked dispatch across all 50 states.",
-    seoKeywords: [
-      "best tech deals United States 2026",
-      "Amazon US tech accessories",
-      "fast USPS shipping gadgets",
-      "EDC gear USA"
-    ]
-  },
-  {
-    slug: "uk",
-    isoCode: "GB",
-    hreflang: "en-GB",
-    countryName: "United Kingdom",
-    countryNameWithArticle: "the United Kingdom",
-    flag: "\u{1F1EC}\u{1F1E7}",
-    currencyCode: "GBP",
-    currencySymbol: "\xA3",
-    exchangeRateFromUsd: 0.79,
-    amazonDomain: "amazon.co.uk",
-    amazonAssociateTag: "aerothoruk-21",
-    dispatchBannerText: "Free 48h Dispatch to the United Kingdom",
-    fastShippingKeyword: "Fast Shipping to UK/Canada",
-    carrierName: "Royal Mail Tracked 48 & DPD UK",
-    transitDays: "2\u20134 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in the United Kingdom (2026)",
-    localizedDealsSubtitle: "Hand-picked Amazon.co.uk Prime tech offers and UK domestic warehouse essentials with VAT-inclusive GBP pricing and Royal Mail Tracked 48 delivery.",
-    seoKeywords: [
-      "top tech deals UK 2026",
-      "Amazon UK gadget deals",
-      "Royal Mail 48h tech accessories",
-      "best everyday carry UK"
-    ]
-  },
-  {
-    slug: "canada",
-    isoCode: "CA",
-    hreflang: "en-CA",
-    countryName: "Canada",
-    countryNameWithArticle: "Canada",
-    flag: "\u{1F1E8}\u{1F1E6}",
-    currencyCode: "CAD",
-    currencySymbol: "CA$",
-    exchangeRateFromUsd: 1.36,
-    amazonDomain: "amazon.ca",
-    amazonAssociateTag: "aerothorca-20",
-    dispatchBannerText: "Free 48h Dispatch to Canada",
-    fastShippingKeyword: "Fast Shipping to Canada & UK",
-    carrierName: "Canada Post Expedited & Purolator",
-    transitDays: "3\u20136 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in Canada (2026)",
-    localizedDealsSubtitle: "Curated Amazon.ca Prime tech markdowns and duty-cleared Canadian dropshipping gear priced in CAD with fast dispatch to Toronto, Vancouver, and Montreal.",
-    seoKeywords: [
-      "top tech deals Canada 2026",
-      "Amazon Canada electronics deals",
-      "fast shipping tech accessories Canada",
-      "EDC gear Canada CAD"
-    ]
-  },
-  {
-    slug: "france",
-    isoCode: "FR",
-    hreflang: "fr-FR",
-    countryName: "France",
-    countryNameWithArticle: "France",
-    flag: "\u{1F1EB}\u{1F1F7}",
-    currencyCode: "EUR",
-    currencySymbol: "\u20AC",
-    exchangeRateFromUsd: 0.92,
-    amazonDomain: "amazon.fr",
-    amazonAssociateTag: "aerothorfr-21",
-    dispatchBannerText: "Free 48h Dispatch to France",
-    fastShippingKeyword: "Fast Shipping to France & EU",
-    carrierName: "Colissimo Suivi & Chronopost France",
-    transitDays: "3\u20135 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in France (2026)",
-    localizedDealsSubtitle: "Verified Amazon.fr Prime tech selections and EU warehouse performance gear in EUR (\u20AC) with rapid Colissimo tracked delivery across metropolitan France.",
-    seoKeywords: [
-      "meilleures offres tech France 2026",
-      "Amazon.fr accessoires high-tech",
-      "livraison rapide 48h France",
-      "top tech deals France"
-    ]
-  },
-  {
-    slug: "germany",
-    isoCode: "DE",
-    hreflang: "de-DE",
-    countryName: "Germany",
-    countryNameWithArticle: "Germany",
-    flag: "\u{1F1E9}\u{1F1EA}",
-    currencyCode: "EUR",
-    currencySymbol: "\u20AC",
-    exchangeRateFromUsd: 0.92,
-    amazonDomain: "amazon.de",
-    amazonAssociateTag: "aerothorde-21",
-    dispatchBannerText: "Free 48h Dispatch to Germany",
-    fastShippingKeyword: "Fast Shipping to Germany & EU",
-    carrierName: "DHL Paket Deutschland",
-    transitDays: "2\u20135 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in Germany (2026)",
-    localizedDealsSubtitle: "Precision-engineered tech accessories, GaN chargers, and Amazon.de Prime deals priced in EUR (\u20AC) with fast DHL Paket delivery throughout Germany.",
-    seoKeywords: [
-      "Top Tech Angebote Deutschland 2026",
-      "Amazon.de Technik Deals",
-      "schneller Versand Deutschland",
-      "best tech deals Germany"
-    ]
-  },
-  {
-    slug: "italy",
-    isoCode: "IT",
-    hreflang: "it-IT",
-    countryName: "Italy",
-    countryNameWithArticle: "Italy",
-    flag: "\u{1F1EE}\u{1F1F9}",
-    currencyCode: "EUR",
-    currencySymbol: "\u20AC",
-    exchangeRateFromUsd: 0.92,
-    amazonDomain: "amazon.it",
-    amazonAssociateTag: "aerothorit-21",
-    dispatchBannerText: "Free 48h Dispatch to Italy",
-    fastShippingKeyword: "Fast Shipping to Italy & EU",
-    carrierName: "Poste Italiane & BRT Corriere Espresso",
-    transitDays: "3\u20136 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in Italy (2026)",
-    localizedDealsSubtitle: "Exclusive Amazon.it Prime electronics deals and Italian express-dispatched travel & desk essentials with transparent EUR (\u20AC) pricing.",
-    seoKeywords: [
-      "migliori offerte tech Italia 2026",
-      "accessori tech Amazon.it",
-      "spedizione veloce 48h Italia",
-      "top tech deals Italy"
-    ]
-  },
-  {
-    slug: "netherlands",
-    isoCode: "NL",
-    hreflang: "nl-NL",
-    countryName: "Netherlands",
-    countryNameWithArticle: "the Netherlands",
-    flag: "\u{1F1F3}\u{1F1F1}",
-    currencyCode: "EUR",
-    currencySymbol: "\u20AC",
-    exchangeRateFromUsd: 0.92,
-    amazonDomain: "amazon.nl",
-    amazonAssociateTag: "aerothornl-21",
-    dispatchBannerText: "Free 48h Dispatch to the Netherlands",
-    fastShippingKeyword: "Fast Shipping to Netherlands & Benelux",
-    carrierName: "PostNL Track & Trace",
-    transitDays: "2\u20134 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in the Netherlands (2026)",
-    localizedDealsSubtitle: "Top-rated Amazon.nl tech accessories and Benelux rapid-fulfillment gear in EUR (\u20AC) with PostNL tracked dispatch to Amsterdam, Rotterdam, and Utrecht.",
-    seoKeywords: [
-      "beste tech deals Nederland 2026",
-      "Amazon.nl elektronica aanbiedingen",
-      "snelle verzending PostNL",
-      "top tech deals Netherlands"
-    ]
-  },
-  {
-    slug: "poland",
-    isoCode: "PL",
-    hreflang: "pl-PL",
-    countryName: "Poland",
-    countryNameWithArticle: "Poland",
-    flag: "\u{1F1F5}\u{1F1F1}",
-    currencyCode: "PLN",
-    currencySymbol: "z\u0142",
-    exchangeRateFromUsd: 3.98,
-    amazonDomain: "amazon.pl",
-    amazonAssociateTag: "aerothorpl-21",
-    dispatchBannerText: "Free 48h Dispatch to Poland",
-    fastShippingKeyword: "Fast Shipping to Poland & Central Europe",
-    carrierName: "InPost Paczkomat & DPD Polska",
-    transitDays: "2\u20135 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in Poland (2026)",
-    localizedDealsSubtitle: "Verified Amazon.pl Prime tech promotions and Central European hub inventory priced in Polish Z\u0142oty (PLN) with fast InPost & DPD delivery.",
-    seoKeywords: [
-      "najlepsze okazje technologiczne Polska 2026",
-      "Amazon.pl promocje elektronika",
-      "szybka wysy\u0142ka 48h Polska",
-      "top tech deals Poland"
-    ]
-  },
-  {
-    slug: "spain",
-    isoCode: "ES",
-    hreflang: "es-ES",
-    countryName: "Spain",
-    countryNameWithArticle: "Spain",
-    flag: "\u{1F1EA}\u{1F1F8}",
-    currencyCode: "EUR",
-    currencySymbol: "\u20AC",
-    exchangeRateFromUsd: 0.92,
-    amazonDomain: "amazon.es",
-    amazonAssociateTag: "aerothores-21",
-    dispatchBannerText: "Free 48h Dispatch to Spain",
-    fastShippingKeyword: "Fast Shipping to Spain & EU",
-    carrierName: "Correos Express & SEUR Espa\xF1a",
-    transitDays: "3\u20135 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in Spain (2026)",
-    localizedDealsSubtitle: "Hand-selected Amazon.es Prime tech deals and Iberian express-shipping accessories in EUR (\u20AC) with 48-hour dispatch to Madrid, Barcelona, and Valencia.",
-    seoKeywords: [
-      "mejores ofertas tecnol\xF3gicas Espa\xF1a 2026",
-      "accesorios tech Amazon.es",
-      "env\xEDo r\xE1pido 48h Espa\xF1a",
-      "top tech deals Spain"
-    ]
-  },
-  {
-    slug: "sweden",
-    isoCode: "SE",
-    hreflang: "sv-SE",
-    countryName: "Sweden",
-    countryNameWithArticle: "Sweden",
-    flag: "\u{1F1F8}\u{1F1EA}",
-    currencyCode: "SEK",
-    currencySymbol: "kr",
-    exchangeRateFromUsd: 10.45,
-    amazonDomain: "amazon.se",
-    amazonAssociateTag: "aerothorse-21",
-    dispatchBannerText: "Free 48h Dispatch to Sweden",
-    fastShippingKeyword: "Fast Shipping to Sweden & Nordics",
-    carrierName: "PostNord Tracked Sweden",
-    transitDays: "3\u20135 Business Days",
-    localizedDealsH1: "Top Tech Deals & Accessories in Sweden (2026)",
-    localizedDealsSubtitle: "Nordic-tested everyday carry, desk hardware, and Amazon.se Prime tech offers priced in SEK (kr) with PostNord tracked delivery across Sweden.",
-    seoKeywords: [
-      "b\xE4sta teknikdeals Sverige 2026",
-      "Amazon.se teknik och tillbeh\xF6r",
-      "snabb leverans PostNord",
-      "top tech deals Sweden"
-    ]
-  }
-];
-var DEFAULT_REGION = TARGET_REGIONS[0];
-function findRegionBySlugOrIso(input) {
-  if (!input) return null;
-  const clean = input.trim().toLowerCase();
-  if (!clean) return null;
-  for (const r of TARGET_REGIONS) {
-    if (r.slug === clean || r.isoCode.toLowerCase() === clean || r.hreflang.toLowerCase() === clean || r.countryName.toLowerCase() === clean) {
-      return r;
-    }
-  }
-  if (clean === "gb" || clean === "great-britain" || clean === "england" || clean === "united-kingdom") {
-    return TARGET_REGIONS.find((r) => r.slug === "uk") || null;
-  }
-  if (clean === "usa" || clean === "united-states") {
-    return TARGET_REGIONS.find((r) => r.slug === "us") || null;
-  }
-  if (clean === "ca") {
-    return TARGET_REGIONS.find((r) => r.slug === "canada") || null;
-  }
-  if (clean === "fr") {
-    return TARGET_REGIONS.find((r) => r.slug === "france") || null;
-  }
-  if (clean === "de" || clean === "deutschland") {
-    return TARGET_REGIONS.find((r) => r.slug === "germany") || null;
-  }
-  if (clean === "it" || clean === "italia") {
-    return TARGET_REGIONS.find((r) => r.slug === "italy") || null;
-  }
-  if (clean === "nl" || clean === "holland") {
-    return TARGET_REGIONS.find((r) => r.slug === "netherlands") || null;
-  }
-  if (clean === "pl" || clean === "polska") {
-    return TARGET_REGIONS.find((r) => r.slug === "poland") || null;
-  }
-  if (clean === "es" || clean === "espana") {
-    return TARGET_REGIONS.find((r) => r.slug === "spain") || null;
-  }
-  if (clean === "se" || clean === "sverige") {
-    return TARGET_REGIONS.find((r) => r.slug === "sweden") || null;
-  }
-  return null;
-}
-function getRegionOrDefault(input) {
-  return findRegionBySlugOrIso(input) || DEFAULT_REGION;
-}
-function buildProductHreflangAlternates(productId, baseUrl = CANONICAL_STORE_URL) {
-  const origin = baseUrl.replace(/\/+$/, "");
-  const encodedId = encodeURIComponent(productId);
-  const languages = {
-    "x-default": `${origin}/product/${encodedId}`
-  };
-  for (const region of TARGET_REGIONS) {
-    languages[region.hreflang] = region.slug === "us" ? `${origin}/product/${encodedId}` : `${origin}/product/${encodedId}?region=${region.slug}`;
-  }
-  return languages;
-}
-function buildDealsHreflangAlternates(baseUrl = CANONICAL_STORE_URL) {
-  const origin = baseUrl.replace(/\/+$/, "");
-  const languages = {
-    "x-default": `${origin}/deals/us`
-  };
-  for (const region of TARGET_REGIONS) {
-    languages[region.hreflang] = `${origin}/deals/${region.slug}`;
-  }
-  return languages;
-}
-function formatRegionalPrice(usdPriceInput, region) {
-  const numericUsd = typeof usdPriceInput === "number" ? usdPriceInput : parseFloat(String(usdPriceInput || "0").replace(/[^0-9.]/g, "")) || 29.99;
-  const converted = numericUsd * region.exchangeRateFromUsd;
-  const rounded = region.currencyCode === "SEK" || region.currencyCode === "PLN" ? Math.round(converted) - 0.01 : Number((Math.floor(converted) + 0.99).toFixed(2));
-  const finalAmount = Math.max(1.99, rounded);
-  const numericStr = finalAmount.toFixed(2);
-  if (region.currencyCode === "PLN" || region.currencyCode === "SEK") {
-    return {
-      formatted: `${numericStr} ${region.currencySymbol}`,
-      numeric: numericStr,
-      currency: region.currencyCode
-    };
-  }
-  return {
-    formatted: `${region.currencySymbol}${numericStr}`,
-    numeric: numericStr,
-    currency: region.currencyCode
-  };
-}
-function buildRegionalDealsJsonLd(region, products, baseUrl = CANONICAL_STORE_URL) {
-  const origin = baseUrl.replace(/\/+$/, "");
-  const pageUrl = `${origin}/deals/${region.slug}`;
-  return {
-    "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "@id": `${pageUrl}#collection`,
-    name: region.localizedDealsH1,
-    description: region.localizedDealsSubtitle,
-    url: pageUrl,
-    inLanguage: region.hreflang,
-    isPartOf: {
-      "@type": "WebSite",
-      name: "AeroThor Commerce",
-      url: origin
-    },
-    about: {
-      "@type": "Place",
-      name: region.countryName,
-      address: {
-        "@type": "PostalAddress",
-        addressCountry: region.isoCode
-      }
-    },
-    mainEntity: {
-      "@type": "ItemList",
-      name: region.localizedDealsH1,
-      numberOfItems: products.length,
-      itemListOrder: "https://schema.org/ItemListOrderDescending",
-      itemListElement: products.slice(0, 24).map((product, index) => {
-        const priceInfo = formatRegionalPrice(product.sale_price || product.price, region);
-        const productUrl = `${origin}/product/${encodeURIComponent(product.id)}?region=${region.slug}`;
-        return {
-          "@type": "ListItem",
-          position: index + 1,
-          url: productUrl,
-          item: {
-            "@type": "Product",
-            name: product.title,
-            description: product.description,
-            image: product.image_link,
-            sku: product.id,
-            mpn: product.mpn || product.id,
-            brand: {
-              "@type": "Brand",
-              name: product.brand || "AeroThor"
-            },
-            aggregateRating: {
-              "@type": "AggregateRating",
-              ratingValue: "4.9",
-              reviewCount: "142"
-            },
-            offers: {
-              "@type": "Offer",
-              url: productUrl,
-              priceCurrency: priceInfo.currency,
-              price: priceInfo.numeric,
-              priceValidUntil: "2027-12-31",
-              availability: product.availability === "out_of_stock" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-              itemCondition: "https://schema.org/NewCondition",
-              eligibleRegion: {
-                "@type": "Country",
-                name: region.isoCode
-              },
-              shippingDetails: {
-                "@type": "OfferShippingDetails",
-                shippingDestination: {
-                  "@type": "DefinedRegion",
-                  addressCountry: region.isoCode
-                },
-                shippingRate: {
-                  "@type": "MonetaryAmount",
-                  value: "0.00",
-                  currency: priceInfo.currency
-                }
-              }
-            }
-          }
-        };
-      })
-    }
-  };
-}
-
 // src/lib/api-integrations.ts
 function sanitizeGmcTitle(rawTitle) {
   if (!rawTitle) return "Premium Direct-to-Consumer Gear";
@@ -2479,22 +2057,6 @@ app.use((req, res, next) => {
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=(self)");
   res.setHeader("Strict-Transport-Security", "max-age=63072000; includeSubDomains; preload");
   res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
-  const queryCountry = typeof req.query.region === "string" ? req.query.region : typeof req.query.country === "string" ? req.query.country : null;
-  const headerCountry = queryCountry || req.headers["x-vercel-ip-country"] || req.headers["cf-ipcountry"] || "US";
-  const region = getRegionOrDefault(headerCountry);
-  const bannerText = `Free 48h Dispatch to ${region.countryNameWithArticle}`;
-  res.setHeader("x-user-country", region.isoCode);
-  res.setHeader("x-user-region-slug", region.slug);
-  res.setHeader("x-user-currency", region.currencyCode);
-  res.setHeader("x-user-hreflang", region.hreflang);
-  res.setHeader("x-geo-dispatch-banner", bannerText);
-  const cookieAttrs = "Path=/; Max-Age=2592000; SameSite=Lax";
-  res.append("Set-Cookie", `aero_geo_country=${encodeURIComponent(region.isoCode)}; ${cookieAttrs}`);
-  res.append("Set-Cookie", `aero_geo_slug=${encodeURIComponent(region.slug)}; ${cookieAttrs}`);
-  res.append("Set-Cookie", `aero_geo_banner=${encodeURIComponent(bannerText)}; ${cookieAttrs}`);
-  if (req.path === "/deals" || req.path === "/deals/") {
-    req.url = `/deals/${region.slug}${req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : ""}`;
-  }
   next();
 });
 var rateLimitStore = /* @__PURE__ */ new Map();
@@ -3156,11 +2718,6 @@ app.get(["/api/sitemap.xml", "/sitemap.xml"], (_req, res) => {
     const staticRoutes = [
       { path: "", changefreq: "daily", priority: "1.0" },
       { path: "/deals", changefreq: "daily", priority: "0.9" },
-      ...TARGET_REGIONS.map((r) => ({
-        path: `/deals/${r.slug}`,
-        changefreq: "daily",
-        priority: "0.95"
-      })),
       { path: "/affiliates", changefreq: "weekly", priority: "0.8" },
       { path: "/return-policy", changefreq: "monthly", priority: "0.7" },
       { path: "/policies/shipping", changefreq: "monthly", priority: "0.6" },
@@ -3173,19 +2730,14 @@ app.get(["/api/sitemap.xml", "/sitemap.xml"], (_req, res) => {
       { path: "/?category=Outerwear%20%26%20Commute", changefreq: "daily", priority: "0.85" },
       { path: "/?category=CJ%20Marketplace", changefreq: "daily", priority: "0.85" }
     ];
-    const dealsHreflangXml = TARGET_REGIONS.map(
-      (r) => `
-    <xhtml:link rel="alternate" hreflang="${r.hreflang}" href="${escapeXml(`${baseUrl}/deals/${r.slug}`)}" />`
-    ).join("");
-    const staticUrlsXml = staticRoutes.map((route) => {
-      const isDealsRoute = route.path === "/deals" || route.path.startsWith("/deals/");
-      return `  <url>
+    const staticUrlsXml = staticRoutes.map(
+      (route) => `  <url>
     <loc>${escapeXml(`${baseUrl}${route.path}`)}</loc>
     <lastmod>${nowIso}</lastmod>
     <changefreq>${route.changefreq}</changefreq>
-    <priority>${route.priority}</priority>${isDealsRoute ? dealsHreflangXml : ""}
-  </url>`;
-    }).join("\n");
+    <priority>${route.priority}</priority>
+  </url>`
+    ).join("\n");
     const activeProducts = currentCatalog.filter(
       (item) => item.status !== "archived" && item.isVisible !== false
     );
@@ -3197,22 +2749,16 @@ app.get(["/api/sitemap.xml", "/sitemap.xml"], (_req, res) => {
       <image:loc>${escapeXml(product.image_link)}</image:loc>
       <image:title>${escapeXml(product.title)}</image:title>
     </image:image>` : "";
-      const productHreflangXml = TARGET_REGIONS.map((r) => {
-        const altHref = r.slug === "us" ? productUrl : `${productUrl}?region=${r.slug}`;
-        return `
-    <xhtml:link rel="alternate" hreflang="${r.hreflang}" href="${escapeXml(altHref)}" />`;
-      }).join("");
       return `  <url>
     <loc>${escapeXml(productUrl)}</loc>
     <lastmod>${nowIso}</lastmod>
     <changefreq>daily</changefreq>
-    <priority>${priority}</priority>${imageExtensionXml}${productHreflangXml}
+    <priority>${priority}</priority>${imageExtensionXml}
   </url>`;
     }).join("\n");
     const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${staticUrlsXml}
 ${productUrlsXml}
 </urlset>`;
@@ -5262,22 +4808,16 @@ app.get(["/product/:id", "/products/:id"], (req, res, next) => {
       }
     }
     if (!html) return next();
-    const baseUrl = getCanonicalBaseUrl();
-    const queryRegion = typeof req.query.region === "string" ? req.query.region : typeof req.query.country === "string" ? req.query.country : req.headers["x-vercel-ip-country"] || null;
-    const region = findRegionBySlugOrIso(queryRegion);
-    const meta = generateProductPageMetadata(product, baseUrl);
-    const localizedTitle = region ? `Buy ${product.title} - ${region.fastShippingKeyword} | AeroThor` : meta.title;
-    const safeTitle = escapeXml(localizedTitle);
+    const meta = generateProductPageMetadata(product, getCanonicalBaseUrl());
+    const safeTitle = escapeXml(meta.title);
     const safeDesc = escapeXml(meta.description);
     const safeCanonical = escapeXml(meta.canonicalUrl);
     const safeImage = escapeXml(meta.openGraph.image || "");
     const jsonLdString = JSON.stringify(meta.jsonLd);
-    const hreflangLinks = Object.entries(buildProductHreflangAlternates(product.id, baseUrl)).map(([lang, url]) => `    <link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(url)}" />`).join("\n");
     html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
     const injectedHeadTags = `
     <meta name="description" content="${safeDesc}" />
     <link id="canonical-link" rel="canonical" href="${safeCanonical}" />
-${hreflangLinks}
     <meta property="og:title" content="${safeTitle}" />
     <meta property="og:description" content="${safeDesc}" />
     <meta property="og:url" content="${safeCanonical}" />
@@ -5289,56 +4829,6 @@ ${hreflangLinks}
     <meta name="twitter:image" content="${safeImage}" />
     <script id="product-jsonld" type="application/ld+json">${jsonLdString}</script>
     <script>window.__INITIAL_PRODUCT__ = ${JSON.stringify(product)};</script>`;
-    html = html.replace("</head>", `${injectedHeadTags}
-  </head>`);
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.status(200).send(html);
-  } catch {
-    return next();
-  }
-});
-app.get("/deals/:country", (req, res, next) => {
-  try {
-    const region = findRegionBySlugOrIso(req.params.country);
-    if (!region) return next();
-    const templateCandidates = [
-      path2.resolve(process.cwd(), "data", "index-template.html"),
-      path2.resolve(process.cwd(), "dist", "index.html"),
-      path2.resolve(process.cwd(), "index.html")
-    ];
-    let html = "";
-    for (const candidate of templateCandidates) {
-      if (fs2.existsSync(candidate)) {
-        html = fs2.readFileSync(candidate, "utf-8");
-        break;
-      }
-    }
-    if (!html) return next();
-    const baseUrl = getCanonicalBaseUrl();
-    const canonicalUrl = `${baseUrl}/deals/${region.slug}`;
-    const safeTitle = escapeXml(
-      `${region.localizedDealsH1} | Fast Dispatch & Amazon.${region.amazonDomain.replace(/^amazon\./, "")} Deals`
-    );
-    const safeDesc = escapeXml(region.localizedDealsSubtitle);
-    const regionalJsonLd = buildRegionalDealsJsonLd(
-      region,
-      currentCatalog.slice(0, 24),
-      baseUrl
-    );
-    const hreflangLinks = Object.entries(buildDealsHreflangAlternates(baseUrl)).map(
-      ([lang, url]) => `    <link rel="alternate" hreflang="${escapeXml(lang)}" href="${escapeXml(url)}" />`
-    ).join("\n");
-    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
-    const injectedHeadTags = `
-    <meta name="description" content="${safeDesc}" />
-    <link id="canonical-link" rel="canonical" href="${escapeXml(canonicalUrl)}" />
-${hreflangLinks}
-    <meta property="og:title" content="${safeTitle}" />
-    <meta property="og:description" content="${safeDesc}" />
-    <meta property="og:url" content="${escapeXml(canonicalUrl)}" />
-    <meta property="og:type" content="website" />
-    <script id="regional-deals-jsonld" type="application/ld+json">${JSON.stringify(regionalJsonLd)}</script>
-    <script>window.__INITIAL_REGION_SLUG__ = ${JSON.stringify(region.slug)};</script>`;
     html = html.replace("</head>", `${injectedHeadTags}
   </head>`);
     res.setHeader("Content-Type", "text/html; charset=utf-8");
