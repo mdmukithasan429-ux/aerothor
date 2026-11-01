@@ -97,30 +97,56 @@ function filterCatalogLocally(
     const descLower = (p.description || '').toLowerCase();
     const skuLower = (p.id || '').toLowerCase();
     const brandLower = (p.brand || '').toLowerCase();
+    const typeLower = (p.product_type || p.google_product_category || '').toLowerCase();
+    const isAffiliate =
+      p.productType === 'affiliate' ||
+      Boolean(p.affiliateUrl || p.affiliate_url) ||
+      skuLower.startsWith('aff-');
 
     let matchesCategory = true;
-    if (selectedCategory === 'CJ Marketplace') {
+    if (selectedCategory === 'Affiliate Deals') {
+      matchesCategory = isAffiliate;
+    } else if (selectedCategory === 'Clothing' || selectedCategory === 'Outerwear & Commute') {
+      matchesCategory =
+        typeLower.includes('clothing') ||
+        typeLower.includes('apparel') ||
+        typeLower.includes('outerwear') ||
+        titleLower.includes('hoodie') ||
+        titleLower.includes('jacket') ||
+        titleLower.includes('shirt') ||
+        titleLower.includes('merino') ||
+        titleLower.includes('backpack') ||
+        titleLower.includes('eyewear') ||
+        titleLower.includes('aviator');
+    } else if (selectedCategory === 'CJ Marketplace') {
       matchesCategory =
         Boolean(p.cj_pid) ||
         p.source === 'cj_live' ||
         (skuLower.startsWith('cj-') && !/^cj-(home|fit|trvl|tech)-\d{5}$/.test(skuLower));
     } else if (selectedCategory === 'Drinkware & Travel') {
       matchesCategory =
+        typeLower.includes('drinkware') ||
         titleLower.includes('flask') ||
         titleLower.includes('tumbler') ||
         titleLower.includes('pillow');
     } else if (selectedCategory === 'Tech Accessories') {
       matchesCategory =
+        typeLower.includes('tech') ||
+        typeLower.includes('electronics') ||
         titleLower.includes('charge') ||
         titleLower.includes('stand') ||
         titleLower.includes('dock') ||
+        titleLower.includes('adapter') ||
+        titleLower.includes('ssd') ||
+        titleLower.includes('audio') ||
+        titleLower.includes('headphone') ||
         titleLower.includes('wallet');
-    } else if (selectedCategory === 'Outerwear & Commute') {
+    } else if (selectedCategory && selectedCategory !== 'All') {
+      const catLower = selectedCategory.toLowerCase();
       matchesCategory =
-        titleLower.includes('hoodie') ||
-        titleLower.includes('backpack') ||
-        titleLower.includes('eyewear') ||
-        titleLower.includes('aviator');
+        typeLower.includes(catLower) ||
+        titleLower.includes(catLower) ||
+        descLower.includes(catLower);
     }
 
     if (!matchesCategory) return false;
@@ -161,6 +187,8 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
     filterCatalogLocally(products, searchQuery, selectedCategory)
   );
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -387,7 +415,37 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
     setIsExpressCheckoutOpen(true);
   };
 
-  const categories = ['All', 'CJ Marketplace', 'Drinkware & Travel', 'Tech Accessories', 'Outerwear & Commute'];
+  const categories = [
+    'All',
+    'Clothing',
+    'Tech Accessories',
+    'Affiliate Deals',
+    'Drinkware & Travel',
+    'CJ Marketplace',
+  ];
+
+  // Reset pagination to page 1 when filters or search query change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, debouncedQuery, itemsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, safeCurrentPage, itemsPerPage]);
+
+  const visiblePageNumbers = useMemo(() => {
+    const pages: number[] = [];
+    const start = Math.max(1, safeCurrentPage - 2);
+    const end = Math.min(totalPages, start + 4);
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }, [safeCurrentPage, totalPages]);
 
   // Persist searchQuery and selectedCategory to localStorage & URL query string
   useEffect(() => {
@@ -713,9 +771,23 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
           <div className="flex items-center justify-between sm:justify-end gap-3 px-1">
             <span className="text-xs text-slate-400 font-mono whitespace-nowrap">
-              Showing <span className="text-emerald-400 font-semibold">{filteredProducts.length}</span> of{' '}
-              <span className="text-slate-200 font-semibold">{products.length}</span> items
+              Showing{' '}
+              <span className="text-emerald-400 font-semibold">
+                {filteredProducts.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1}–
+                {Math.min(safeCurrentPage * itemsPerPage, filteredProducts.length)}
+              </span>{' '}
+              of <span className="text-slate-200 font-semibold">{filteredProducts.length}</span> items
             </span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => setItemsPerPage(Number(e.target.value))}
+              aria-label="Products per page"
+              className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs font-mono text-slate-300 focus:outline-none focus:border-emerald-500"
+            >
+              <option value={12}>12 / page</option>
+              <option value={20}>20 / page</option>
+              <option value={40}>40 / page</option>
+            </select>
             {(searchQuery.trim() !== '' || selectedCategory !== 'All') && (
               <button
                 type="button"
@@ -763,8 +835,9 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {filteredProducts.map((p) => {
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+              {paginatedProducts.map((p) => {
               const displayImage = resolveProductImage(p.image_link);
               const isAffiliate =
                 p.productType === 'affiliate' ||
@@ -941,7 +1014,75 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                 </article>
               );
             })}
-          </div>
+            </div>
+
+            {/* Storefront Pagination Bar */}
+            {totalPages > 1 && (
+              <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+                <div>
+                  Showing{' '}
+                  <strong className="text-white">
+                    {(safeCurrentPage - 1) * itemsPerPage + 1}
+                  </strong>
+                  –
+                  <strong className="text-white">
+                    {Math.min(safeCurrentPage * itemsPerPage, filteredProducts.length)}
+                  </strong>{' '}
+                  of <strong className="text-emerald-400">{filteredProducts.length}</strong> products
+                  {selectedCategory !== 'All' && (
+                    <span>
+                      {' '}
+                      in <strong className="text-white">{selectedCategory}</strong>
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage <= 1}
+                    onClick={() => {
+                      setCurrentPage((prev) => Math.max(1, prev - 1));
+                      document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 hover:bg-slate-800 disabled:opacity-40 font-semibold cursor-pointer transition-colors"
+                  >
+                    ← Prev
+                  </button>
+
+                  {visiblePageNumbers.map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      onClick={() => {
+                        setCurrentPage(pageNum);
+                        document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition-colors cursor-pointer ${
+                        pageNum === safeCurrentPage
+                          ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                          : 'bg-slate-950 border border-slate-800 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={safeCurrentPage >= totalPages}
+                    onClick={() => {
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                      document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 hover:bg-slate-800 disabled:opacity-40 font-semibold cursor-pointer transition-colors"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
 

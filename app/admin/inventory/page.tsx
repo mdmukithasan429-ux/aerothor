@@ -17,8 +17,15 @@ import {
   Download,
   X,
   AlertCircle,
+  Globe,
+  Tag,
 } from 'lucide-react';
 import { parseProductCsv, validateCsvHeaders } from '../../../src/lib/csv-importer';
+import { InternationalSeoDashboard } from '../../components/InternationalSeoDashboard';
+import {
+  STOREFRONT_CATEGORY_TABS,
+  matchesProductCategory,
+} from '../../../components/product/ProductGrid';
 
 export interface InventoryProduct {
   id: string;
@@ -47,9 +54,10 @@ export default function AdminInventoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'dropshipping' | 'affiliate'>('all');
-  const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
+  const [showI18nSeoDashboard, setShowI18nSeoDashboard] = useState<boolean>(true);
 
   // Import CSV Modal State
   const [isImportCsvModalOpen, setIsImportCsvModalOpen] = useState(false);
@@ -137,29 +145,29 @@ export default function AdminInventoryPage() {
     }
   };
 
-  // Extract unique categories dynamically from products
-  const categories = useMemo(() => {
-    const set = new Set<string>();
+  // Dynamic Category Tabs
+  const categoryTabs = useMemo(() => {
+    const base = [...STOREFRONT_CATEGORY_TABS];
+    const seen = new Set(base.map((c) => c.toLowerCase()));
     products.forEach((p) => {
-      const rawCat = p.category || p.product_type || p.google_product_category || 'General Merchandise';
-      const topCat = rawCat.split('>')[0].trim();
-      if (topCat) set.add(topCat);
+      const rawCat = p.category || p.product_type || p.google_product_category || '';
+      const topCat = rawCat.split('>')[0]?.trim();
+      if (topCat && !seen.has(topCat.toLowerCase()) && base.length < 9) {
+        seen.add(topCat.toLowerCase());
+        base.push(topCat as any);
+      }
     });
-    return ['ALL', ...Array.from(set).sort()];
+    return base;
   }, [products]);
 
-  // Filter products by Type (Dropshipping vs Affiliate), Category, and Search Query
+  // Filter products by Type (Dropshipping vs Affiliate), Category Tab, and Search Query
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const source =
         p.productSource || p.productType || (p.affiliateUrl ? 'affiliate' : 'dropshipping');
       if (selectedType !== 'all' && source !== selectedType) return false;
 
-      if (selectedCategory !== 'ALL') {
-        const rawCat = p.category || p.product_type || p.google_product_category || 'General Merchandise';
-        const topCat = rawCat.split('>')[0].trim();
-        if (topCat !== selectedCategory) return false;
-      }
+      if (!matchesProductCategory(p as any, selectedCategory)) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -213,11 +221,20 @@ export default function AdminInventoryPage() {
               ERP Product Inventory &amp; Categorization
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Paginated catalog management for CJ Dropshipping &amp; Affiliate products ({filteredProducts.length} matching of {products.length} total)
+              Paginated catalog management ({itemsPerPage} items/page) for CJ Dropshipping &amp; Affiliate products ({filteredProducts.length} matching of {products.length} total)
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowI18nSeoDashboard((prev) => !prev)}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-900 border border-emerald-500/40 hover:border-emerald-400 text-emerald-400 text-xs font-bold transition-colors cursor-pointer"
+            >
+              <Globe className="w-4 h-4" />
+              <span>{showI18nSeoDashboard ? 'Hide i18n SEO Dashboard' : 'Show i18n SEO Dashboard'}</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setIsImportCsvModalOpen(true)}
@@ -236,6 +253,36 @@ export default function AdminInventoryPage() {
               Refresh Catalog
             </button>
           </div>
+        </div>
+
+        {/* International SEO GA4 Dashboard */}
+        {showI18nSeoDashboard && <InternationalSeoDashboard />}
+
+        {/* Dynamic Category Tabs at Top of Product Grid */}
+        <div className="flex items-center gap-1.5 p-1.5 bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto no-scrollbar">
+          {categoryTabs.map((cat) => {
+            const active = selectedCategory === cat;
+            const isAffiliateTab = cat === 'Affiliate Deals';
+            return (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  active
+                    ? isAffiliateTab
+                      ? 'bg-amber-500 text-slate-950 font-bold shadow'
+                      : 'bg-emerald-400 text-slate-950 font-bold shadow'
+                    : isAffiliateTab
+                    ? 'text-amber-300 hover:text-amber-200 hover:bg-slate-800'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                {isAffiliateTab && <Tag className="w-3.5 h-3.5" />}
+                <span>{cat}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Filter Bar: Type Tabs + Category Dropdown + Search + Page Size */}
@@ -266,9 +313,9 @@ export default function AdminInventoryPage() {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="w-full bg-transparent text-xs text-slate-200 focus:outline-none"
               >
-                {categories.map((cat) => (
+                {categoryTabs.map((cat) => (
                   <option key={cat} value={cat} className="bg-slate-900 text-slate-100">
-                    {cat === 'ALL' ? 'All Categories' : cat}
+                    {cat === 'All' ? 'All Categories' : cat}
                   </option>
                 ))}
               </select>
@@ -297,7 +344,7 @@ export default function AdminInventoryPage() {
               onChange={(e) => setItemsPerPage(Number(e.target.value))}
               className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none"
             >
-              {[10, 15, 25, 50].map((size) => (
+              {[10, 20, 50, 100].map((size) => (
                 <option key={size} value={size} className="bg-slate-900">
                   {size} / page
                 </option>

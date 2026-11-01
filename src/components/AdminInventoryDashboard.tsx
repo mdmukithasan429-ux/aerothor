@@ -57,6 +57,8 @@ import {
 } from 'lucide-react';
 import { formatPriceForDisplay } from '../lib/currency';
 import { parseProductCsv, validateCsvHeaders } from '../lib/csv-importer';
+import { getAdminToken } from '../lib/admin-auth';
+import { InternationalSeoDashboard } from './InternationalSeoDashboard';
 
 const SAMPLE_INVENTORY_CSV = `SKU,Title,Price,Sale Price,Category,Brand,Availability,Image URL,GTIN,Description,Type,Affiliate URL
 CSV-AERO-TUMB-01,Ultra-Light Titanium Insulated Tumbler 600ml,59.99,44.99,Home & Kitchen > Drinkware,AeroThor,in_stock,https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80,084123456001,Double-wall vacuum insulated Grade-1 titanium tumbler with leakproof magnetic lid.,dropshipping,
@@ -97,7 +99,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   onNavigateToTab,
 }) => {
   // Authentication & Bearer Token State
-  const [adminToken, setAdminToken] = useState('aero_secret_adm_994821');
+  const [adminToken, setAdminToken] = useState(() => getAdminToken());
   const [showToken, setShowToken] = useState(false);
   const [isTokenValid, setIsTokenValid] = useState(true);
 
@@ -108,9 +110,9 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'title-asc' | 'price-asc' | 'price-desc' | 'sku'>('newest');
 
-  // Pagination State (Prevents rendering all 525+ items at once)
+  // Pagination State (20 products per page default to prevent heavy DOM rendering)
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
 
   // Selection for Batch Operations
   const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
@@ -311,20 +313,67 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           return false;
         }
 
-        // Category match
-        if (selectedCategory !== 'all') {
+        // Category match (supports dynamic tabs: Clothing, Tech Accessories, Affiliate Deals, Drinkware & Travel, CJ Marketplace, plus custom categories)
+        const isAffiliate =
+          p.productType === 'affiliate' ||
+          p.id.toLowerCase().startsWith('aff-') ||
+          Boolean(p.affiliateUrl || p.affiliate_url);
+
+        if (selectedCategory !== 'all' && selectedCategory !== 'All') {
           const rawCat = p.product_type || p.google_product_category || '';
           const cleanCat = rawCat.split('>').pop()?.trim() || rawCat.trim();
-          if (cleanCat !== selectedCategory && !rawCat.toLowerCase().includes(selectedCategory.toLowerCase())) {
+          const titleLower = (p.title || '').toLowerCase();
+          const typeLower = rawCat.toLowerCase();
+          const skuLower = (p.id || '').toLowerCase();
+
+          if (selectedCategory === 'Affiliate Deals') {
+            if (!isAffiliate) return false;
+          } else if (selectedCategory === 'Clothing') {
+            const isClothing =
+              typeLower.includes('clothing') ||
+              typeLower.includes('apparel') ||
+              typeLower.includes('outerwear') ||
+              titleLower.includes('hoodie') ||
+              titleLower.includes('jacket') ||
+              titleLower.includes('shirt') ||
+              titleLower.includes('merino') ||
+              titleLower.includes('backpack') ||
+              titleLower.includes('eyewear') ||
+              titleLower.includes('aviator');
+            if (!isClothing) return false;
+          } else if (selectedCategory === 'Tech Accessories') {
+            const isTech =
+              typeLower.includes('tech') ||
+              typeLower.includes('electronics') ||
+              titleLower.includes('charge') ||
+              titleLower.includes('stand') ||
+              titleLower.includes('dock') ||
+              titleLower.includes('adapter') ||
+              titleLower.includes('ssd') ||
+              titleLower.includes('audio') ||
+              titleLower.includes('headphone') ||
+              titleLower.includes('wallet');
+            if (!isTech) return false;
+          } else if (selectedCategory === 'Drinkware & Travel') {
+            const isDrinkware =
+              typeLower.includes('drinkware') ||
+              titleLower.includes('flask') ||
+              titleLower.includes('tumbler') ||
+              titleLower.includes('pillow');
+            if (!isDrinkware) return false;
+          } else if (selectedCategory === 'CJ Marketplace') {
+            const isCj =
+              Boolean(p.cj_pid) || p.source === 'cj_live' || skuLower.startsWith('cj-');
+            if (!isCj) return false;
+          } else if (
+            cleanCat !== selectedCategory &&
+            !rawCat.toLowerCase().includes(selectedCategory.toLowerCase())
+          ) {
             return false;
           }
         }
 
         // Product Type match (Dropshipping vs Affiliate)
-        const isAffiliate =
-          p.productType === 'affiliate' ||
-          p.id.toLowerCase().startsWith('aff-') ||
-          Boolean(p.affiliateUrl || p.affiliate_url);
         if (productTypeFilter === 'affiliate' && !isAffiliate) {
           return false;
         }
@@ -2522,6 +2571,11 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
       </div>
 
       {/* --------------------------------------------------------------------- */}
+      {/* INTERNATIONAL SEO DASHBOARD (GA4 REGIONAL TRAFFIC SPLIT BY COUNTRY)   */}
+      {/* --------------------------------------------------------------------- */}
+      <InternationalSeoDashboard />
+
+      {/* --------------------------------------------------------------------- */}
       {/* GOOGLE ANALYTICS 4 (G-0KS0T13HQ7) LIVE DATA COLLECTION CONSOLE        */}
       {/* --------------------------------------------------------------------- */}
       <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-3">
@@ -2695,6 +2749,34 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
             <Upload className="w-3.5 h-3.5 text-emerald-400" />
             <span>Import CSV</span>
           </button>
+        </div>
+
+        {/* Dynamic Category Tabs at top of Admin Product Grid */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-950 border border-slate-800 rounded-lg overflow-x-auto no-scrollbar">
+          {[
+            { label: 'All', value: 'all' },
+            { label: 'Clothing', value: 'Clothing' },
+            { label: 'Tech Accessories', value: 'Tech Accessories' },
+            { label: 'Affiliate Deals', value: 'Affiliate Deals' },
+            { label: 'Drinkware & Travel', value: 'Drinkware & Travel' },
+            { label: 'CJ Marketplace', value: 'CJ Marketplace' },
+          ].map((tab) => {
+            const active = selectedCategory === tab.value;
+            return (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setSelectedCategory(tab.value)}
+                className={`px-3 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                  active
+                    ? 'bg-emerald-400 text-slate-950 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
@@ -3078,9 +3160,9 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500"
               >
                 <option value={10}>10 / page</option>
-                <option value={15}>15 / page</option>
-                <option value={25}>25 / page</option>
+                <option value={20}>20 / page</option>
                 <option value={50}>50 / page</option>
+                <option value={100}>100 / page</option>
               </select>
             </div>
           </div>

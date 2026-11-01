@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { validateAdminPassword } from '../auth/route';
+import { buildProductPrismaWhere } from '../../products/route';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Validate Bearer Token against ADMIN_SECRET_KEY
+ * Validate Bearer Token or session cookie strictly against Vercel environment variables
+ * (process.env.ADMIN_SECURE_PASSWORD / process.env.ADMIN_SECRET_KEY / process.env.ADMIN_PASSWORD)
+ * with zero hardcoded fallback strings.
  */
 function authenticateAdmin(req: NextRequest): { authorized: boolean; response?: NextResponse } {
   const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-  const expectedSecret = process.env.ADMIN_SECRET_KEY || 'aero_secret_adm_994821';
-  const expectedPassword = process.env.ADMIN_PASSWORD || 'admin12345';
   const cookieToken = req.cookies.get('admin_session')?.value || '';
 
-  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : cookieToken;
+  const token =
+    authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : cookieToken;
 
   if (!token) {
     return {
@@ -24,14 +27,7 @@ function authenticateAdmin(req: NextRequest): { authorized: boolean; response?: 
     };
   }
 
-  const isAuthorized =
-    token === expectedSecret ||
-    token === expectedPassword ||
-    token === 'aero_secret_adm_994821' ||
-    token === 'admin12345' ||
-    token === 'Admin@2026';
-
-  if (!isAuthorized) {
+  if (!validateAdminPassword(token)) {
     return {
       authorized: false,
       response: NextResponse.json(
@@ -42,6 +38,68 @@ function authenticateAdmin(req: NextRequest): { authorized: boolean; response?: 
   }
 
   return { authorized: true };
+}
+
+/**
+ * 0. GET: Paginated & Category-Filtered Admin Inventory Query (Prisma `skip`, `take`, `where`)
+ */
+export async function GET(req: NextRequest) {
+  const auth = authenticateAdmin(req);
+  if (!auth.authorized) return auth.response!;
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
+    const take = Math.min(
+      100,
+      Math.max(1, parseInt(searchParams.get('limit') || searchParams.get('take') || '20', 10) || 20)
+    );
+    const explicitSkip = searchParams.get('skip');
+    const skip =
+      explicitSkip !== null && !isNaN(parseInt(explicitSkip, 10))
+        ? Math.max(0, parseInt(explicitSkip, 10))
+        : (page - 1) * take;
+
+    const category = searchParams.get('category') || 'All';
+    const query = searchParams.get('q') || '';
+    const type = searchParams.get('type') || '';
+
+    const where = buildProductPrismaWhere({
+      category,
+      query,
+      type,
+      includeHidden: true,
+    });
+
+    const [totalCount, products] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        include: { variants: true },
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      page,
+      pageSize: take,
+      skip,
+      take,
+      totalCount,
+      totalPages: Math.max(1, Math.ceil(totalCount / take)),
+      category,
+      query,
+      products,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message || 'Failed to fetch paginated admin inventory.' },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -74,15 +132,10 @@ export async function POST(req: NextRequest) {
           currency: (item.currency || 'USD').toUpperCase(),
           stockQuantity: parseInt(String(item.stockQuantity), 10) || 0,
           availability: item.availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
-          condition: item.condition || 'new',
           mainImageUrl: String(item.mainImageUrl || item.image_link || '').trim(),
-          additionalImages: Array.isArray(item.additionalImages) ? item.additionalImages : [],
-          gtin: item.gtin ? String(item.gtin).trim() : null,
-          mpn: item.mpn ? String(item.mpn).trim() : sku,
-          googleCategory: item.googleCategory || 'Apparel & Accessories',
-          productType: item.productType || 'Lifestyle & Gadgets',
-          warehouseCountry: item.warehouseCountry || 'US',
-          status: 'active',
+          additionalImgs: Array.isArray(item.additionalImages) ? item.additionalImages : [],
+          productType: item.productType || 'dropshipping',
+          affiliateUrl: item.affiliateUrl || null,
           isVisible: true,
         };
       });
@@ -92,11 +145,14 @@ export async function POST(req: NextRequest) {
         skipDuplicates: true,
       });
 
-      return NextResponse.json({
-        success: true,
-        message: `Batch created ${result.count} products successfully.`,
-        insertedCount: result.count,
-      }, { status: 201 });
+      return NextResponse.json(
+        {
+          success: true,
+          message: `Batch created ${result.count} products successfully.`,
+          insertedCount: result.count,
+        },
+        { status: 201 }
+      );
     }
 
     // Single item insertion mode
@@ -112,12 +168,8 @@ export async function POST(req: NextRequest) {
       additionalImages = [],
       stockQuantity = 99,
       availability = 'in_stock',
-      condition = 'new',
-      gtin,
-      mpn,
-      googleCategory = 'Apparel & Accessories',
-      productType = 'Lifestyle & Gadgets',
-      warehouseCountry = 'US',
+      productType = 'dropshipping',
+      affiliateUrl,
     } = body;
 
     if (!sku || !title || !price || !mainImageUrl) {
@@ -149,24 +201,22 @@ export async function POST(req: NextRequest) {
         currency: currency.toUpperCase(),
         stockQuantity: parseInt(String(stockQuantity), 10) || 0,
         availability: availability === 'out_of_stock' ? 'out_of_stock' : 'in_stock',
-        condition: condition || 'new',
         mainImageUrl: String(mainImageUrl).trim(),
-        additionalImages: Array.isArray(additionalImages) ? additionalImages : [],
-        gtin: gtin ? String(gtin).trim() : null,
-        mpn: mpn ? String(mpn).trim() : String(sku).trim(),
-        googleCategory,
+        additionalImgs: Array.isArray(additionalImages) ? additionalImages : [],
         productType,
-        warehouseCountry,
-        status: 'active',
+        affiliateUrl: affiliateUrl || null,
         isVisible: true,
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      message: `Product ${newProduct.sku} created successfully.`,
-      product: newProduct,
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        success: true,
+        message: `Product ${newProduct.sku} created successfully.`,
+        product: newProduct,
+      },
+      { status: 201 }
+    );
   } catch (err: any) {
     console.error('[Admin Product Create Error]:', err);
     if (err.code === 'P2002') {
@@ -215,10 +265,13 @@ export async function PATCH(req: NextRequest) {
         if (title !== undefined) dataToUpdate.title = String(title).slice(0, 150);
         if (description !== undefined) dataToUpdate.description = String(description);
 
-        await prisma.product.update({
-          where: targetWhere,
-          data: dataToUpdate,
-        }).then(() => updatedCount++).catch((e) => console.warn('[Batch Item Skip]:', e.message));
+        await prisma.product
+          .update({
+            where: targetWhere,
+            data: dataToUpdate,
+          })
+          .then(() => updatedCount++)
+          .catch((e) => console.warn('[Batch Item Skip]:', e.message));
       }
 
       return NextResponse.json({
@@ -287,7 +340,6 @@ export async function DELETE(req: NextRequest) {
     const sku = searchParams.get('sku');
     const skusParam = searchParams.get('skus');
 
-    // Body can also contain skus array
     let bodySkus: string[] = [];
     try {
       const body = await req.json();
@@ -301,7 +353,6 @@ export async function DELETE(req: NextRequest) {
       ...bodySkus,
     ];
 
-    // Batch deletion mode
     if (combinedSkus.length > 0) {
       const result = await prisma.product.deleteMany({
         where: {
@@ -317,7 +368,6 @@ export async function DELETE(req: NextRequest) {
       });
     }
 
-    // Single deletion mode
     if (!id && !sku) {
       return NextResponse.json(
         { error: 'Query parameter "id", "sku", or "skus" list is required for deletion.' },

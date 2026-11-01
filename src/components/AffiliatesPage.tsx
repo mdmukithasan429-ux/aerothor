@@ -22,6 +22,7 @@ import {
   localizeAmazonAffiliateUrl,
   buildRegionalDealsJsonLd,
 } from '../lib/i18n-regions';
+import { InternationalSeoDashboard } from './InternationalSeoDashboard';
 
 interface AffiliatesPageProps {
   products: GmcProduct[];
@@ -451,6 +452,9 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
           </div>
         )}
       </section>
+
+      {/* International SEO & GA4 Regional Traffic Verification Dashboard */}
+      <InternationalSeoDashboard />
     </div>
   );
 };

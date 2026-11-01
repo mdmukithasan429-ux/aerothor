@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Shield, Lock, Mail, KeyRound, Eye, EyeOff, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { saveAdminSession } from '../lib/admin-auth';
 
-interface AdminLoginModalProps {
+export interface AdminLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (token: string, email: string) => void;
@@ -13,9 +13,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [email, setEmail] = useState('codernestwebsolution@gmail.com');
-  const [secretKey, setSecretKey] = useState('aero_secret_adm_994821');
-  const [showKey, setShowKey] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,8 +26,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     e.preventDefault();
     setError(null);
 
-    if (!secretKey.trim()) {
-      setError('Please enter your Admin Password or Admin Secret Key.');
+    if (!password.trim()) {
+      setError('Please enter your administrator password.');
       return;
     }
 
@@ -35,8 +35,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     try {
       const payload = {
         email: email.trim(),
-        password: secretKey.trim(),
-        secretKey: secretKey.trim(),
+        password: password.trim(),
       };
 
       let res = await fetch('/api/admin/auth/login', {
@@ -45,7 +44,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         body: JSON.stringify(payload),
       });
 
-      // Fallback to /api/admin/auth if /login endpoint is 404 or fails
       if (!res.ok && res.status === 404) {
         res = await fetch('/api/admin/auth', {
           method: 'POST',
@@ -67,6 +65,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
 
       saveAdminSession(data.token, data.email || email.trim(), rememberDevice);
+      setPassword('');
       onSuccess(data.token, data.email || email.trim());
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
@@ -100,11 +99,11 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs" autoComplete="off">
           <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-300 leading-relaxed flex items-start gap-2.5">
             <Lock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
             <div>
-              Public store visitors can only browse products and checkout. Enter your administrator credentials to unlock Inventory Management, CJ API Integration, and Feed controls.
+              Restricted administrative portal. Credentials are validated server-side against your configured <code className="text-emerald-400 font-mono">ADMIN_SECURE_PASSWORD</code> environment variable.
             </div>
           </div>
 
@@ -126,57 +125,37 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="codernestwebsolution@gmail.com"
+                placeholder="admin@aerothor.com"
+                autoComplete="username"
                 className="w-full pl-9 pr-3 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-[11px] font-semibold text-slate-300">
-                Admin Password / Secret Key
-              </label>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSecretKey('admin12345')}
-                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2"
-                >
-                  Fill admin12345
-                </button>
-                <span className="text-slate-600">·</span>
-                <button
-                  type="button"
-                  onClick={() => setSecretKey('aero_secret_adm_994821')}
-                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2"
-                >
-                  Fill Secret Key
-                </button>
-              </div>
-            </div>
+            <label className="block text-[11px] font-semibold text-slate-300">
+              Admin Secure Password
+            </label>
             <div className="relative">
               <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
-                type={showKey ? 'text' : 'password'}
+                type={showPassword ? 'text' : 'password'}
                 required
-                value={secretKey}
-                onChange={(e) => setSecretKey(e.target.value)}
-                placeholder="Enter ADMIN_PASSWORD or ADMIN_SECRET_KEY..."
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your secure administrator password"
+                autoComplete="current-password"
                 className="w-full pl-9 pr-10 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               />
               <button
                 type="button"
-                onClick={() => setShowKey(!showKey)}
+                onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
-                aria-label={showKey ? 'Hide key' : 'Show key'}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
-                {showKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
             </div>
-            <p className="text-[10px] text-slate-400 font-mono">
-              Accepted: <span className="text-emerald-400 select-all">admin12345</span> or <span className="text-emerald-400 select-all">aero_secret_adm_994821</span>
-            </p>
           </div>
 
           <label className="flex items-center gap-2 text-[11px] text-slate-400 cursor-pointer select-none pt-1">
@@ -211,3 +190,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     </div>
   );
 };
+
+export const AuthModal = AdminLoginModal;
+export default AdminLoginModal;

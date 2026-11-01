@@ -4,6 +4,31 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Strictly validates the submitted password against Vercel environment variables
+ * with zero hardcoded fallback strings.
+ */
+export function validateAdminPassword(submittedPassword: string): boolean {
+  const candidate = String(submittedPassword || '').trim();
+  if (!candidate) return false;
+
+  const configuredSecurePassword = (process.env.ADMIN_SECURE_PASSWORD || '').trim();
+  const configuredAdminPassword = (process.env.ADMIN_PASSWORD || '').trim();
+  const configuredSecretKey = (process.env.ADMIN_SECRET_KEY || '').trim();
+
+  if (configuredSecurePassword && candidate === configuredSecurePassword) {
+    return true;
+  }
+  if (configuredAdminPassword && candidate === configuredAdminPassword) {
+    return true;
+  }
+  if (configuredSecretKey && candidate === configuredSecretKey) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Next.js App Router Admin Authentication Route
  * Endpoint: POST /api/admin/auth
  */
@@ -13,22 +38,28 @@ export async function POST(req: NextRequest) {
     const reqEmail = String(body.email || body.reqEmail || '').trim();
     const reqPassword = String(body.password || body.secretKey || body.reqPassword || '').trim();
 
-    // 1. Strict environment variable checks with emergency fallbacks
-    const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || 'codernestwebsolution@gmail.com').trim();
-    const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || 'admin12345').trim();
-    const ADMIN_SECRET = (process.env.ADMIN_SECRET_KEY || 'aero_secret_adm_994821').trim();
+    const configuredSecurePassword = (process.env.ADMIN_SECURE_PASSWORD || '').trim();
+    const configuredAdminPassword = (process.env.ADMIN_PASSWORD || '').trim();
+    const configuredSecretKey = (process.env.ADMIN_SECRET_KEY || '').trim();
+    const configuredAdminEmail = (process.env.ADMIN_EMAIL || '').trim();
 
-    // 2. Simple direct string comparison (removes edge runtime hashing quirks)
+    if (!configuredSecurePassword && !configuredAdminPassword && !configuredSecretKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            'Server configuration error: ADMIN_SECURE_PASSWORD environment variable is not configured.',
+        },
+        { status: 500 }
+      );
+    }
+
     const isEmailValid =
-      reqEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase() ||
-      reqEmail.toLowerCase() === 'codernestwebsolution@gmail.com';
+      !configuredAdminEmail ||
+      !reqEmail ||
+      reqEmail.toLowerCase() === configuredAdminEmail.toLowerCase();
 
-    const isPasswordValid =
-      reqPassword === ADMIN_PASSWORD ||
-      reqPassword === 'admin12345' ||
-      reqPassword === ADMIN_SECRET ||
-      reqPassword === 'aero_secret_adm_994821' ||
-      reqPassword === 'Admin@2026';
+    const isPasswordValid = validateAdminPassword(reqPassword);
 
     if (!isEmailValid || !isPasswordValid) {
       return NextResponse.json(
@@ -40,20 +71,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const token = ADMIN_SECRET || 'aero_secret_adm_994821';
+    const sessionToken =
+      configuredSecretKey || configuredSecurePassword || configuredAdminPassword;
 
     const response = NextResponse.json(
       {
         success: true,
-        token,
-        email: reqEmail || ADMIN_EMAIL,
+        token: sessionToken,
+        email: reqEmail || configuredAdminEmail,
         message: 'Admin session authenticated successfully.',
       },
       { status: 200 }
     );
 
-    // Set HTTP-only session cookie for SSR/middleware support
-    response.cookies.set('admin_session', token, {
+    response.cookies.set('admin_session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -75,18 +106,11 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization') || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : req.cookies.get('admin_session')?.value || '';
-  const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || 'admin12345').trim();
-  const ADMIN_SECRET = (process.env.ADMIN_SECRET_KEY || 'aero_secret_adm_994821').trim();
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7).trim()
+    : req.cookies.get('admin_session')?.value || '';
 
-  const isValid =
-    token === ADMIN_PASSWORD ||
-    token === ADMIN_SECRET ||
-    token === 'admin12345' ||
-    token === 'aero_secret_adm_994821' ||
-    token === 'Admin@2026';
-
-  if (!isValid) {
+  if (!validateAdminPassword(token)) {
     return NextResponse.json({ authenticated: false, error: 'Unauthorized' }, { status: 401 });
   }
 
