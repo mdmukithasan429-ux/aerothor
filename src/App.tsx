@@ -8,6 +8,7 @@ import { GmcFeedWorkspace } from './components/GmcFeedWorkspace';
 import { CsvUploadWorkspace } from './components/CsvUploadWorkspace';
 import { NextJsCodeWorkspace } from './components/NextJsCodeWorkspace';
 import { CjSyncWorkspace } from './components/CjSyncWorkspace';
+import { AffiliateAutoSyncWorkspace } from './components/AffiliateAutoSyncWorkspace';
 import { PMaxAuditWorkspace } from './components/PMaxAuditWorkspace';
 import { AiChatWorkspace } from './components/AiChatWorkspace';
 import { CreativeStudioWorkspace } from './components/CreativeStudioWorkspace';
@@ -32,6 +33,7 @@ function resolveInitialTabFromPath(): WorkspaceTab {
   if (pathname === '/affiliates' || pathname === '/deals') return 'affiliates';
   if (pathname === '/track-order') return 'track_order';
   if (pathname === '/admin/orders') return 'admin_orders';
+  if (pathname === '/admin/affiliate-sync' || pathname === '/admin/auto-sync') return 'affiliate_auto_sync';
   if (pathname === '/admin') return 'admin_inventory';
   return 'storefront';
 }
@@ -345,6 +347,7 @@ export default function App() {
             onBatchUpdate={handleBatchUpdate}
             onBatchDelete={handleBatchDelete}
             onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
+            onNavigateToTab={(t) => setActiveTab(t as any)}
           />
         )}
 
@@ -377,6 +380,15 @@ export default function App() {
 
         {effectiveTab === 'cj_sync' && isAdminAuthenticated && (
           <CjSyncWorkspace
+            catalogProducts={products}
+            onIngestProducts={handleIngestProducts}
+            onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
+            onOpenStorefront={() => setActiveTab('storefront')}
+          />
+        )}
+
+        {effectiveTab === 'affiliate_auto_sync' && isAdminAuthenticated && (
+          <AffiliateAutoSyncWorkspace
             catalogProducts={products}
             onIngestProducts={handleIngestProducts}
             onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}

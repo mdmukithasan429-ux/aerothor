@@ -63,6 +63,7 @@ interface AdminInventoryDashboardProps {
   onBatchUpdate?: (updatedProducts: GmcProduct[]) => void;
   onBatchDelete?: (deletedIds: string[]) => void;
   onReplaceCatalog?: (nextCatalog: GmcProduct[]) => void;
+  onNavigateToTab?: (tab: string) => void;
 }
 
 interface ServerLog {
@@ -82,6 +83,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   onBatchUpdate,
   onBatchDelete,
   onReplaceCatalog,
+  onNavigateToTab,
 }) => {
   // Authentication & Bearer Token State
   const [adminToken, setAdminToken] = useState('aero_secret_adm_994821');
@@ -1421,6 +1423,18 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
               <RefreshCw className={`w-3.5 h-3.5 text-slate-950 ${isSyncing500 ? 'animate-spin' : ''}`} />
               <span>{isSyncing500 ? 'Syncing 500+ Products...' : `Sync 500+ Catalog (${products.length})`}</span>
             </button>
+
+            {onNavigateToTab && (
+              <button
+                type="button"
+                onClick={() => onNavigateToTab('affiliate_auto_sync')}
+                className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 border border-indigo-400/50 rounded-lg shadow-md cursor-pointer transition-all"
+                title="Open dedicated Affiliate Auto-Sync & CJ Dropshipping workspace"
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-300" />
+                <span>Affiliate Auto-Sync (500+)</span>
+              </button>
+            )}
 
             <button
               onClick={() => setIsAddAmazonModalOpen(true)}

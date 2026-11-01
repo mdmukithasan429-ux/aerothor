@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag } from 'lucide-react';
+import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag, Zap } from 'lucide-react';
 
 export type WorkspaceTab =
   | 'storefront'
@@ -8,6 +8,7 @@ export type WorkspaceTab =
   | 'return_policy'
   | 'admin_inventory'
   | 'admin_orders'
+  | 'affiliate_auto_sync'
   | 'gmc_feed'
   | 'csv_upload'
   | 'nextjs_code'
@@ -147,6 +148,18 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 <ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Orders (/admin/orders)</span>
+              </button>
+
+              <button
+                onClick={() => onTabChange('affiliate_auto_sync')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+                  activeTab === 'affiliate_auto_sync'
+                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                    : 'text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>Affiliate Auto-Sync (500+)</span>
               </button>
 
               <button
@@ -368,6 +381,18 @@ export const TopBar: React.FC<TopBarProps> = ({
               }`}
             >
               Orders (/admin/orders)
+            </button>
+
+            <button
+              onClick={() => onTabChange('affiliate_auto_sync')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors flex items-center gap-1 ${
+                activeTab === 'affiliate_auto_sync'
+                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                  : 'text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30'
+              }`}
+            >
+              <Zap className="w-3 h-3 text-amber-400" />
+              <span>Auto-Sync (500+)</span>
             </button>
 
             <button
