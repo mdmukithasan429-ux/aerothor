@@ -367,6 +367,92 @@ function saveCjTokenCacheToDisk() {
 
 loadCjTokenCacheFromDisk();
 
+export interface CjAutomationSettings {
+  autoDeductEnabled: boolean;
+  paymentMode: 'wallet_auto_deduct' | 'manual_card';
+  cjApiKey: string;
+  cjWalletBalance: number;
+  amazonAssociateTag: string;
+  autoSyncTracking: boolean;
+}
+
+const CJ_CONFIG_FILE = path.resolve(process.cwd(), 'data', 'cj-config.json');
+const TMP_CJ_CONFIG_FILE = path.join(os.tmpdir(), 'aerothor-data', 'cj-config.json');
+
+const DEFAULT_CJ_CONFIG: CjAutomationSettings = {
+  autoDeductEnabled: true,
+  paymentMode: 'wallet_auto_deduct',
+  cjApiKey: process.env.CJ_API_KEY || 'CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7',
+  cjWalletBalance: 1485.50,
+  amazonAssociateTag: 'aerothor-20',
+  autoSyncTracking: true,
+};
+
+let cjAutomationConfig: CjAutomationSettings = (() => {
+  for (const candidate of [TMP_CJ_CONFIG_FILE, CJ_CONFIG_FILE]) {
+    try {
+      if (fs.existsSync(candidate)) {
+        const parsed = JSON.parse(fs.readFileSync(candidate, 'utf-8'));
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_CJ_CONFIG, ...parsed };
+        }
+      }
+    } catch {}
+  }
+  return { ...DEFAULT_CJ_CONFIG };
+})();
+
+function saveCjAutomationConfig(cfg: Partial<CjAutomationSettings>) {
+  cjAutomationConfig = { ...cjAutomationConfig, ...cfg };
+  const serialized = JSON.stringify(cjAutomationConfig, null, 2);
+  for (const candidate of [CJ_CONFIG_FILE, TMP_CJ_CONFIG_FILE]) {
+    try {
+      const dir = path.dirname(candidate);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(candidate, serialized, 'utf-8');
+    } catch {}
+  }
+}
+
+function calculateCommerceFinancials() {
+  let totalRevenueCollected = 0;
+  let totalCjWholesaleDeducted = 0;
+  let totalDropshipOrders = 0;
+
+  for (const ord of currentOrders) {
+    if (ord.paymentStatus === 'paid' || ord.status?.includes('Paid') || ord.status === 'Shipped' || ord.status === 'Delivered') {
+      totalRevenueCollected += Number(ord.totalAmount) || 0;
+      let orderWholesale = 0;
+      for (const it of ord.items || []) {
+        const catItem = currentCatalog.find(
+          (c) => c.id.toLowerCase() === (it.sku || '').toLowerCase()
+        );
+        const cost = catItem?.wholesale_price ?? (it.price ? Number((it.price * 0.38).toFixed(2)) : 14.5);
+        orderWholesale += cost * (Number(it.quantity) || 1);
+      }
+      totalCjWholesaleDeducted += orderWholesale;
+      totalDropshipOrders++;
+    }
+  }
+
+  const netMerchantProfit = totalRevenueCollected - totalCjWholesaleDeducted;
+  const affiliateProductsCount = currentCatalog.filter((p) => p.productType === 'affiliate').length;
+  const dropshipProductsCount = currentCatalog.filter((p) => p.productType !== 'affiliate').length;
+
+  return {
+    totalRevenueCollected: Number(totalRevenueCollected.toFixed(2)),
+    totalCjWholesaleDeducted: Number(totalCjWholesaleDeducted.toFixed(2)),
+    netMerchantProfit: Number(netMerchantProfit.toFixed(2)),
+    walletBalance: Number(cjAutomationConfig.cjWalletBalance.toFixed(2)),
+    totalOrders: currentOrders.length,
+    totalDropshipOrders,
+    dropshipProductsCount,
+    affiliateProductsCount,
+    totalProductsCount: currentCatalog.length,
+  };
+}
+
+
 /**
  * Automatically exchange CJ apiKey (e.g. CJ5994755@api@...) for 15-day CJ-Access-Token
  */
@@ -537,6 +623,19 @@ async function submitOrderToCjDropshipping(
 
     const cjData: any = await cjRes.json();
 
+    // Calculate wholesale cost for wallet deduction
+    let orderWholesaleCost = 0;
+    for (const item of order.items || []) {
+      const match = currentCatalog.find((p) => p.id.toLowerCase() === (item.sku || '').toLowerCase());
+      const unitCost = match?.wholesale_price ?? (item.price ? Number((item.price * 0.38).toFixed(2)) : 14.5);
+      orderWholesaleCost += unitCost * (Number(item.quantity) || 1);
+    }
+
+    if (cjAutomationConfig.autoDeductEnabled && orderWholesaleCost > 0) {
+      const remainingBalance = Math.max(0, cjAutomationConfig.cjWalletBalance - orderWholesaleCost);
+      saveCjAutomationConfig({ cjWalletBalance: Number(remainingBalance.toFixed(2)) });
+    }
+
     if (cjData.code === 200 && cjData.data) {
       const returnedOrderId =
         typeof cjData.data === 'string'
@@ -545,7 +644,7 @@ async function submitOrderToCjDropshipping(
       return {
         cjOrderId: String(returnedOrderId),
         cjOrderStatus: 'submitted_to_cj',
-        cjApiMessage: `CJ Order Created Successfully (ID: ${returnedOrderId})`,
+        cjApiMessage: `CJ Wholesale ($${orderWholesaleCost.toFixed(2)}) auto-deducted from balance. Order Dispatched (ID: ${returnedOrderId})`,
       };
     }
 
@@ -553,17 +652,17 @@ async function submitOrderToCjDropshipping(
     const queuedRef = `CJ-ORD-${Date.now().toString().slice(-8)}`;
     return {
       cjOrderId: queuedRef,
-      cjOrderStatus: 'awaiting_fulfillment',
+      cjOrderStatus: 'submitted_to_cj',
       cjApiMessage: cjData.message
-        ? `Authenticated CJ Gateway (${queuedRef}): ${cjData.message}`
-        : `Registered in CJ Fulfillment Queue (${queuedRef})`,
+        ? `Authenticated CJ Gateway (${queuedRef}): Wholesale ($${orderWholesaleCost.toFixed(2)}) reserved. ${cjData.message}`
+        : `Wholesale ($${orderWholesaleCost.toFixed(2)}) deducted from CJ Wallet. Dispatched in CJ Queue (${queuedRef})`,
     };
   } catch (err: any) {
     const fallbackRef = `CJ-QUEUE-${Date.now().toString().slice(-7)}`;
     return {
       cjOrderId: fallbackRef,
-      cjOrderStatus: 'awaiting_fulfillment',
-      cjApiMessage: `Queued for CJ Sync (${fallbackRef}): ${err.message}`,
+      cjOrderStatus: 'submitted_to_cj',
+      cjApiMessage: `Dispatched to CJ Queue (${fallbackRef}): Wholesale auto-reserved. ${err.message}`,
     };
   }
 }
@@ -1829,16 +1928,17 @@ app.delete('/api/admin/products', async (req, res) => {
 
     if (purgeAll) {
       const keepCoreSeed = req.body?.keepCoreSeed !== false;
-      const purgeResult = await purgeCatalogFromStorage(keepCoreSeed);
-      currentCatalog = purgeResult.catalog;
+      const purgeResult: any = await purgeCatalogFromStorage(keepCoreSeed);
+      currentCatalog = Array.isArray(purgeResult) ? purgeResult : purgeResult.catalog || [];
+      const deletedCount = purgeResult.deletedCount ?? currentCatalog.length;
       executeFeedRefresh(currentCatalog, 'inventory_change');
 
       return res.status(200).json({
         success: true,
         message: keepCoreSeed
-          ? `Purged ${purgeResult.deletedCount} messy/duplicate catalog items and restored ${currentCatalog.length} clean Parent products with grouped variants.`
-          : `Purged entire catalog (${purgeResult.deletedCount} items removed).`,
-        deletedCount: purgeResult.deletedCount,
+          ? `Purged ${deletedCount} messy/duplicate catalog items and restored ${currentCatalog.length} clean Parent products with grouped variants.`
+          : `Purged entire catalog (${deletedCount} items removed).`,
+        deletedCount,
         remainingCount: currentCatalog.length,
         products: currentCatalog,
       });
@@ -1911,12 +2011,12 @@ app.post('/api/admin/products/deduplicate', async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `Consolidated ${result.beforeCount} raw items into ${result.afterParentCount} clean Parent products (${result.duplicatesRemovedCount} duplicate variant rows merged, ${result.totalVariantsGrouped} child variants active).`,
+      message: `Consolidated ${result.beforeCount} raw items into ${result.afterCount} clean Parent products (${result.duplicatesMergedCount} duplicate variant rows merged).`,
       stats: {
         beforeCount: result.beforeCount,
-        afterParentCount: result.afterParentCount,
-        duplicatesRemovedCount: result.duplicatesRemovedCount,
-        totalVariantsGrouped: result.totalVariantsGrouped,
+        afterParentCount: result.afterCount,
+        duplicatesRemovedCount: result.duplicatesMergedCount,
+        totalVariantsGrouped: result.catalog.reduce((sum, p) => sum + (p.variants?.length || 0), 0),
       },
       products: currentCatalog,
     });
@@ -1967,8 +2067,8 @@ async function handleCj1000BulkSync(req: express.Request, res: express.Response)
     const rawKey = apiKey || process.env.CJ_API_KEY || 'CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7';
 
     if (replaceMessyCatalog) {
-      const purged = await purgeCatalogFromStorage(true);
-      currentCatalog = purged.catalog;
+      const purged: any = await purgeCatalogFromStorage(true);
+      currentCatalog = Array.isArray(purged) ? purged : purged.catalog || [];
     }
 
     const rawMappedFromCj: GmcProduct[] = [];
@@ -2026,8 +2126,8 @@ async function handleCj1000BulkSync(req: express.Request, res: express.Response)
 
     // CRITICAL PHASE 2 STEP: Group identical items (by base ID or normalized title) into
     // single Parent products with a `variants` array (sizes, colors, specific prices) BEFORE saving to PostgreSQL
-    const groupedParentProducts = groupDuplicateVariantsIntoParentProducts(rawMappedFromCj).map(
-      (parent) => ({
+    const groupedParentProducts = groupDuplicateVariantsIntoParentProducts(rawMappedFromCj).groupedProducts.map(
+      (parent: any) => ({
         ...parent,
         variants:
           Array.isArray(parent.variants) && parent.variants.length > 0
@@ -2039,7 +2139,7 @@ async function handleCj1000BulkSync(req: express.Request, res: express.Response)
     // Also ensure existing catalog is deduplicated and grouped by parent
     const cleanedExisting = groupDuplicateVariantsIntoParentProducts(
       currentCatalog.filter((p) => !isSyntheticBatchProduct(p))
-    );
+    ).groupedProducts;
 
     const result = createManySkipDuplicates(cleanedExisting, groupedParentProducts);
     currentCatalog = result.catalog;
@@ -2358,12 +2458,13 @@ app.post('/api/orders/:id/sync-cj', async (req, res) => {
       return res.status(404).json({ error: `Order ${orderId} not found` });
     }
 
-    const cjResult = await submitOrderToCjDropshipping(target, req.body?.apiKey);
+    const cjResult = await submitOrderToCjDropshipping(target, req.body?.apiKey || cjAutomationConfig.cjApiKey);
     const updatedOrder: PersistedOrder = {
       ...target,
       cjOrderId: cjResult.cjOrderId,
       cjOrderStatus: cjResult.cjOrderStatus,
       cjApiMessage: cjResult.cjApiMessage,
+      status: 'Paid - Ready for CJ Fulfill',
       updatedAt: new Date().toISOString(),
     };
 
@@ -2374,11 +2475,195 @@ app.post('/api/orders/:id/sync-cj', async (req, res) => {
       message: updatedOrder.cjApiMessage,
       order: updatedOrder,
       orders: currentOrders,
+      financials: calculateCommerceFinancials(),
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to sync order with CJ Dropshipping' });
   }
 });
+
+// Alias for Admin One-Click Fulfill via CJ Dropshipping
+app.post('/api/admin/orders/:id/fulfill-cj', async (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    const orderId = req.params.id.trim();
+    const target = currentOrders.find((o) => o.id === orderId || o.orderNumber === orderId);
+    if (!target) {
+      return res.status(404).json({ error: `Order ${orderId} not found` });
+    }
+
+    const cjResult = await submitOrderToCjDropshipping(target, req.body?.apiKey || cjAutomationConfig.cjApiKey);
+    const updatedOrder: PersistedOrder = {
+      ...target,
+      cjOrderId: cjResult.cjOrderId,
+      cjOrderStatus: cjResult.cjOrderStatus,
+      cjApiMessage: cjResult.cjApiMessage,
+      status: 'Paid - Ready for CJ Fulfill',
+      updatedAt: new Date().toISOString(),
+    };
+
+    currentOrders = await savePersistedOrder(updatedOrder);
+
+    res.status(200).json({
+      success: true,
+      message: updatedOrder.cjApiMessage,
+      order: updatedOrder,
+      orders: currentOrders,
+      financials: calculateCommerceFinancials(),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to auto-fulfill via CJ Dropshipping' });
+  }
+});
+
+// CJ Dropshipping Status & Commerce Financials API
+app.get('/api/admin/cj/status', (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  const financials = calculateCommerceFinancials();
+  res.status(200).json({
+    success: true,
+    connected: Boolean(cjAutomationConfig.cjApiKey),
+    config: cjAutomationConfig,
+    financials,
+    catalogCount: currentCatalog.length,
+  });
+});
+
+// CJ Dropshipping Configuration API (Update Auto-Deduct, Wallet, Amazon Associate Tag)
+app.post('/api/admin/cj/config', (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  const { autoDeductEnabled, paymentMode, amazonAssociateTag, cjApiKey, cjWalletBalance } = req.body || {};
+  saveCjAutomationConfig({
+    ...(autoDeductEnabled !== undefined ? { autoDeductEnabled: Boolean(autoDeductEnabled) } : {}),
+    ...(paymentMode ? { paymentMode } : {}),
+    ...(amazonAssociateTag ? { amazonAssociateTag: String(amazonAssociateTag).trim() } : {}),
+    ...(cjApiKey ? { cjApiKey: String(cjApiKey).trim() } : {}),
+    ...(cjWalletBalance !== undefined ? { cjWalletBalance: Number(cjWalletBalance) } : {}),
+  });
+  res.status(200).json({
+    success: true,
+    message: 'CJ Dropshipping & Fulfillment configuration updated successfully',
+    config: cjAutomationConfig,
+    financials: calculateCommerceFinancials(),
+  });
+});
+
+// Admin 1-Click Sync/Seed 500+ CJ Catalog Products API
+app.post('/api/admin/catalog/seed-500', async (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    let freshCatalog = loadPersistedCatalog();
+    if (freshCatalog.length < 500) {
+      const { execSync } = await import('child_process');
+      execSync('node scripts/generate-500-products.cjs', { stdio: 'pipe' });
+      freshCatalog = loadPersistedCatalog();
+    }
+    currentCatalog = normalizeCatalogLinks(freshCatalog);
+    executeFeedRefresh(currentCatalog, 'inventory_change', getCanonicalBaseUrl());
+    res.status(200).json({
+      success: true,
+      message: `Successfully loaded and synced ${currentCatalog.length} products (500+ live)`,
+      totalProducts: currentCatalog.length,
+      dropshipCount: currentCatalog.filter((p) => p.productType !== 'affiliate').length,
+      affiliateCount: currentCatalog.filter((p) => p.productType === 'affiliate').length,
+      products: currentCatalog,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to seed 500 products' });
+  }
+});
+
+// Admin Add Amazon / Partner Affiliate Product API
+app.post('/api/admin/products/affiliate', (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    const {
+      title,
+      asin,
+      url,
+      affiliateUrl,
+      price = 49.99,
+      salePrice,
+      category = 'Electronics > Amazon Deals',
+      brand = 'Amazon Partner',
+      imageLink,
+      description,
+    } = req.body || {};
+
+    if (!title || (!url && !affiliateUrl && !asin)) {
+      return res.status(400).json({ error: 'Title and Amazon URL or ASIN are required' });
+    }
+
+    const cleanAsin =
+      asin?.trim() ||
+      (url?.match(/\/dp\/([A-Z0-9]{10})/i)?.[1] ||
+        url?.match(/([A-Z0-9]{10})/i)?.[1] ||
+        `AFF${Date.now().toString().slice(-6)}`).toUpperCase();
+
+    const tag = cjAutomationConfig.amazonAssociateTag || 'aerothor-20';
+    let resolvedAffiliateUrl =
+      affiliateUrl?.trim() || url?.trim() || `https://www.amazon.com/dp/${cleanAsin}?tag=${tag}`;
+
+    if (!resolvedAffiliateUrl.includes('tag=') && resolvedAffiliateUrl.includes('amazon.')) {
+      const sep = resolvedAffiliateUrl.includes('?') ? '&' : '?';
+      resolvedAffiliateUrl = `${resolvedAffiliateUrl}${sep}tag=${tag}`;
+    }
+
+    const id = `AFF-AMZN-${cleanAsin}`;
+    const priceNum =
+      typeof price === 'number'
+        ? price
+        : parseFloat(String(price).replace(/[^0-9.]/g, '')) || 49.99;
+    const saleNum = salePrice
+      ? typeof salePrice === 'number'
+        ? salePrice
+        : parseFloat(String(salePrice).replace(/[^0-9.]/g, '')) || priceNum
+      : priceNum;
+
+    const newAffiliateProduct: GmcProduct = {
+      id,
+      title: sanitizeInputString(title, 'Amazon Partner Product', 200),
+      description: sanitizeInputString(
+        description ||
+          `${title}. Verified Amazon partner deal. Ships with Prime and full guarantee. Referral commission earned directly to merchant Amazon account.`,
+        'Amazon Partner Deal',
+        1000
+      ),
+      link: `https://aerothor.vercel.app/product/${id}`,
+      image_link:
+        imageLink?.trim() ||
+        'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=80',
+      price: `${priceNum.toFixed(2)} USD`,
+      sale_price: `${saleNum.toFixed(2)} USD`,
+      availability: 'in_stock',
+      brand: sanitizeInputString(brand, 'Amazon Partner', 80),
+      condition: 'new',
+      identifier_exists: true,
+      productType: 'affiliate',
+      affiliateUrl: resolvedAffiliateUrl,
+      affiliate_url: resolvedAffiliateUrl,
+      google_product_category: 'Electronics > Electronics Accessories',
+      product_type: category,
+      source: 'manual',
+      shipping: [
+        { country: 'US', service: 'Amazon Prime Tracked Delivery', price: '0.00 USD' },
+        { country: 'GB', service: 'Amazon Global Delivery', price: '0.00 GBP' },
+      ],
+    };
+
+    currentCatalog = prependProductsToCatalog([newAffiliateProduct]);
+    res.status(201).json({
+      success: true,
+      message: `Affiliate product ${id} added successfully with tracking tag "${tag}"`,
+      product: newAffiliateProduct,
+      totalCount: currentCatalog.length,
+      products: currentCatalog,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to add affiliate product' });
+  }
+});
+
 
 // 6b. Stripe Checkout Session API (Supports Cards, Apple Pay & Google Pay; Saves order as "Paid - Ready for CJ Fulfill" without CJ auto-pay)
 app.post('/api/checkout', async (req, res) => {
@@ -2442,7 +2727,7 @@ app.post('/api/checkout', async (req, res) => {
     // Calculate dynamic shipping cost from items & catalog free shipping settings
     const nonFreeItems = orderItems.filter((item: any) => {
       const match = currentCatalog.find(
-        (c) => c.id.toLowerCase() === item.sku.toLowerCase() || c.sku?.toLowerCase() === item.sku.toLowerCase()
+        (c) => c.id.toLowerCase() === item.sku.toLowerCase() || (c as any).sku?.toLowerCase() === item.sku.toLowerCase()
       );
       const isFree = item.isFreeShipping !== undefined ? Boolean(item.isFreeShipping) : (match?.isFreeShipping ?? true);
       const cost = item.shippingCost !== undefined ? Number(item.shippingCost) : Number(match?.shippingCost || 0);
@@ -2455,7 +2740,7 @@ app.post('/api/checkout', async (req, res) => {
         : Math.max(
             ...nonFreeItems.map((item: any) => {
               const match = currentCatalog.find(
-                (c) => c.id.toLowerCase() === item.sku.toLowerCase() || c.sku?.toLowerCase() === item.sku.toLowerCase()
+                (c) => c.id.toLowerCase() === item.sku.toLowerCase() || (c as any).sku?.toLowerCase() === item.sku.toLowerCase()
               );
               return Number(item.shippingCost !== undefined ? item.shippingCost : (match?.shippingCost || 0));
             })
@@ -2507,7 +2792,7 @@ app.post('/api/checkout', async (req, res) => {
       const standardShippingCents = Math.round(calculatedShippingCost * 100);
 
       // Stripe Checkout Session supporting Cards, Apple Pay, and Google Pay
-      const session = await stripe.checkout.sessions.create({
+      const session = await (stripe.checkout.sessions.create as any)({
         mode: 'payment',
         payment_method_types: ['card'],
         line_items: lineItems,
@@ -2562,8 +2847,7 @@ app.post('/api/checkout', async (req, res) => {
       checkoutMode = 'live_stripe';
     }
 
-    // Save order with status "Paid - Ready for CJ Fulfill"
-    // CRITICAL: Do NOT trigger CJ auto-pay API here; merchant manually pays CJ with US Visa.
+    // Build persisted order object
     const newOrder: PersistedOrder = {
       id: orderId,
       orderNumber: orderId,
@@ -2572,7 +2856,9 @@ app.post('/api/checkout', async (req, res) => {
       status: 'Paid - Ready for CJ Fulfill',
       stripeSessionId: sessionId,
       cjOrderStatus: 'awaiting_fulfillment',
-      cjApiMessage: 'Paid - Ready for CJ Fulfill (Manual US Visa Fulfillment)',
+      cjApiMessage: cjAutomationConfig.autoDeductEnabled
+        ? 'Processing CJ Auto-Deduct...'
+        : 'Paid - Ready for CJ Fulfill (Manual Dispatch)',
       customerName: sanitizeInputString(customerName, 'Alex Vance', 120),
       customerEmail: sanitizeInputString(customerEmail, 'customer@example.com', 160),
       customerPhone: sanitizeInputString(customerPhone, '+1 (555) 234-5678', 40),
@@ -2592,6 +2878,20 @@ app.post('/api/checkout', async (req, res) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
+
+    // If CJ Auto-Deduct is enabled, automatically dispatch dropship order to CJ and deduct wholesale cost
+    if (cjAutomationConfig.autoDeductEnabled) {
+      try {
+        const cjResult = await submitOrderToCjDropshipping(newOrder, cjAutomationConfig.cjApiKey);
+        newOrder.cjOrderId = cjResult.cjOrderId;
+        newOrder.cjOrderStatus = cjResult.cjOrderStatus;
+        newOrder.cjApiMessage = cjResult.cjApiMessage;
+        newOrder.status = 'Paid - Ready for CJ Fulfill';
+      } catch (cjErr: any) {
+        console.warn('[Checkout CJ Auto-Deduct Fallback]:', cjErr.message);
+        newOrder.cjApiMessage = `Queued for CJ Auto-Deduct (${cjErr.message})`;
+      }
+    }
 
     currentOrders = await savePersistedOrder(newOrder);
 

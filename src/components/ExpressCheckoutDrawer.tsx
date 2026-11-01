@@ -317,7 +317,7 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-slate-400 pt-1">
                   <span>Total Amount Paid</span>
-                  <span className="text-white font-bold text-xs">{formatPriceForDisplay(`${confirmedOrderDetails.totalPaid} ${checkoutCurrency}`)}</span>
+                  <span className="text-white font-bold text-xs">{formatPriceForDisplay(`${confirmedOrderDetails.totalPaid} ${formData.country === 'GB' ? 'GBP' : 'USD'}`)}</span>
                 </div>
               </div>
 

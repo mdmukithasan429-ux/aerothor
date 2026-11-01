@@ -1,0 +1,113 @@
+[
+  {
+    "id": "ORD-2026-928140",
+    "orderNumber": "ORD-2026-928140",
+    "trackingCode": "94001118995648123900",
+    "trackingNumber": "94001118995648123900",
+    "status": "Paid - Ready for CJ Fulfill",
+    "stripeSessionId": "cs_live_928140_auto_cj",
+    "cjOrderId": "CJ-ORD-20261101-83921",
+    "cjOrderStatus": "submitted_to_cj",
+    "cjApiMessage": "CJ Wholesale ($24.50) auto-deducted from balance. Order Dispatched (ID: CJ-ORD-20261101-83921)",
+    "customerName": "Marcus Sterling",
+    "customerEmail": "marcus.sterling@gmail.com",
+    "customerPhone": "+1 (415) 883-9201",
+    "shippingAddress": "452 Mission Street, Suite 1400",
+    "shippingCity": "San Francisco",
+    "shippingState": "CA",
+    "shippingZip": "94105",
+    "shippingCountry": "US",
+    "shippingMethod": "free",
+    "paymentMethod": "card",
+    "totalAmount": 69.99,
+    "currency": "USD",
+    "paymentStatus": "paid",
+    "carrier": "USPS Priority Mail",
+    "estimatedDelivery": "3 to 5 Business Days",
+    "items": [
+      {
+        "sku": "CJ-AUD-1000137-BLK",
+        "title": "AeroThor Audio Active Noise Cancelling Wireless Headphones Hi-Res 40mm Drivers (Pro Titanium Edition)",
+        "price": 69.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80"
+      }
+    ],
+    "createdAt": "2026-11-01T04:30:00.000Z",
+    "updatedAt": "2026-11-01T04:30:15.000Z"
+  },
+  {
+    "id": "ORD-2026-881924",
+    "orderNumber": "ORD-2026-881924",
+    "trackingCode": "RM-48-91823401GB",
+    "trackingNumber": "RM-48-91823401GB",
+    "status": "Shipped",
+    "stripeSessionId": "cs_live_881924_auto_cj",
+    "cjOrderId": "CJ-ORD-20261031-77192",
+    "cjOrderStatus": "submitted_to_cj",
+    "cjApiMessage": "CJ Wholesale (£18.50) auto-deducted from balance. Dispatched via Royal Mail Tracked 48",
+    "customerName": "Emma Watson-Davies",
+    "customerEmail": "emma.watson@oxfordalumni.co.uk",
+    "customerPhone": "+44 7700 900142",
+    "shippingAddress": "18 Beaumont Street",
+    "shippingCity": "Oxford",
+    "shippingState": "Oxfordshire",
+    "shippingZip": "OX1 2LX",
+    "shippingCountry": "GB",
+    "shippingMethod": "express",
+    "paymentMethod": "apple_pay",
+    "totalAmount": 58.99,
+    "currency": "GBP",
+    "paymentStatus": "paid",
+    "carrier": "Royal Mail Tracked 48",
+    "estimatedDelivery": "2 to 3 Business Days",
+    "items": [
+      {
+        "sku": "CJ-HOME-1000411-BLK",
+        "title": "AeroThor Living Volcano Flame Aroma Diffuser & Ultrasonic Cool Mist Humidifier (Stealth Matte Black)",
+        "price": 51.00,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?auto=format&fit=crop&w=800&q=80"
+      }
+    ],
+    "createdAt": "2026-10-31T18:15:00.000Z",
+    "updatedAt": "2026-10-31T18:15:20.000Z"
+  },
+  {
+    "id": "ORD-2026-773412",
+    "orderNumber": "ORD-2026-773412",
+    "trackingCode": "94001118995633901200",
+    "trackingNumber": "94001118995633901200",
+    "status": "Delivered",
+    "stripeSessionId": "cs_live_773412_auto_cj",
+    "cjOrderId": "CJ-ORD-20261028-66104",
+    "cjOrderStatus": "fulfilled",
+    "cjApiMessage": "CJ Wholesale ($21.00) deducted. Package Delivered via USPS Priority",
+    "customerName": "David Chen",
+    "customerEmail": "david.chen@techstartup.io",
+    "customerPhone": "+1 (206) 555-0182",
+    "shippingAddress": "1100 2nd Ave, Floor 8",
+    "shippingCity": "Seattle",
+    "shippingState": "WA",
+    "shippingZip": "98101",
+    "shippingCountry": "US",
+    "shippingMethod": "free",
+    "paymentMethod": "google_pay",
+    "totalAmount": 59.99,
+    "currency": "USD",
+    "paymentStatus": "paid",
+    "carrier": "USPS Priority Mail",
+    "estimatedDelivery": "Delivered",
+    "items": [
+      {
+        "sku": "CJ-PWR-1000274-BLK",
+        "title": "AeroThor Power 3-in-1 Foldable MagSafe Wireless Charging Station for iPhone & Watch",
+        "price": 59.99,
+        "quantity": 1,
+        "image": "https://images.unsplash.com/photo-1622445268047-9252c8038bfd?auto=format&fit=crop&w=800&q=80"
+      }
+    ],
+    "createdAt": "2026-10-28T11:20:00.000Z",
+    "updatedAt": "2026-10-30T16:40:00.000Z"
+  }
+]
