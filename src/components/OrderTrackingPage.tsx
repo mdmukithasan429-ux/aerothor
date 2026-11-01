@@ -20,7 +20,8 @@ export type OrderStatusType =
   | 'Pending'
   | 'Processing'
   | 'Shipped'
-  | 'Delivered';
+  | 'Delivered'
+  | 'Cancelled';
 
 export interface TrackedOrderItem {
   sku: string;

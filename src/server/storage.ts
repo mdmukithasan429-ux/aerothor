@@ -45,7 +45,8 @@ export type OrderFulfillmentStatus =
   | 'Pending'
   | 'Processing'
   | 'Shipped'
-  | 'Delivered';
+  | 'Delivered'
+  | 'Cancelled';
 
 export interface PersistedOrder {
   id: string;

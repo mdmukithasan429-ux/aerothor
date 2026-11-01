@@ -13,6 +13,7 @@ import { PMaxAuditWorkspace } from './components/PMaxAuditWorkspace';
 import { AiChatWorkspace } from './components/AiChatWorkspace';
 import { CreativeStudioWorkspace } from './components/CreativeStudioWorkspace';
 import { AdminInventoryDashboard } from './components/AdminInventoryDashboard';
+import { AdminSettingsWorkspace } from './components/AdminSettingsWorkspace';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { ReturnPolicyView } from './components/ReturnPolicyView';
 import { INITIAL_PRODUCTS } from './server/seed-data';
@@ -33,6 +34,7 @@ function resolveInitialTabFromPath(): WorkspaceTab {
   if (pathname === '/affiliates' || pathname === '/deals') return 'affiliates';
   if (pathname === '/track-order') return 'track_order';
   if (pathname === '/admin/orders') return 'admin_orders';
+  if (pathname === '/admin/settings') return 'admin_settings';
   if (pathname === '/admin/affiliate-sync' || pathname === '/admin/auto-sync') return 'affiliate_auto_sync';
   if (pathname === '/admin') return 'admin_inventory';
   return 'storefront';
@@ -61,6 +63,8 @@ function mapTabToPathname(tab: WorkspaceTab): string {
       return '/admin';
     case 'admin_orders':
       return '/admin/orders';
+    case 'admin_settings':
+      return '/admin/settings';
     default:
       return `/admin/${tab.replace(/_/g, '-')}`;
   }
@@ -394,6 +398,10 @@ export default function App() {
             onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
             onOpenStorefront={() => setActiveTab('storefront')}
           />
+        )}
+
+        {effectiveTab === 'admin_settings' && isAdminAuthenticated && (
+          <AdminSettingsWorkspace />
         )}
 
         {effectiveTab === 'pmax_audit' && isAdminAuthenticated && <PMaxAuditWorkspace />}

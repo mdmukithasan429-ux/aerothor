@@ -584,6 +584,78 @@ function saveCjAutomationConfig(cfg: Partial<CjAutomationSettings>) {
   }
 }
 
+export interface StoreSettingsConfig {
+  id: string;
+  isStripeEnabled: boolean;
+  isCodEnabled: boolean;
+  cjApiToken: string;
+  storeCurrency: string;
+  supportEmail: string;
+  amazonAssociateTag: string;
+  autoDeductEnabled: boolean;
+  updatedAt: string;
+}
+
+const STORE_SETTINGS_FILE = path.resolve(process.cwd(), 'data', 'store-settings.json');
+const TMP_STORE_SETTINGS_FILE = path.join(os.tmpdir(), 'aerothor-data', 'store-settings.json');
+
+const DEFAULT_STORE_SETTINGS: StoreSettingsConfig = {
+  id: 'singleton',
+  isStripeEnabled: true,
+  isCodEnabled: false,
+  cjApiToken:
+    cjAutomationConfig.cjApiKey ||
+    process.env.CJ_API_KEY ||
+    'CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7',
+  storeCurrency: 'USD',
+  supportEmail: 'support@aerothor.com',
+  amazonAssociateTag: cjAutomationConfig.amazonAssociateTag || 'aerothor-20',
+  autoDeductEnabled: cjAutomationConfig.autoDeductEnabled ?? true,
+  updatedAt: new Date().toISOString(),
+};
+
+let storeSettings: StoreSettingsConfig = (() => {
+  for (const candidate of [TMP_STORE_SETTINGS_FILE, STORE_SETTINGS_FILE]) {
+    try {
+      if (fs.existsSync(candidate)) {
+        const parsed = JSON.parse(fs.readFileSync(candidate, 'utf-8'));
+        if (parsed && typeof parsed === 'object') {
+          return { ...DEFAULT_STORE_SETTINGS, ...parsed };
+        }
+      }
+    } catch {}
+  }
+  return { ...DEFAULT_STORE_SETTINGS };
+})();
+
+function saveStoreSettings(partial: Partial<StoreSettingsConfig>): StoreSettingsConfig {
+  storeSettings = {
+    ...storeSettings,
+    ...partial,
+    id: 'singleton',
+    updatedAt: new Date().toISOString(),
+  };
+
+  // Sync shared fields with CJ automation config
+  if (partial.cjApiToken !== undefined || partial.amazonAssociateTag !== undefined || partial.autoDeductEnabled !== undefined) {
+    saveCjAutomationConfig({
+      ...(partial.cjApiToken ? { cjApiKey: partial.cjApiToken } : {}),
+      ...(partial.amazonAssociateTag ? { amazonAssociateTag: partial.amazonAssociateTag } : {}),
+      ...(partial.autoDeductEnabled !== undefined ? { autoDeductEnabled: partial.autoDeductEnabled } : {}),
+    });
+  }
+
+  const serialized = JSON.stringify(storeSettings, null, 2);
+  for (const candidate of [STORE_SETTINGS_FILE, TMP_STORE_SETTINGS_FILE]) {
+    try {
+      const dir = path.dirname(candidate);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(candidate, serialized, 'utf-8');
+    } catch {}
+  }
+  return storeSettings;
+}
+
 function calculateCommerceFinancials() {
   let totalRevenueCollected = 0;
   let totalCjWholesaleDeducted = 0;
@@ -714,6 +786,8 @@ async function submitOrderToCjDropshipping(
 }> {
   const rawKey =
     customApiKey?.trim() ||
+    storeSettings.cjApiToken?.trim() ||
+    cjAutomationConfig.cjApiKey?.trim() ||
     process.env.CJ_API_KEY ||
     'CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7';
 
@@ -2426,6 +2500,18 @@ app.get('/api/orders/track', (req, res) => {
   }
 });
 
+function normalizeOrderStatusInput(rawStatus: unknown, fallback: PersistedOrder['status'] = 'Paid - Ready for CJ Fulfill'): NonNullable<PersistedOrder['status']> {
+  const s = String(rawStatus || '').trim();
+  const upper = s.toUpperCase();
+  if (upper === 'PENDING') return 'Pending';
+  if (upper === 'PROCESSING') return 'Processing';
+  if (upper === 'SHIPPED') return 'Shipped';
+  if (upper === 'DELIVERED') return 'Delivered';
+  if (upper === 'CANCELLED' || upper === 'CANCELED') return 'Cancelled';
+  if (upper.includes('PAID')) return 'Paid - Ready for CJ Fulfill';
+  return fallback || 'Paid - Ready for CJ Fulfill';
+}
+
 // Admin Order Update API (Update status & trackingCode)
 app.patch('/api/admin/orders/:id', async (req, res) => {
   if (!validateAdminBearer(req, res)) return;
@@ -2443,16 +2529,8 @@ app.patch('/api/admin/orders/:id', async (req, res) => {
       return res.status(404).json({ error: `Order ${req.params.id} not found.` });
     }
 
-    const validStatuses = [
-      'Paid - Ready for CJ Fulfill',
-      'Pending',
-      'Processing',
-      'Shipped',
-      'Delivered',
-    ] as const;
-    const requestedStatus = req.body?.status;
-    const nextStatus = validStatuses.includes(requestedStatus)
-      ? requestedStatus
+    const nextStatus = req.body?.status
+      ? normalizeOrderStatusInput(req.body.status, targetOrder.status)
       : targetOrder.status || 'Paid - Ready for CJ Fulfill';
 
     const nextTrackingCode =
@@ -2494,6 +2572,116 @@ app.patch('/api/admin/orders/:id', async (req, res) => {
     return res.status(500).json({ error: err.message || 'Failed to update order tracking' });
   }
 });
+
+// Dedicated Live Order Status Update Endpoint: PATCH /api/admin/orders/:id/status
+app.patch('/api/admin/orders/:id/status', async (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+
+  try {
+    const targetId = decodeURIComponent(req.params.id).trim().toLowerCase();
+    const latestOrders = loadPersistedOrders();
+    const targetOrder = latestOrders.find(
+      (o) =>
+        o.id.toLowerCase() === targetId ||
+        String(o.orderNumber || '').toLowerCase() === targetId
+    );
+
+    if (!targetOrder) {
+      return res.status(404).json({ error: `Order ${req.params.id} not found.` });
+    }
+
+    if (!req.body?.status) {
+      return res.status(400).json({ error: 'Missing required "status" field in request body.' });
+    }
+
+    const nextStatus = normalizeOrderStatusInput(req.body.status, targetOrder.status);
+
+    const updatedOrder: PersistedOrder = {
+      ...targetOrder,
+      orderNumber: targetOrder.orderNumber || targetOrder.id,
+      status: nextStatus,
+      cjOrderStatus:
+        nextStatus === 'Delivered'
+          ? 'fulfilled'
+          : nextStatus === 'Shipped'
+          ? 'submitted_to_cj'
+          : targetOrder.cjOrderStatus,
+      updatedAt: new Date().toISOString(),
+    };
+
+    currentOrders = await savePersistedOrder(updatedOrder);
+
+    return res.status(200).json({
+      success: true,
+      message: `Order ${updatedOrder.orderNumber} status updated to ${updatedOrder.status}.`,
+      order: updatedOrder,
+      orders: currentOrders,
+    });
+  } catch (err: any) {
+    console.error('[PATCH /api/admin/orders/:id/status Error]:', err);
+    return res.status(500).json({ error: err.message || 'Failed to update order status' });
+  }
+});
+
+// Global Store Settings & Payment Gateway Management API (/api/admin/settings & /api/settings)
+app.get('/api/settings', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    settings: {
+      id: storeSettings.id,
+      isStripeEnabled: storeSettings.isStripeEnabled,
+      isCodEnabled: storeSettings.isCodEnabled,
+      storeCurrency: storeSettings.storeCurrency,
+      supportEmail: storeSettings.supportEmail,
+      amazonAssociateTag: storeSettings.amazonAssociateTag,
+      updatedAt: storeSettings.updatedAt,
+    },
+  });
+});
+
+app.get('/api/admin/settings', (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  res.status(200).json({
+    success: true,
+    settings: storeSettings,
+  });
+});
+
+const handleUpdateStoreSettings = (req: express.Request, res: express.Response) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    const {
+      isStripeEnabled,
+      isCodEnabled,
+      cjApiToken,
+      storeCurrency,
+      supportEmail,
+      amazonAssociateTag,
+      autoDeductEnabled,
+    } = req.body || {};
+
+    const updated = saveStoreSettings({
+      ...(isStripeEnabled !== undefined ? { isStripeEnabled: Boolean(isStripeEnabled) } : {}),
+      ...(isCodEnabled !== undefined ? { isCodEnabled: Boolean(isCodEnabled) } : {}),
+      ...(cjApiToken !== undefined ? { cjApiToken: String(cjApiToken).trim() } : {}),
+      ...(storeCurrency ? { storeCurrency: String(storeCurrency).toUpperCase().trim() } : {}),
+      ...(supportEmail ? { supportEmail: sanitizeInputString(supportEmail, 'support@aerothor.com', 160) } : {}),
+      ...(amazonAssociateTag ? { amazonAssociateTag: String(amazonAssociateTag).trim() } : {}),
+      ...(autoDeductEnabled !== undefined ? { autoDeductEnabled: Boolean(autoDeductEnabled) } : {}),
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Global Store Settings & Payment Gateways saved to database.',
+      settings: updated,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to update store settings' });
+  }
+};
+
+app.put('/api/admin/settings', handleUpdateStoreSettings);
+app.post('/api/admin/settings', handleUpdateStoreSettings);
 
 app.post('/api/orders', async (req, res) => {
   try {
@@ -3136,7 +3324,20 @@ app.post('/api/checkout', async (req, res) => {
       return res.status(400).json({ error: 'Cart is empty. Add at least one product to checkout.' });
     }
 
-    const normalizedCurrency = String(currency).toLowerCase() === 'gbp' ? 'gbp' : 'usd';
+    // Validate dynamic StoreSettings payment gateway toggles before initializing checkout
+    const isCodPayment = String(paymentMethod || 'card').toLowerCase() === 'cod';
+    if (isCodPayment && !storeSettings.isCodEnabled) {
+      return res.status(403).json({
+        error: 'Cash on Delivery (COD) is currently unavailable. Please select an active payment gateway.',
+      });
+    }
+    if (!isCodPayment && !storeSettings.isStripeEnabled) {
+      return res.status(403).json({
+        error: 'Payment gateway currently unavailable',
+      });
+    }
+
+    const normalizedCurrency = String(currency || storeSettings.storeCurrency || 'usd').toLowerCase() === 'gbp' ? 'gbp' : 'usd';
     const origin =
       req.headers.origin ||
       process.env.APP_URL ||

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * PHASE 4: POST /api/checkout
  * Generates a Stripe Checkout Session from cart items supporting Cards, Apple Pay, and Google Pay.
- * Does NOT execute CJ auto-pay API logic (orders are saved via webhook with status "Paid - Ready for CJ Fulfill").
+ * Validates StoreSettings.isStripeEnabled before initializing Stripe session.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -23,6 +24,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Cart is empty. Provide at least one item to start checkout.' },
         { status: 400 }
+      );
+    }
+
+    // Fetch singleton StoreSettings to verify if Stripe payment gateway is enabled
+    let isStripeEnabled = true;
+    let defaultCurrency = 'usd';
+    try {
+      const storeSettings = await (prisma as any).storeSettings.findUnique({
+        where: { id: 'singleton' },
+      });
+      if (storeSettings) {
+        isStripeEnabled = Boolean(storeSettings.isStripeEnabled);
+        if (storeSettings.storeCurrency) {
+          defaultCurrency = String(storeSettings.storeCurrency).toLowerCase();
+        }
+      }
+    } catch {
+      // Fallback if DB is not yet migrated
+    }
+
+    if (!isStripeEnabled) {
+      return NextResponse.json(
+        { error: 'Payment gateway currently unavailable' },
+        { status: 403 }
       );
     }
 

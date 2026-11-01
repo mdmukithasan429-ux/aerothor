@@ -2436,6 +2436,58 @@ function saveCjAutomationConfig(cfg) {
     }
   }
 }
+var STORE_SETTINGS_FILE = path2.resolve(process.cwd(), "data", "store-settings.json");
+var TMP_STORE_SETTINGS_FILE = path2.join(os2.tmpdir(), "aerothor-data", "store-settings.json");
+var DEFAULT_STORE_SETTINGS = {
+  id: "singleton",
+  isStripeEnabled: true,
+  isCodEnabled: false,
+  cjApiToken: cjAutomationConfig.cjApiKey || process.env.CJ_API_KEY || "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7",
+  storeCurrency: "USD",
+  supportEmail: "support@aerothor.com",
+  amazonAssociateTag: cjAutomationConfig.amazonAssociateTag || "aerothor-20",
+  autoDeductEnabled: cjAutomationConfig.autoDeductEnabled ?? true,
+  updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+};
+var storeSettings = (() => {
+  for (const candidate of [TMP_STORE_SETTINGS_FILE, STORE_SETTINGS_FILE]) {
+    try {
+      if (fs2.existsSync(candidate)) {
+        const parsed = JSON.parse(fs2.readFileSync(candidate, "utf-8"));
+        if (parsed && typeof parsed === "object") {
+          return { ...DEFAULT_STORE_SETTINGS, ...parsed };
+        }
+      }
+    } catch {
+    }
+  }
+  return { ...DEFAULT_STORE_SETTINGS };
+})();
+function saveStoreSettings(partial) {
+  storeSettings = {
+    ...storeSettings,
+    ...partial,
+    id: "singleton",
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
+  if (partial.cjApiToken !== void 0 || partial.amazonAssociateTag !== void 0 || partial.autoDeductEnabled !== void 0) {
+    saveCjAutomationConfig({
+      ...partial.cjApiToken ? { cjApiKey: partial.cjApiToken } : {},
+      ...partial.amazonAssociateTag ? { amazonAssociateTag: partial.amazonAssociateTag } : {},
+      ...partial.autoDeductEnabled !== void 0 ? { autoDeductEnabled: partial.autoDeductEnabled } : {}
+    });
+  }
+  const serialized = JSON.stringify(storeSettings, null, 2);
+  for (const candidate of [STORE_SETTINGS_FILE, TMP_STORE_SETTINGS_FILE]) {
+    try {
+      const dir = path2.dirname(candidate);
+      if (!fs2.existsSync(dir)) fs2.mkdirSync(dir, { recursive: true });
+      fs2.writeFileSync(candidate, serialized, "utf-8");
+    } catch {
+    }
+  }
+  return storeSettings;
+}
 function calculateCommerceFinancials() {
   let totalRevenueCollected = 0;
   let totalCjWholesaleDeducted = 0;
@@ -2534,7 +2586,7 @@ async function resolveCjVariantId(accessToken, pid, fallbackVid) {
   return fallbackVid || pid || null;
 }
 async function submitOrderToCjDropshipping(order, customApiKey) {
-  const rawKey = customApiKey?.trim() || process.env.CJ_API_KEY || "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7";
+  const rawKey = customApiKey?.trim() || storeSettings.cjApiToken?.trim() || cjAutomationConfig.cjApiKey?.trim() || process.env.CJ_API_KEY || "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7";
   try {
     const accessToken = await getOrExchangeCjToken(rawKey);
     const cjProductsPayload = [];
@@ -3778,6 +3830,17 @@ app.get("/api/orders/track", (req, res) => {
     return res.status(500).json({ error: err.message || "Order tracking lookup failed" });
   }
 });
+function normalizeOrderStatusInput(rawStatus, fallback = "Paid - Ready for CJ Fulfill") {
+  const s = String(rawStatus || "").trim();
+  const upper = s.toUpperCase();
+  if (upper === "PENDING") return "Pending";
+  if (upper === "PROCESSING") return "Processing";
+  if (upper === "SHIPPED") return "Shipped";
+  if (upper === "DELIVERED") return "Delivered";
+  if (upper === "CANCELLED" || upper === "CANCELED") return "Cancelled";
+  if (upper.includes("PAID")) return "Paid - Ready for CJ Fulfill";
+  return fallback || "Paid - Ready for CJ Fulfill";
+}
 app.patch("/api/admin/orders/:id", async (req, res) => {
   if (!validateAdminBearer(req, res)) return;
   try {
@@ -3789,15 +3852,7 @@ app.patch("/api/admin/orders/:id", async (req, res) => {
     if (!targetOrder) {
       return res.status(404).json({ error: `Order ${req.params.id} not found.` });
     }
-    const validStatuses = [
-      "Paid - Ready for CJ Fulfill",
-      "Pending",
-      "Processing",
-      "Shipped",
-      "Delivered"
-    ];
-    const requestedStatus = req.body?.status;
-    const nextStatus = validStatuses.includes(requestedStatus) ? requestedStatus : targetOrder.status || "Paid - Ready for CJ Fulfill";
+    const nextStatus = req.body?.status ? normalizeOrderStatusInput(req.body.status, targetOrder.status) : targetOrder.status || "Paid - Ready for CJ Fulfill";
     const nextTrackingCode = req.body?.trackingCode !== void 0 ? sanitizeInputString(req.body.trackingCode, "", 80) : targetOrder.trackingCode || targetOrder.trackingNumber;
     const nextCarrier = req.body?.carrier !== void 0 ? sanitizeInputString(req.body.carrier, targetOrder.carrier, 80) : targetOrder.carrier;
     const updatedOrder = {
@@ -3822,6 +3877,93 @@ app.patch("/api/admin/orders/:id", async (req, res) => {
     return res.status(500).json({ error: err.message || "Failed to update order tracking" });
   }
 });
+app.patch("/api/admin/orders/:id/status", async (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    const targetId = decodeURIComponent(req.params.id).trim().toLowerCase();
+    const latestOrders = loadPersistedOrders();
+    const targetOrder = latestOrders.find(
+      (o) => o.id.toLowerCase() === targetId || String(o.orderNumber || "").toLowerCase() === targetId
+    );
+    if (!targetOrder) {
+      return res.status(404).json({ error: `Order ${req.params.id} not found.` });
+    }
+    if (!req.body?.status) {
+      return res.status(400).json({ error: 'Missing required "status" field in request body.' });
+    }
+    const nextStatus = normalizeOrderStatusInput(req.body.status, targetOrder.status);
+    const updatedOrder = {
+      ...targetOrder,
+      orderNumber: targetOrder.orderNumber || targetOrder.id,
+      status: nextStatus,
+      cjOrderStatus: nextStatus === "Delivered" ? "fulfilled" : nextStatus === "Shipped" ? "submitted_to_cj" : targetOrder.cjOrderStatus,
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    currentOrders = await savePersistedOrder(updatedOrder);
+    return res.status(200).json({
+      success: true,
+      message: `Order ${updatedOrder.orderNumber} status updated to ${updatedOrder.status}.`,
+      order: updatedOrder,
+      orders: currentOrders
+    });
+  } catch (err) {
+    console.error("[PATCH /api/admin/orders/:id/status Error]:", err);
+    return res.status(500).json({ error: err.message || "Failed to update order status" });
+  }
+});
+app.get("/api/settings", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    settings: {
+      id: storeSettings.id,
+      isStripeEnabled: storeSettings.isStripeEnabled,
+      isCodEnabled: storeSettings.isCodEnabled,
+      storeCurrency: storeSettings.storeCurrency,
+      supportEmail: storeSettings.supportEmail,
+      amazonAssociateTag: storeSettings.amazonAssociateTag,
+      updatedAt: storeSettings.updatedAt
+    }
+  });
+});
+app.get("/api/admin/settings", (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  res.status(200).json({
+    success: true,
+    settings: storeSettings
+  });
+});
+var handleUpdateStoreSettings = (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    const {
+      isStripeEnabled,
+      isCodEnabled,
+      cjApiToken,
+      storeCurrency,
+      supportEmail,
+      amazonAssociateTag,
+      autoDeductEnabled
+    } = req.body || {};
+    const updated = saveStoreSettings({
+      ...isStripeEnabled !== void 0 ? { isStripeEnabled: Boolean(isStripeEnabled) } : {},
+      ...isCodEnabled !== void 0 ? { isCodEnabled: Boolean(isCodEnabled) } : {},
+      ...cjApiToken !== void 0 ? { cjApiToken: String(cjApiToken).trim() } : {},
+      ...storeCurrency ? { storeCurrency: String(storeCurrency).toUpperCase().trim() } : {},
+      ...supportEmail ? { supportEmail: sanitizeInputString(supportEmail, "support@aerothor.com", 160) } : {},
+      ...amazonAssociateTag ? { amazonAssociateTag: String(amazonAssociateTag).trim() } : {},
+      ...autoDeductEnabled !== void 0 ? { autoDeductEnabled: Boolean(autoDeductEnabled) } : {}
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Global Store Settings & Payment Gateways saved to database.",
+      settings: updated
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message || "Failed to update store settings" });
+  }
+};
+app.put("/api/admin/settings", handleUpdateStoreSettings);
+app.post("/api/admin/settings", handleUpdateStoreSettings);
 app.post("/api/orders", async (req, res) => {
   try {
     const {
@@ -4359,7 +4501,18 @@ app.post("/api/checkout", async (req, res) => {
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: "Cart is empty. Add at least one product to checkout." });
     }
-    const normalizedCurrency = String(currency).toLowerCase() === "gbp" ? "gbp" : "usd";
+    const isCodPayment = String(paymentMethod || "card").toLowerCase() === "cod";
+    if (isCodPayment && !storeSettings.isCodEnabled) {
+      return res.status(403).json({
+        error: "Cash on Delivery (COD) is currently unavailable. Please select an active payment gateway."
+      });
+    }
+    if (!isCodPayment && !storeSettings.isStripeEnabled) {
+      return res.status(403).json({
+        error: "Payment gateway currently unavailable"
+      });
+    }
+    const normalizedCurrency = String(currency || storeSettings.storeCurrency || "usd").toLowerCase() === "gbp" ? "gbp" : "usd";
     const origin = req.headers.origin || process.env.APP_URL || `http://localhost:${PORT}`;
     const orderItems = items.map((item) => {
       const rawPrice = typeof item.price === "number" ? item.price : parseFloat(String(item.price || "0").replace(/[^0-9.]/g, "")) || 0;

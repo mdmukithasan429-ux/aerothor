@@ -94,7 +94,12 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   const [searchQuery, setSearchQuery] = useState('');
   const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'in_stock' | 'out_of_stock'>('all');
   const [selectedBrand, setSelectedBrand] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [sortBy, setSortBy] = useState<'newest' | 'title-asc' | 'price-asc' | 'price-desc' | 'sku'>('newest');
+
+  // Pagination State (Prevents rendering all 525+ items at once)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(15);
 
   // Selection for Batch Operations
   const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
@@ -236,13 +241,25 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     setLogs((prev) => [newEntry, ...prev.slice(0, 19)]);
   };
 
-  // Unique Brands list
+  // Unique Brands & Categories list
   const brands = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p) => {
       if (p.brand) set.add(p.brand);
     });
     return Array.from(set);
+  }, [products]);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p) => {
+      const rawCat = p.product_type || p.google_product_category || '';
+      if (rawCat) {
+        const cleanCat = rawCat.split('>').pop()?.trim() || rawCat.trim();
+        if (cleanCat) set.add(cleanCat);
+      }
+    });
+    return Array.from(set).sort();
   }, [products]);
 
   // Filtered & Sorted Products
@@ -271,6 +288,15 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
           return false;
         }
 
+        // Category match
+        if (selectedCategory !== 'all') {
+          const rawCat = p.product_type || p.google_product_category || '';
+          const cleanCat = rawCat.split('>').pop()?.trim() || rawCat.trim();
+          if (cleanCat !== selectedCategory && !rawCat.toLowerCase().includes(selectedCategory.toLowerCase())) {
+            return false;
+          }
+        }
+
         // Product Type match (Dropshipping vs Affiliate)
         const isAffiliate =
           p.productType === 'affiliate' ||
@@ -295,7 +321,20 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
         if (sortBy === 'sku') return String(a.id || '').localeCompare(String(b.id || ''));
         return String(a.title || '').localeCompare(String(b.title || ''));
       });
-  }, [products, searchQuery, availabilityFilter, selectedBrand, sortBy, productTypeFilter]);
+  }, [products, searchQuery, availabilityFilter, selectedBrand, selectedCategory, sortBy, productTypeFilter]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, availabilityFilter, selectedBrand, selectedCategory, sortBy, productTypeFilter, itemsPerPage]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, safeCurrentPage, itemsPerPage]);
 
   // Model statistics
   const dropshipCount = useMemo(
@@ -2559,6 +2598,21 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
 
           {/* Filters & Sorting */}
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Category Filter */}
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-emerald-500"
+              aria-label="Filter by product category"
+            >
+              <option value="all">All Categories ({categories.length})</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
             {/* Availability Filter */}
             <select
               value={availabilityFilter}
@@ -2676,14 +2730,14 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-sans">
-              {filteredProducts.length === 0 ? (
+              {paginatedProducts.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="p-8 text-center text-slate-500">
                     No products matching search criteria &quot;{searchQuery}&quot;.
                   </td>
                 </tr>
               ) : (
-                filteredProducts.map((p) => {
+                paginatedProducts.map((p) => {
                   const isSelected = selectedSkus.has(p.id);
                   const isStock = p.availability === 'in_stock';
 
@@ -2873,14 +2927,60 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
           </table>
         </div>
 
-        {/* Table Footer Summary */}
-        <div className="p-3.5 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-          <div>
-            Showing <strong className="text-white">{filteredProducts.length}</strong> of{' '}
-            <strong className="text-white">{products.length}</strong> products
+        {/* Table Footer Pagination & Summary */}
+        <div className="p-3.5 bg-slate-950/90 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span>
+              Showing{' '}
+              <strong className="text-white">
+                {filteredProducts.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1}
+              </strong>
+              –
+              <strong className="text-white">
+                {Math.min(safeCurrentPage * itemsPerPage, filteredProducts.length)}
+              </strong>{' '}
+              of <strong className="text-white">{filteredProducts.length}</strong> filtered (
+              <strong className="text-emerald-400">{products.length}</strong> total catalog)
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-slate-500">Rows per page:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-emerald-500"
+              >
+                <option value={10}>10 / page</option>
+                <option value={15}>15 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
+            </div>
           </div>
-          <div className="font-mono text-[11px]">
-            Google Merchant Center Feed: <span className="text-emerald-400">Synchronized</span>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              disabled={safeCurrentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded text-xs font-semibold disabled:opacity-40 cursor-pointer transition-colors"
+            >
+              Prev
+            </button>
+
+            <span className="px-2.5 py-1 bg-slate-900/60 border border-slate-800 rounded font-mono text-[11px] text-slate-300">
+              Page <strong className="text-emerald-400">{safeCurrentPage}</strong> of{' '}
+              <strong className="text-white">{totalPages}</strong>
+            </span>
+
+            <button
+              type="button"
+              disabled={safeCurrentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 rounded text-xs font-semibold disabled:opacity-40 cursor-pointer transition-colors"
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>

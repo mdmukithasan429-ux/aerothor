@@ -1,8 +1,16 @@
 {
-  "autoDeductEnabled": true,
+  "autoDeductEnabled": false,
   "paymentMode": "wallet_auto_deduct",
   "cjApiKey": "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7",
-  "cjWalletBalance": 1485.50,
+  "cjWalletBalance": 1413.3,
   "amazonAssociateTag": "aerothor-20",
-  "autoSyncTracking": true
+  "autoSyncTracking": true,
+  "autoSyncIntervalHours": 12,
+  "lastSyncTimestamp": "2026-11-01T14:50:56.153Z",
+  "lastSyncProductCount": 525,
+  "defaultMarkupMultiplier": 2.5,
+  "affiliateCommissionRatePercent": 12,
+  "minCommissionThresholdUsd": 10,
+  "autoSyncStatus": "success",
+  "targetMarket": "US"
 }

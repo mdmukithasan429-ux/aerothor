@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag, Zap } from 'lucide-react';
+import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag, Zap, Settings } from 'lucide-react';
 
 export type WorkspaceTab =
   | 'storefront'
@@ -8,6 +8,7 @@ export type WorkspaceTab =
   | 'return_policy'
   | 'admin_inventory'
   | 'admin_orders'
+  | 'admin_settings'
   | 'affiliate_auto_sync'
   | 'gmc_feed'
   | 'csv_upload'
@@ -160,6 +161,18 @@ export const TopBar: React.FC<TopBarProps> = ({
               >
                 <Zap className="w-3.5 h-3.5 text-amber-400" />
                 <span>Affiliate Auto-Sync (500+)</span>
+              </button>
+
+              <button
+                onClick={() => onTabChange('admin_settings')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
+                  activeTab === 'admin_settings'
+                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
+                }`}
+              >
+                <Settings className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Settings (/admin/settings)</span>
               </button>
 
               <button
@@ -393,6 +406,18 @@ export const TopBar: React.FC<TopBarProps> = ({
             >
               <Zap className="w-3 h-3 text-amber-400" />
               <span>Auto-Sync (500+)</span>
+            </button>
+
+            <button
+              onClick={() => onTabChange('admin_settings')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors flex items-center gap-1 ${
+                activeTab === 'admin_settings'
+                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
+                  : 'text-slate-300 hover:text-white'
+              }`}
+            >
+              <Settings className="w-3 h-3 text-emerald-400" />
+              <span>Settings (/admin/settings)</span>
             </button>
 
             <button

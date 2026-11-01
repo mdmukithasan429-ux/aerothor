@@ -43,6 +43,7 @@ const ORDER_STATUS_OPTIONS: OrderStatusType[] = [
   'Processing',
   'Shipped',
   'Delivered',
+  'Cancelled',
 ];
 
 export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
@@ -53,6 +54,7 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'All' | OrderStatusType>('All');
   const [savingOrderId, setSavingOrderId] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
   const [fulfillingOrderId, setFulfillingOrderId] = useState<string | null>(null);
   const [cjFinancials, setCjFinancials] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -197,6 +199,59 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
       showToast(err.message || 'Failed to update order tracking', 'error');
     } finally {
       setSavingOrderId(null);
+    }
+  };
+
+  // Live instant dropdown status update handler -> PATCH /api/admin/orders/:id/status
+  const handleLiveStatusChange = async (orderNumber: string, nextStatus: OrderStatusType) => {
+    const existingDraft = draftEdits[orderNumber] || {
+      status: nextStatus,
+      trackingCode: '',
+      carrier: 'USPS Priority Mail',
+    };
+
+    // Optimistically update draft state
+    setDraftEdits((prev) => ({
+      ...prev,
+      [orderNumber]: {
+        ...existingDraft,
+        status: nextStatus,
+      },
+    }));
+
+    setUpdatingStatusId(orderNumber);
+    try {
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderNumber)}/status`, {
+        method: 'PATCH',
+        headers: getAdminAuthHeaders(),
+        body: JSON.stringify({ status: nextStatus }),
+      });
+
+      const rawText = await res.text();
+      const data = rawText ? JSON.parse(rawText) : {};
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to update order status');
+      }
+
+      if (Array.isArray(data.orders)) {
+        setOrders(data.orders);
+      } else if (data.order) {
+        setOrders((prev) =>
+          prev.map((o) => ((o.orderNumber || o.id) === orderNumber ? data.order : o))
+        );
+      } else {
+        setOrders((prev) =>
+          prev.map((o) =>
+            (o.orderNumber || o.id) === orderNumber ? { ...o, status: nextStatus } : o
+          )
+        );
+      }
+
+      showToast(`Order ${orderNumber} status updated to "${nextStatus}"`);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update order status', 'error');
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -743,15 +798,41 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
                       </td>
 
                       <td className="py-3.5 px-4 align-top">
-                        <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase inline-block ${
-                          draft.status === 'Paid - Ready for CJ Fulfill' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900' :
-                          draft.status === 'Pending' ? 'bg-amber-950/50 text-amber-400 border border-amber-900' :
-                          draft.status === 'Processing' ? 'bg-blue-950/50 text-blue-400 border border-blue-900' :
-                          draft.status === 'Shipped' ? 'bg-indigo-950/50 text-indigo-400 border border-indigo-900' :
-                          draft.status === 'Delivered' ? 'bg-slate-800 text-slate-300 border border-slate-700' :
-                          'bg-rose-950/50 text-rose-400 border border-rose-900'
-                        }`}>
-                          {draft.status}
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={draft.status}
+                            disabled={updatingStatusId === key}
+                            onChange={(e) =>
+                              handleLiveStatusChange(key, e.target.value as OrderStatusType)
+                            }
+                            aria-label={`Update status for order ${key}`}
+                            className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold uppercase cursor-pointer transition-colors focus:outline-none disabled:opacity-60 ${
+                              draft.status === 'Paid - Ready for CJ Fulfill'
+                                ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/40'
+                                : draft.status === 'Pending'
+                                ? 'bg-amber-950/70 text-amber-300 border border-amber-500/40'
+                                : draft.status === 'Processing'
+                                ? 'bg-blue-950/70 text-blue-300 border border-blue-500/40'
+                                : draft.status === 'Shipped'
+                                ? 'bg-indigo-950/70 text-indigo-300 border border-indigo-500/40'
+                                : draft.status === 'Delivered'
+                                ? 'bg-slate-800 text-slate-200 border border-slate-600'
+                                : 'bg-rose-950/70 text-rose-300 border border-rose-500/40'
+                            }`}
+                          >
+                            {ORDER_STATUS_OPTIONS.map((statusOpt) => (
+                              <option
+                                key={statusOpt}
+                                value={statusOpt}
+                                className="bg-slate-950 text-slate-200"
+                              >
+                                {statusOpt.toUpperCase()}
+                              </option>
+                            ))}
+                          </select>
+                          {updatingStatusId === key && (
+                            <RefreshCw className="w-3.5 h-3.5 text-emerald-400 animate-spin shrink-0" />
+                          )}
                         </div>
                       </td>
 

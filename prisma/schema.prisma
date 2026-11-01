@@ -87,3 +87,18 @@ model Order {
   @@index([customerEmail])
   @@map("orders")
 }
+
+model StoreSettings {
+  id                  String   @id @default("singleton")
+  isStripeEnabled     Boolean  @default(true) @map("is_stripe_enabled")
+  isCodEnabled        Boolean  @default(false) @map("is_cod_enabled")
+  cjApiToken          String?  @map("cj_api_token") @db.Text
+  storeCurrency       String   @default("USD") @map("store_currency")
+  supportEmail        String   @default("support@aerothor.com") @map("support_email")
+  amazonAssociateTag  String   @default("aerothor-20") @map("amazon_associate_tag")
+  autoDeductEnabled   Boolean  @default(true) @map("auto_deduct_enabled")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("store_settings")
+}
+
