@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { GmcProduct } from '../lib/gmc-feed';
+import { GmcProduct, CANONICAL_STORE_URL } from '../lib/gmc-feed';
 import {
   buildDefaultSeoTitle,
   buildDefaultSeoDescription,
@@ -50,6 +50,7 @@ import {
   FileCode,
   Download,
 } from 'lucide-react';
+import { formatPriceForDisplay } from '../lib/currency';
 
 interface AdminInventoryDashboardProps {
   products: GmcProduct[];
@@ -239,25 +240,29 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
       })
       .sort((a, b) => {
         if (sortBy === 'newest') return 0; // preserve catalog order (newly synced CJ items first)
-        const priceA = parseFloat(a.price.replace(/[^0-9.]/g, '') || '0');
-        const priceB = parseFloat(b.price.replace(/[^0-9.]/g, '') || '0');
+        const priceA = parseFloat(String(a.price || '').replace(/[^0-9.]/g, '') || '0');
+        const priceB = parseFloat(String(b.price || '').replace(/[^0-9.]/g, '') || '0');
 
         if (sortBy === 'price-asc') return priceA - priceB;
         if (sortBy === 'price-desc') return priceB - priceA;
-        if (sortBy === 'sku') return a.id.localeCompare(b.id);
-        return a.title.localeCompare(b.title);
+        if (sortBy === 'sku') return String(a.id || '').localeCompare(String(b.id || ''));
+        return String(a.title || '').localeCompare(String(b.title || ''));
       });
   }, [products, searchQuery, availabilityFilter, selectedBrand, sortBy]);
 
   // Statistics
   const inStockCount = useMemo(() => products.filter((p) => p.availability === 'in_stock').length, [products]);
   const outOfStockCount = useMemo(() => products.filter((p) => p.availability === 'out_of_stock').length, [products]);
-  const catalogValuation = useMemo(() => {
+  const totalValuation = useMemo(() => {
     return products.reduce((acc, p) => {
-      const val = parseFloat(p.price.replace(/[^0-9.]/g, '') || '0');
-      return acc + val;
+      const val = parseFloat(String(p?.price || '').replace(/[^0-9.]/g, '') || '0');
+      return acc + (Number.isFinite(val) ? val : 0);
     }, 0);
   }, [products]);
+
+  const catalogValuationFormatted = useMemo(() => {
+    return formatPriceForDisplay(`${totalValuation.toFixed(2)} USD`);
+  }, [totalValuation]);
 
   // Selection Handlers
   const handleToggleSelect = (sku: string) => {
@@ -1294,7 +1299,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <a
-                href="https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app"
+                href={CANONICAL_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-md transition-colors"
@@ -1307,7 +1312,7 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
                 type="button"
                 onClick={() => {
                   navigator.clipboard.writeText(
-                    'https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app'
+                    CANONICAL_STORE_URL
                   );
                   showToast('Copied Live Published Store URL to clipboard!');
                 }}
@@ -1349,12 +1354,12 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
           <p className="text-[11px] text-slate-400 leading-relaxed">
             Your store is live now at{' '}
             <a
-              href="https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app"
+              href={CANONICAL_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="text-emerald-400 hover:underline font-mono"
             >
-              https://ais-pre-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app
+              {CANONICAL_STORE_URL}
             </a>
             . We also switched <code className="text-slate-200 font-mono">mukithasan232/E-commerce-dropshiping-store-</code> from Private to <strong className="text-emerald-400">Public</strong> on GitHub and pushed the latest build so Vercel can import and deploy it without any private repository errors.
           </p>
@@ -1388,8 +1393,8 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
 
         <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-1">
           <p className="text-xs text-slate-400 font-medium">Total Retail Valuation</p>
-          <p className="text-2xl font-extrabold text-white font-mono">${catalogValuation.toFixed(2)}</p>
-          <p className="text-[11px] text-emerald-400">Average: ${(catalogValuation / (products.length || 1)).toFixed(2)}</p>
+          <p className="text-2xl font-extrabold text-white font-mono">${totalValuation.toFixed(2)}</p>
+          <p className="text-[11px] text-emerald-400">Average: ${(totalValuation / (products.length || 1)).toFixed(2)}</p>
         </div>
       </div>
 
@@ -2405,10 +2410,10 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                       {/* Price & Shipping */}
                       <td className="p-3.5 font-mono">
                         <div>
-                          <span className="font-bold text-white">{p.price}</span>
+                          <span className="font-bold text-white">{formatPriceForDisplay(p.price)}</span>
                           {p.sale_price && (
                             <div className="text-[10px] text-emerald-400 font-medium">
-                              Sale: {p.sale_price}
+                              Sale: {formatPriceForDisplay(p.sale_price)}
                             </div>
                           )}
                           <div className="mt-1">

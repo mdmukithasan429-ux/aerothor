@@ -12,6 +12,8 @@
     "STORE_NAME": "AeroThor Commerce",
     "DEFAULT_CURRENCY": "USD",
     "ADMIN_SECRET_KEY": "aero_secret_adm_994821",
+    "ADMIN_EMAIL": "codernestwebsolution@gmail.com",
+    "ADMIN_PASSWORD": "admin12345",
     "CJ_API_KEY": "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7"
   },
   "build": {

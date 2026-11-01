@@ -1,4 +1,4 @@
-import { buildGmcXmlFeed, GmcProduct, validateGmcProduct } from '../lib/gmc-feed.js';
+import { buildGmcXmlFeed, GmcProduct, validateGmcProduct, CANONICAL_STORE_URL } from '../lib/gmc-feed.js';
 
 export interface FeedRefreshLog {
   id: string;
@@ -64,7 +64,7 @@ export function getMsUntilNextMidnightUtc(): number {
 export function executeFeedRefresh(
   products: GmcProduct[],
   trigger: FeedRefreshLog['trigger'] = 'automated_daily',
-  appUrl: string = 'https://aerothor.vercel.app'
+  appUrl: string = CANONICAL_STORE_URL
 ): FeedRefreshLog {
   const startTime = Date.now();
   const now = new Date();
@@ -94,7 +94,7 @@ export function executeFeedRefresh(
   // Build compliant XML feed with current lastBuildDate
   const xml = buildGmcXmlFeed(products, {
     title: 'AeroThor Global Store — Official GMC Product Feed',
-    link: appUrl || 'https://aerothor.vercel.app',
+    link: appUrl || CANONICAL_STORE_URL,
     description: `High-CRP Direct-to-Consumer Catalog strictly compliant with Google Shopping RSS 2.0 standards. Auto-refreshed: ${rfc822Date}`,
   });
 

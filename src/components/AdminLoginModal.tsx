@@ -33,14 +33,26 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/auth/login', {
+      const payload = {
+        email: email.trim(),
+        password: secretKey.trim(),
+        secretKey: secretKey.trim(),
+      };
+
+      let res = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.trim(),
-          secretKey: secretKey.trim(),
-        }),
+        body: JSON.stringify(payload),
       });
+
+      // Fallback to /api/admin/auth if /login endpoint is 404 or fails
+      if (!res.ok && res.status === 404) {
+        res = await fetch('/api/admin/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       const rawText = await res.text();
       let data: any = {};
@@ -55,7 +67,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
       }
 
       saveAdminSession(data.token, data.email || email.trim(), rememberDevice);
-      setSecretKey('aero_secret_adm_994821');
       onSuccess(data.token, data.email || email.trim());
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please check your credentials.');
@@ -124,15 +135,25 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-[11px] font-semibold text-slate-300">
-                Admin Secret Key / Password
+                Admin Password / Secret Key
               </label>
-              <button
-                type="button"
-                onClick={() => setSecretKey('aero_secret_adm_994821')}
-                className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2"
-              >
-                Fill Default Key
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSecretKey('admin12345')}
+                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2"
+                >
+                  Fill admin12345
+                </button>
+                <span className="text-slate-600">·</span>
+                <button
+                  type="button"
+                  onClick={() => setSecretKey('aero_secret_adm_994821')}
+                  className="text-[10px] text-emerald-400 hover:text-emerald-300 font-mono underline underline-offset-2"
+                >
+                  Fill Secret Key
+                </button>
+              </div>
             </div>
             <div className="relative">
               <KeyRound className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -141,7 +162,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 required
                 value={secretKey}
                 onChange={(e) => setSecretKey(e.target.value)}
-                placeholder="Enter ADMIN_SECRET_KEY..."
+                placeholder="Enter ADMIN_PASSWORD or ADMIN_SECRET_KEY..."
                 className="w-full pl-9 pr-10 py-2.5 bg-slate-900 border border-slate-800 rounded-lg text-xs font-mono text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
               />
               <button
@@ -154,7 +175,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               </button>
             </div>
             <p className="text-[10px] text-slate-400 font-mono">
-              Default Key: <span className="text-emerald-400 select-all">aero_secret_adm_994821</span> (or <span className="text-emerald-400 select-all">Admin@2026</span>)
+              Accepted: <span className="text-emerald-400 select-all">admin12345</span> or <span className="text-emerald-400 select-all">aero_secret_adm_994821</span>
             </p>
           </div>
 

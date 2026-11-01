@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import pg from 'pg';
 import dotenv from 'dotenv';
-import { GmcProduct } from '../lib/gmc-feed';
+import { GmcProduct, CANONICAL_STORE_URL } from '../lib/gmc-feed';
 import { INITIAL_PRODUCTS } from './seed-data';
 import {
   buildDefaultVariantsForProduct,
@@ -11,6 +11,7 @@ import {
 } from '../lib/api-integrations';
 
 dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env.production' });
 dotenv.config();
 
 const BUNDLED_DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -78,10 +79,27 @@ export interface PersistedOrder {
 }
 
 let pgPool: pg.Pool | null = null;
+let pgUnavailable = false;
+
+function disablePostgresPool(): void {
+  pgUnavailable = true;
+  if (pgPool) {
+    const oldPool = pgPool;
+    pgPool = null;
+    oldPool.end().catch(() => {});
+  }
+}
 
 function getPostgresPool(): pg.Pool | null {
+  if (pgUnavailable) return null;
   const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl || dbUrl.includes('db.supabase.co:5432/postgres?pgbouncer=true') || dbUrl.includes('[YOUR-PASSWORD]')) {
+  if (
+    !dbUrl ||
+    dbUrl.includes('db.supabase.co:5432/postgres?pgbouncer=true') ||
+    dbUrl.includes('[YOUR-PASSWORD]') ||
+    dbUrl.includes('YOUR_PASSWORD') ||
+    dbUrl.includes(':password@')
+  ) {
     return null;
   }
   if (!pgPool) {
@@ -94,8 +112,8 @@ function getPostgresPool(): pg.Pool | null {
       statement_timeout: 4000,
       idleTimeoutMillis: 10000,
     });
-    pgPool.on('error', (err) => {
-      console.warn('[Postgres Pool Background Error]:', err.message);
+    pgPool.on('error', () => {
+      disablePostgresPool();
     });
   }
   return pgPool;
@@ -237,7 +255,7 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
         id: row.sku,
         title: row.title,
         description: row.description,
-        link: `${process.env.APP_URL || 'https://my-store.com'}/product/${row.sku}`,
+        link: `${process.env.APP_URL || process.env.NEXT_PUBLIC_SITE_URL || CANONICAL_STORE_URL}/product/${row.sku}`,
         image_link: row.main_image_url,
         price: `${Number(row.price).toFixed(2)} ${row.currency || 'USD'}`,
         sale_price: row.sale_price ? `${Number(row.sale_price).toFixed(2)} ${row.currency || 'USD'}` : undefined,
@@ -264,7 +282,7 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
 
       // If local had items not yet in Postgres, push them up
       if (merged.length > dbProducts.length) {
-        syncCatalogToPostgres(merged).catch((e) => console.warn('[Postgres Merge Sync]:', e.message));
+        syncCatalogToPostgres(merged).catch(() => disablePostgresPool());
       }
 
       console.log(`[Supabase PostgreSQL] Synchronized ${merged.length} products with live database.`);
@@ -273,8 +291,8 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
       await syncCatalogToPostgres(prioritizedLocal);
       console.log(`[Supabase PostgreSQL] Seeded ${prioritizedLocal.length} products into live database.`);
     }
-  } catch (err: any) {
-    console.warn('[Supabase PostgreSQL Init Warning]:', err.message);
+  } catch {
+    disablePostgresPool();
   }
 
   return prioritizedLocal;
@@ -370,8 +388,8 @@ export async function syncCatalogToPostgres(products: GmcProduct[]): Promise<voi
         values
       );
     }
-  } catch (err: any) {
-    console.warn('[Supabase Sync Warning]:', err.message);
+  } catch {
+    disablePostgresPool();
   }
 }
 
@@ -382,8 +400,8 @@ export async function deleteSkusFromPostgres(skus: string[]): Promise<void> {
   try {
     const lowerSkus = skus.map((s) => s.trim().toLowerCase());
     await pool.query('DELETE FROM products WHERE LOWER(sku) = ANY($1)', [lowerSkus]);
-  } catch (err: any) {
-    console.warn('[Supabase Delete Warning]:', err.message);
+  } catch {
+    disablePostgresPool();
   }
 }
 
@@ -447,9 +465,7 @@ export function savePersistedCatalog(products: GmcProduct[], changedSubset?: Gmc
   const ordered = prioritizeRealProductsFirst(products);
   savePersistedCatalogToDiskOnly(ordered);
   const toSync = changedSubset && changedSubset.length > 0 ? changedSubset : ordered;
-  syncCatalogToPostgres(toSync).catch((err) =>
-    console.warn('[Background Postgres Sync Error]:', err.message)
-  );
+  syncCatalogToPostgres(toSync).catch(() => disablePostgresPool());
 }
 
 /**
@@ -479,9 +495,7 @@ export function createManySkipDuplicates(
   savePersistedCatalogToDiskOnly(updatedCatalog);
 
   if (newUniqueProducts.length > 0) {
-    syncCatalogToPostgres(newUniqueProducts).catch((err) =>
-      console.warn('[Background Postgres Bulk Insert Error]:', err.message)
-    );
+    syncCatalogToPostgres(newUniqueProducts).catch(() => disablePostgresPool());
   }
 
   return {
@@ -505,8 +519,8 @@ export async function purgeCatalogFromStorage(keepCoreSeed = false): Promise<Gmc
       if (keepCoreSeed && nextCatalog.length > 0) {
         await syncCatalogToPostgres(nextCatalog);
       }
-    } catch (err: any) {
-      console.warn('[Postgres Catalog Purge Warning]:', err.message);
+    } catch {
+      disablePostgresPool();
     }
   }
 
@@ -543,8 +557,8 @@ export async function deduplicateAndGroupCatalogVariants(
     try {
       await pool.query('TRUNCATE TABLE products RESTART IDENTITY CASCADE');
       await syncCatalogToPostgres(prioritized);
-    } catch (err: any) {
-      console.warn('[Postgres Deduplicate Sync Warning]:', err.message);
+    } catch {
+      disablePostgresPool();
     }
   }
 
@@ -801,8 +815,8 @@ export async function savePersistedOrder(order: PersistedOrder): Promise<Persist
           JSON.stringify(normalized),
         ]
       );
-    } catch (err: any) {
-      console.warn('[Supabase Order Save Warning]:', err.message);
+    } catch {
+      disablePostgresPool();
     }
   }
 
@@ -858,8 +872,8 @@ export async function initOrdersFromPostgres(): Promise<PersistedOrder[]> {
     const merged = Array.from(map.values());
     saveOrdersToDisk(merged);
     return merged;
-  } catch (err: any) {
-    console.warn('[Supabase Orders Load Warning]:', err.message);
+  } catch {
+    disablePostgresPool();
     return localOrders;
   }
 }

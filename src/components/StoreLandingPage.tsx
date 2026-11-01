@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { GmcProduct, ProductVariantOption } from '../lib/gmc-feed';
+import { GmcProduct, ProductVariantOption, CANONICAL_STORE_URL } from '../lib/gmc-feed';
 import { buildDefaultVariantsForProduct } from '../lib/api-integrations';
 import { ExpressCheckoutDrawer, CheckoutItem } from './ExpressCheckoutDrawer';
 import {
@@ -15,6 +15,7 @@ import {
   trackBeginCheckout,
   trackSearch,
 } from '../lib/analytics';
+import { formatPriceForDisplay } from '../lib/currency';
 import {
   ShoppingBag,
   ShieldCheck,
@@ -202,7 +203,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
   const handleCopyProductLink = (product: GmcProduct, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const canonicalUrl = `https://aerothor.vercel.app/product/${encodeURIComponent(product.id)}`;
+    const canonicalUrl = `${CANONICAL_STORE_URL}/product/${encodeURIComponent(product.id)}`;
     navigator.clipboard?.writeText(canonicalUrl).catch(() => {});
     setCopiedProductId(product.id);
     window.setTimeout(() => {
@@ -350,7 +351,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
   const handleBuyNow = (product: GmcProduct, source = 'buy_now_card') => {
     const rawPrice = parseFloat(
-      product.sale_price?.replace(/[^0-9.]/g, '') || product.price.replace(/[^0-9.]/g, '') || '0'
+      String(product.sale_price || product.price || '0').replace(/[^0-9.]/g, '') || '0'
     );
     trackBeginCheckout([{ product, quantity: 1 }], rawPrice, 'USD', {
       checkoutSource: source,
@@ -512,8 +513,10 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
   };
 
   const cartTotal = cart.reduce((sum, item) => {
-    const rawPrice = parseFloat(item.product.sale_price?.replace(/[^0-9.]/g, '') || item.product.price.replace(/[^0-9.]/g, '') || '0');
-    return sum + rawPrice * item.quantity;
+    const rawPrice = parseFloat(
+      String(item.product.sale_price || item.product.price || '0').replace(/[^0-9.]/g, '') || '0'
+    );
+    return sum + (Number.isFinite(rawPrice) ? rawPrice : 0) * item.quantity;
   }, 0);
 
   const handleSimulateCheckout = () => {
@@ -837,7 +840,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                           type="button"
                           onClick={(e) => handleCopyProductLink(p, e)}
                           className="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-slate-300 hover:text-emerald-300 font-mono transition-colors cursor-pointer"
-                          title={`Copy Product Link: https://aerothor.vercel.app/product/${p.id}`}
+                          title={`Copy Product Link: ${CANONICAL_STORE_URL}/product/${p.id}`}
                         >
                           {copiedProductId === p.id ? '✓ Link Copied' : 'Copy Product Link'}
                         </button>
@@ -864,15 +867,15 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                               isAffiliate ? 'text-amber-400' : 'text-emerald-400'
                             }`}
                           >
-                            {p.sale_price}
+                            {formatPriceForDisplay(p.sale_price)}
                           </span>
                           <span className="text-[11px] line-through text-slate-500 whitespace-nowrap">
-                            {p.price}
+                            {formatPriceForDisplay(p.price)}
                           </span>
                         </div>
                       ) : (
                         <span className="text-base font-extrabold text-white whitespace-nowrap">
-                          {p.price}
+                          {formatPriceForDisplay(p.price)}
                         </span>
                       )}
                     </div>
@@ -1011,7 +1014,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-white truncate">{item.product.title}</p>
                       <p className="text-[11px] text-emerald-400 font-mono">
-                        {item.product.sale_price || item.product.price}
+                        {formatPriceForDisplay(item.product.sale_price || item.product.price)}
                       </p>
                       <div className="flex items-center gap-2 mt-1.5">
                         <button
@@ -1183,15 +1186,15 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                 <div className="space-y-2 pt-4 border-t border-slate-800">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xl font-extrabold font-mono text-emerald-400">
-                      $
-                      {selectedVariant
-                        ? formatVariantPriceAmount(selectedVariant.sale_price || selectedVariant.price)
-                        : (quickViewProduct.sale_price || quickViewProduct.price).replace(/[^0-9.]/g, '')}{' '}
-                      USD
+                      {formatPriceForDisplay(
+                        selectedVariant
+                          ? selectedVariant.sale_price || selectedVariant.price
+                          : quickViewProduct.sale_price || quickViewProduct.price
+                      )}
                     </span>
                     {selectedVariant?.sale_price && (
                       <span className="text-xs font-mono line-through text-slate-500">
-                        ${formatVariantPriceAmount(selectedVariant.price)} USD
+                        {formatPriceForDisplay(selectedVariant.price)}
                       </span>
                     )}
                   </div>
@@ -1278,12 +1281,12 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                   <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                   <span className="text-slate-400 shrink-0">Canonical Product Link:</span>
                   <a
-                    href={`https://aerothor.vercel.app/product/${encodeURIComponent(fullPdpProduct.id)}`}
+                    href={`${CANONICAL_STORE_URL}/product/${encodeURIComponent(fullPdpProduct.id)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-mono text-emerald-400 hover:underline truncate select-all"
                   >
-                    https://aerothor.vercel.app/product/{encodeURIComponent(fullPdpProduct.id)}
+                    {CANONICAL_STORE_URL}/product/{encodeURIComponent(fullPdpProduct.id)}
                   </a>
                 </div>
                 <button
@@ -1330,15 +1333,15 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                   {/* Dynamic Price Display */}
                   <div className="flex items-baseline gap-2.5">
                     <span className="text-2xl font-extrabold text-emerald-400 font-mono">
-                      $
-                      {selectedVariant
-                        ? formatVariantPriceAmount(selectedVariant.sale_price || selectedVariant.price)
-                        : (fullPdpProduct.sale_price || fullPdpProduct.price).replace(/[^0-9.]/g, '')}{' '}
-                      USD
+                      {formatPriceForDisplay(
+                        selectedVariant
+                          ? selectedVariant.sale_price || selectedVariant.price
+                          : fullPdpProduct.sale_price || fullPdpProduct.price
+                      )}
                     </span>
                     {selectedVariant?.sale_price && (
                       <span className="text-sm font-mono line-through text-slate-500">
-                        ${formatVariantPriceAmount(selectedVariant.price)} USD
+                        {formatPriceForDisplay(selectedVariant.price)}
                       </span>
                     )}
                   </div>
@@ -1423,11 +1426,12 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     >
                       <Zap className="w-4 h-4 fill-current" />
                       <span>
-                        Buy Now — $
-                        {selectedVariant
-                          ? formatVariantPriceAmount(selectedVariant.sale_price || selectedVariant.price)
-                          : (fullPdpProduct.sale_price || fullPdpProduct.price).replace(/[^0-9.]/g, '')}{' '}
-                        USD
+                        Buy Now —{' '}
+                        {formatPriceForDisplay(
+                          selectedVariant
+                            ? selectedVariant.sale_price || selectedVariant.price
+                            : fullPdpProduct.sale_price || fullPdpProduct.price
+                        )}
                       </span>
                     </button>
                     <button

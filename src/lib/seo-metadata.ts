@@ -1,4 +1,4 @@
-import { GmcProduct } from './gmc-feed';
+import { GmcProduct, CANONICAL_STORE_URL } from './gmc-feed';
 
 export const DEFAULT_STORE_TITLE =
   'AeroThor — Official US & UK Direct Store | Fast Tracked Shipping';
@@ -94,12 +94,12 @@ export function generateProductPageMetadata(
   const rawOrigin =
     baseUrl ||
     (typeof window !== 'undefined' ? window.location.origin : '') ||
-    'https://aerothor.vercel.app';
+    CANONICAL_STORE_URL;
   const origin =
     rawOrigin.includes('.run.app') ||
     rawOrigin.includes('e-commerce-dropshiping-store.vercel.app') ||
     rawOrigin.includes('aerothor.com')
-      ? 'https://aerothor.vercel.app'
+      ? CANONICAL_STORE_URL
       : rawOrigin.replace(/\/+$/, '');
 
   const seoTitle = resolveProductSeoTitle(product);
@@ -264,7 +264,7 @@ export function applyProductMetadataToDocumentHead(product: GmcProduct | null): 
     const canonicalEl = document.getElementById('canonical-link') as HTMLLinkElement | null;
     if (canonicalEl && typeof window !== 'undefined') {
       const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
-      canonicalEl.href = `https://aerothor.vercel.app${currentPath === '/' ? '/' : currentPath}`;
+      canonicalEl.href = `${CANONICAL_STORE_URL}${currentPath === '/' ? '/' : currentPath}`;
     }
 
     const existingJsonLd = document.getElementById('product-jsonld');
@@ -274,7 +274,7 @@ export function applyProductMetadataToDocumentHead(product: GmcProduct | null): 
     return;
   }
 
-  const meta = generateProductPageMetadata(product, 'https://aerothor.vercel.app');
+  const meta = generateProductPageMetadata(product, CANONICAL_STORE_URL);
   document.title = meta.title;
   upsertMetaTag('name', 'description', meta.description);
   upsertMetaTag('property', 'og:title', meta.openGraph.title);

@@ -36,7 +36,7 @@ function resolveInitialTabFromPath(): WorkspaceTab {
   return 'storefront';
 }
 
-function isPublicTab(tab: WorkspaceTab): boolean {
+function checkIsPublicTab(tab: WorkspaceTab): boolean {
   return (
     tab === 'storefront' ||
     tab === 'affiliates' ||
@@ -67,10 +67,19 @@ function mapTabToPathname(tab: WorkspaceTab): string {
 export default function App() {
   const [activeTab, setActiveTab] = useState<WorkspaceTab>(() => resolveInitialTabFromPath());
   const [products, setProducts] = useState<GmcProduct[]>(() => {
-    if (typeof window !== 'undefined' && (window as any).__INITIAL_PRODUCT__) {
-      const initProd = (window as any).__INITIAL_PRODUCT__ as GmcProduct;
-      const filtered = INITIAL_PRODUCTS.filter((p) => p.id.toLowerCase() !== initProd.id.toLowerCase());
-      return [initProd, ...filtered];
+    try {
+      if (typeof window !== 'undefined' && (window as any).__INITIAL_PRODUCT__) {
+        const initProd = (window as any).__INITIAL_PRODUCT__ as GmcProduct;
+        const initId = String(initProd?.id || '').trim().toLowerCase();
+        if (initId) {
+          const filtered = INITIAL_PRODUCTS.filter(
+            (p) => String(p?.id || '').trim().toLowerCase() !== initId
+          );
+          return [initProd, ...filtered];
+        }
+      }
+    } catch {
+      // fallback
     }
     return INITIAL_PRODUCTS;
   });
@@ -111,7 +120,7 @@ export default function App() {
   useEffect(() => {
     const onPopState = () => {
       const nextTab = resolveInitialTabFromPath();
-      if (!isPublicTab(nextTab) && !getAdminSession().isAuthenticated) {
+      if (!checkIsPublicTab(nextTab) && !getAdminSession().isAuthenticated) {
         setPendingAdminTab(nextTab);
         setIsAdminLoginModalOpen(true);
         setActiveTab('storefront');
@@ -127,7 +136,7 @@ export default function App() {
   useEffect(() => {
     const session = getAdminSession();
     const initialTab = resolveInitialTabFromPath();
-    const isAdminRoute = !isPublicTab(initialTab);
+    const isAdminRoute = !checkIsPublicTab(initialTab);
 
     if (session.isAuthenticated && session.token) {
       fetch('/api/admin/auth/verify', {
@@ -259,9 +268,9 @@ export default function App() {
     });
   };
 
-  const isPublicTab = activeTab === 'storefront' || activeTab === 'track_order';
+  const isCurrentTabPublic = checkIsPublicTab(activeTab);
   const effectiveTab: WorkspaceTab =
-    (!isAdminAuthenticated || isCustomerPreviewMode) && !isPublicTab
+    (!isAdminAuthenticated || isCustomerPreviewMode) && !isCurrentTabPublic
       ? 'storefront'
       : activeTab;
 
@@ -277,7 +286,7 @@ export default function App() {
         onToggleCustomerPreview={() => {
           const nextPreview = !isCustomerPreviewMode;
           setIsCustomerPreviewMode(nextPreview);
-          if (nextPreview && !isPublicTab) {
+          if (nextPreview && !isCurrentTabPublic) {
             setActiveTab('storefront');
           }
         }}

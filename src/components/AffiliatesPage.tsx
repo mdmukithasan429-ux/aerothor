@@ -13,6 +13,7 @@ import {
   X,
   Compass,
 } from 'lucide-react';
+import { formatPriceForDisplay } from '../lib/currency';
 
 interface AffiliatesPageProps {
   products: GmcProduct[];
@@ -263,15 +264,15 @@ export const AffiliatesPage: React.FC<AffiliatesPageProps> = ({
                         {product.sale_price ? (
                           <div className="flex items-baseline gap-2">
                             <span className="text-base font-extrabold text-amber-400">
-                              {product.sale_price}
+                              {formatPriceForDisplay(product.sale_price)}
                             </span>
                             <span className="text-xs text-slate-500 line-through">
-                              {product.price}
+                              {formatPriceForDisplay(product.price)}
                             </span>
                           </div>
                         ) : (
                           <span className="text-base font-extrabold text-white">
-                            {product.price}
+                            {formatPriceForDisplay(product.price)}
                           </span>
                         )}
                       </div>

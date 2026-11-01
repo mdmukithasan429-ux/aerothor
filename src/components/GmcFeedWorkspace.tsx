@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { GmcProduct, buildGmcXmlFeed, validateGmcProduct, GmcValidationError } from '../lib/gmc-feed';
+import { GmcProduct, buildGmcXmlFeed, validateGmcProduct, GmcValidationError, CANONICAL_STORE_URL } from '../lib/gmc-feed';
+import { formatPriceForDisplay } from '../lib/currency';
 import {
   FileCode2,
   Copy,
@@ -94,7 +95,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
   };
 
   const handleCopyUrl = () => {
-    const fullUrl = 'https://aerothor.vercel.app/api/feed.xml';
+    const fullUrl = `${CANONICAL_STORE_URL}/api/feed.xml`;
     navigator.clipboard.writeText(fullUrl);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
@@ -139,7 +140,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
   const generatedXml = useMemo(() => {
     return buildGmcXmlFeed(products, {
       title: 'AeroThor Global Store — Official GMC Product Feed',
-      link: 'https://aerothor.vercel.app',
+      link: CANONICAL_STORE_URL,
       description: 'Automated High-CRP US/UK Product Feed for Google Shopping & Performance Max',
     });
   }, [products]);
@@ -171,7 +172,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
       id: newId,
       title: 'New High-CRP Product - 2-Day Shipping',
       description: 'Engineered for exceptional longevity and performance. Precision manufacturing for US/UK customers.',
-      link: `https://aerothor.vercel.app/product/${newId}`,
+      link: `${CANONICAL_STORE_URL}/product/${newId}`,
       image_link: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80',
       price: '59.00 USD',
       availability: 'in_stock',
@@ -551,11 +552,11 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
                         <td className="py-3 px-4 text-right font-mono tabular-nums text-slate-200 whitespace-nowrap">
                           {p.sale_price ? (
                             <div>
-                              <span className="text-emerald-400 font-semibold">{p.sale_price}</span>
-                              <span className="line-through text-slate-500 text-[11px] block">{p.price}</span>
+                              <span className="text-emerald-400 font-semibold">{formatPriceForDisplay(p.sale_price)}</span>
+                              <span className="line-through text-slate-500 text-[11px] block">{formatPriceForDisplay(p.price)}</span>
                             </div>
                           ) : (
-                            <span>{p.price}</span>
+                            <span>{formatPriceForDisplay(p.price)}</span>
                           )}
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
@@ -825,7 +826,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[11px]">Price</span>
-                    <span className="font-mono tabular-nums text-emerald-400 font-semibold">{selectedProduct.price}</span>
+                    <span className="font-mono tabular-nums text-emerald-400 font-semibold">{formatPriceForDisplay(selectedProduct.price)}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[11px]">GTIN</span>
@@ -902,7 +903,7 @@ export const GmcFeedWorkspace: React.FC<GmcFeedWorkspaceProps> = ({
               <p className="text-slate-200 font-medium line-clamp-2">{productToDelete.title}</p>
               <div className="flex items-center justify-between text-slate-400 text-[11px]">
                 <span>{productToDelete.brand}</span>
-                <span className="font-mono text-emerald-400 font-semibold">{productToDelete.price}</span>
+                <span className="font-mono text-emerald-400 font-semibold">{formatPriceForDisplay(productToDelete.price)}</span>
               </div>
             </div>
 

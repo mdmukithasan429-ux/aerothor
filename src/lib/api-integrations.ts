@@ -1,4 +1,4 @@
-import { GmcProduct, ProductVariantOption } from './gmc-feed';
+import { GmcProduct, ProductVariantOption, CANONICAL_STORE_URL } from './gmc-feed';
 
 /**
  * CJ Dropshipping Raw Product Response Interface
@@ -109,10 +109,10 @@ export function mapCjProductToGmc(
   const multiplier = options.markupMultiplier ?? 2.5;
   const currency = options.currency ?? 'USD';
   const brand = options.defaultBrand ?? 'AeroThor';
-  const rawDomain = options.domain ?? 'aerothor.vercel.app';
+  const rawDomain = options.domain ?? CANONICAL_STORE_URL.replace(/^https?:\/\//, '');
   const domain =
     rawDomain === 'aerothor.com' || rawDomain === 'example-store.com'
-      ? 'aerothor.vercel.app'
+      ? CANONICAL_STORE_URL.replace(/^https?:\/\//, '')
       : rawDomain.replace(/^https?:\/\//, '').replace(/\/+$/, '');
 
   const rawPrice = cj.sellPrice || (cj as any).nowPrice || (cj as any).price;

@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { getAdminAuthHeaders } from '../lib/admin-auth';
 import { OrderStatusType, TrackedOrderResult } from './OrderTrackingPage';
+import { formatPriceForDisplay } from '../lib/currency';
 
 interface AdminOrdersManagerProps {
   onOpenPublicTracker?: (orderNumber: string) => void;
@@ -488,7 +489,7 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
                 }}
                 formatter={(value: any, name: any) => {
                   if (String(name).includes('Revenue')) {
-                    return [`$${Number(value || 0).toFixed(2)} USD`, name];
+                    return [formatPriceForDisplay(`${Number(value || 0).toFixed(2)} USD`), name];
                   }
                   return [value, name];
                 }}
@@ -614,32 +615,23 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
                       </td>
 
                       <td className="py-3.5 px-4 align-top font-mono font-bold text-white">
-                        ${Number(order.totalAmount || 0).toFixed(2)} {order.currency || 'USD'}
+                        {formatPriceForDisplay(`${Number(order.totalAmount || 0).toFixed(2)} ${order.currency || 'USD'}`)}
                         <p className="text-[10px] text-slate-500 font-normal">
                           {(order.items || []).length} item(s)
                         </p>
                       </td>
 
                       <td className="py-3.5 px-4 align-top">
-                        <select
-                          value={draft.status}
-                          onChange={(e) =>
-                            setDraftEdits((prev) => ({
-                              ...prev,
-                              [key]: {
-                                ...draft,
-                                status: e.target.value as OrderStatusType,
-                              },
-                            }))
-                          }
-                          className="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-white focus:outline-none focus:border-emerald-500"
-                        >
-                          {ORDER_STATUS_OPTIONS.map((st) => (
-                            <option key={st} value={st}>
-                              {st}
-                            </option>
-                          ))}
-                        </select>
+                        <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase inline-block ${
+                          draft.status === 'Paid - Ready for CJ Fulfill' ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-900' :
+                          draft.status === 'Pending' ? 'bg-amber-950/50 text-amber-400 border border-amber-900' :
+                          draft.status === 'Processing' ? 'bg-blue-950/50 text-blue-400 border border-blue-900' :
+                          draft.status === 'Shipped' ? 'bg-indigo-950/50 text-indigo-400 border border-indigo-900' :
+                          draft.status === 'Delivered' ? 'bg-slate-800 text-slate-300 border border-slate-700' :
+                          'bg-rose-950/50 text-rose-400 border border-rose-900'
+                        }`}>
+                          {draft.status}
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-4 align-top">

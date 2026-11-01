@@ -6,6 +6,7 @@ import {
   trackStripeCheckoutInitiation,
   trackPurchase,
 } from '../lib/analytics';
+import { formatPriceForDisplay } from '../lib/currency';
 import {
   X,
   ShieldCheck,
@@ -316,7 +317,7 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
                 </div>
                 <div className="flex items-center justify-between text-slate-400 pt-1">
                   <span>Total Amount Paid</span>
-                  <span className="text-white font-bold text-xs">${confirmedOrderDetails.totalPaid} USD</span>
+                  <span className="text-white font-bold text-xs">{formatPriceForDisplay(`${confirmedOrderDetails.totalPaid} ${checkoutCurrency}`)}</span>
                 </div>
               </div>
 
@@ -422,7 +423,7 @@ export const ExpressCheckoutDrawer: React.FC<ExpressCheckoutDrawerProps> = ({
                           <p className="text-[11px] text-slate-400 font-mono">SKU: {item.product.id}</p>
                           <div className="flex items-center justify-between mt-1">
                             <span className="text-emerald-400 font-bold font-mono text-xs">
-                              {item.product.sale_price || item.product.price}
+                              {formatPriceForDisplay(item.product.sale_price || item.product.price)}
                             </span>
                             {onUpdateQuantity && (
                               <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded px-1.5 py-0.5">
