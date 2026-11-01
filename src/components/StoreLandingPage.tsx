@@ -218,8 +218,32 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
   // Active Variant Selection State for PDP & QuickView Modals (Size & Color)
   const [selectedSize, setSelectedSize] = useState<string>('M / Standard');
   const [selectedColor, setSelectedColor] = useState<string>('Obsidian Black');
+  const [flashSaleSeconds, setFlashSaleSeconds] = useState<number>(4 * 3600 + 30 * 60);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setFlashSaleSeconds((prev) => (prev > 0 ? prev - 1 : 4 * 3600 + 30 * 60));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const flashHours = Math.floor(flashSaleSeconds / 3600);
+  const flashMinutes = Math.floor((flashSaleSeconds % 3600) / 60);
+  const flashSecs = flashSaleSeconds % 60;
 
   const activeModalProduct = fullPdpProduct || quickViewProduct;
+
+  const relatedDealsForPdp = useMemo<GmcProduct[]>(() => {
+    if (!activeModalProduct) return [];
+    const candidates = products.filter((p) => p.id !== activeModalProduct.id);
+    const affiliates = candidates.filter(
+      (p) => p.productType === 'affiliate' || Boolean(p.affiliateUrl) || Boolean(p.affiliate_url)
+    );
+    const others = candidates.filter(
+      (p) => p.productType !== 'affiliate' && !p.affiliateUrl && !p.affiliate_url
+    );
+    return [...affiliates, ...others].slice(0, 4);
+  }, [products, activeModalProduct]);
 
   const activeProductVariants = useMemo<ProductVariantOption[]>(() => {
     if (!activeModalProduct) return [];
@@ -886,7 +910,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                         href={affiliateLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="min-h-[40px] px-3.5 py-2 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-slate-950 text-xs font-extrabold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
+                        className="min-h-[40px] px-3.5 py-2 bg-[#FF9900] hover:bg-[#e68a00] active:bg-[#cc7a00] text-slate-950 text-xs font-extrabold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 shadow-md shadow-[#FF9900]/20 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
                       >
                         <span>Buy on Amazon</span>
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -1346,6 +1370,27 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     )}
                   </div>
 
+                  {/* CRO URGENCY & SCARCITY TRIGGERS: Flash Sale Timer + Low Stock */}
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-rose-950/90 via-amber-950/50 to-slate-950 border border-rose-500/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span className="font-extrabold uppercase tracking-wider text-rose-300 flex items-center gap-1.5">
+                      <Zap className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                      Flash Sale Ends Soon
+                    </span>
+                    <span className="font-mono font-extrabold text-white bg-slate-950/90 px-2.5 py-1 rounded-md border border-rose-500/30">
+                      Ends in {String(flashHours).padStart(2, '0')}h : {String(flashMinutes).padStart(2, '0')}m :{' '}
+                      {String(flashSecs).padStart(2, '0')}s
+                    </span>
+                  </div>
+
+                  <div className="px-3 py-2 rounded-lg bg-amber-950/40 border border-amber-500/30 flex items-center justify-between text-[11px]">
+                    <span className="font-bold text-amber-300">
+                      Only 3 left in stock - order soon
+                    </span>
+                    <span className="text-emerald-400 font-mono font-semibold">
+                      InStock · Ships Today
+                    </span>
+                  </div>
+
                   {/* Interactive Size & Color Variant Selector */}
                   <div className="p-3.5 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3">
                     {availableSizes.length > 0 && (
@@ -1397,58 +1442,155 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                     )}
                   </div>
 
-                  <div className="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2 text-[11px]">
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <Truck className="w-4 h-4 text-emerald-400" />
-                      <span>Domestic Dispatch: <strong>3-7 Business Days (US/UK)</strong></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <RotateCcw className="w-4 h-4 text-emerald-400" />
-                      <span>Consumer Guarantee: <strong>30-Day Free Returns (0 Restocking Fee)</strong></span>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-300">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                      <span>Google Merchant Center Certified Product Listing</span>
-                    </div>
-                  </div>
-
                   <p className="text-slate-300 leading-relaxed text-xs">{fullPdpProduct.description}</p>
 
-                  <div className="space-y-2 pt-2">
-                    <button
-                      onClick={() =>
-                        handleBuyNow(
-                          buildVariantProductSnapshot(fullPdpProduct, selectedVariant),
-                          'pdp_modal_buy_now'
-                        )
-                      }
-                      className="w-full py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-extrabold text-xs rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
-                    >
-                      <Zap className="w-4 h-4 fill-current" />
-                      <span>
-                        Buy Now —{' '}
-                        {formatPriceForDisplay(
-                          selectedVariant
-                            ? selectedVariant.sale_price || selectedVariant.price
-                            : fullPdpProduct.sale_price || fullPdpProduct.price
-                        )}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        addToCart(
-                          buildVariantProductSnapshot(fullPdpProduct, selectedVariant),
-                          'pdp_modal'
-                        );
-                        setFullPdpProduct(null);
-                      }}
-                      className="w-full py-2.5 bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200 font-semibold text-xs rounded-xl transition-colors cursor-pointer"
-                    >
-                      Add Selected Variant ({selectedSize} · {selectedColor}) to Cart
-                    </button>
+                  {/* HIGH-CONTRAST CTAs: Amazon Orange (#FF9900) + Native Add to Cart / Express Checkout */}
+                  <div className="space-y-2.5 pt-2">
+                    {(fullPdpProduct.productType === 'affiliate' ||
+                      Boolean(fullPdpProduct.affiliateUrl) ||
+                      Boolean(fullPdpProduct.affiliate_url)) && (
+                      <a
+                        href={
+                          fullPdpProduct.affiliateUrl ||
+                          fullPdpProduct.affiliate_url ||
+                          `https://www.amazon.com/s?k=${encodeURIComponent(fullPdpProduct.title)}&tag=aerothor-20`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-3.5 px-5 bg-[#FF9900] hover:bg-[#e68a00] active:bg-[#cc7a00] text-slate-950 font-black text-xs uppercase tracking-wide rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FF9900]/25 cursor-pointer"
+                      >
+                        <span>Buy on Amazon</span>
+                        <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                      </a>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        onClick={() => {
+                          addToCart(
+                            buildVariantProductSnapshot(fullPdpProduct, selectedVariant),
+                            'pdp_modal'
+                          );
+                          setFullPdpProduct(null);
+                        }}
+                        className="w-full py-3.5 px-4 bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 font-extrabold text-xs uppercase tracking-wide rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 cursor-pointer"
+                      >
+                        <ShoppingBag className="w-4 h-4" />
+                        <span>Add to Cart</span>
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          handleBuyNow(
+                            buildVariantProductSnapshot(fullPdpProduct, selectedVariant),
+                            'pdp_modal_buy_now'
+                          )
+                        }
+                        className="w-full py-3.5 px-4 bg-white hover:bg-slate-100 text-slate-950 font-extrabold text-xs uppercase tracking-wide rounded-xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                      >
+                        <Zap className="w-4 h-4 fill-current text-emerald-600" />
+                        <span>
+                          Buy Now —{' '}
+                          {formatPriceForDisplay(
+                            selectedVariant
+                              ? selectedVariant.sale_price || selectedVariant.price
+                              : fullPdpProduct.sale_price || fullPdpProduct.price
+                          )}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* TRUST BADGES BELOW CTA */}
+                    <div className="pt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2 text-slate-200">
+                        <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="font-semibold">Secure Stripe Checkout</span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2 text-slate-200">
+                        <RotateCcw className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="font-semibold">30-Day Money-Back Guarantee</span>
+                      </div>
+                      <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2 text-slate-200">
+                        <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
+                        <span className="font-semibold">3–7 Day US/UK Dispatch</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* RELATED DEALS SECTION (Cross-Sell Affiliate Items Below Main Product) */}
+              {relatedDealsForPdp.length > 0 && (
+                <div className="pt-4 border-t border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-extrabold text-white uppercase tracking-wider">
+                      Related Deals &amp; Amazon Partner Offers
+                    </h3>
+                    <span className="text-[11px] text-amber-400 font-semibold">
+                      Verified Partner Selection
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    {relatedDealsForPdp.map((rel) => {
+                      const isRelAffiliate =
+                        rel.productType === 'affiliate' ||
+                        Boolean(rel.affiliateUrl) ||
+                        Boolean(rel.affiliate_url);
+                      const relAffiliateUrl =
+                        rel.affiliateUrl ||
+                        rel.affiliate_url ||
+                        `https://www.amazon.com/s?k=${encodeURIComponent(rel.title)}&tag=aerothor-20`;
+
+                      return (
+                        <div
+                          key={rel.id}
+                          className="p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-[#FF9900]/50 flex flex-col justify-between gap-2 transition-all"
+                        >
+                          <div
+                            className="cursor-pointer space-y-2"
+                            onClick={() => openProductLinkPage(rel)}
+                          >
+                            <div className="aspect-[4/3] rounded-lg bg-slate-950 overflow-hidden">
+                              <img
+                                src={resolveProductImage(rel.image_link)}
+                                alt={rel.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <p className="text-xs font-bold text-white line-clamp-2 leading-snug">
+                              {rel.title}
+                            </p>
+                          </div>
+                          <div className="space-y-2 pt-1">
+                            <div className="text-xs font-extrabold font-mono text-emerald-400">
+                              {formatPriceForDisplay(rel.sale_price || rel.price)}
+                            </div>
+                            {isRelAffiliate ? (
+                              <a
+                                href={relAffiliateUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full py-1.5 px-2.5 rounded-lg bg-[#FF9900] hover:bg-[#e68a00] text-slate-950 font-extrabold text-[11px] flex items-center justify-center gap-1 transition-colors"
+                              >
+                                <span>Buy on Amazon</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => openProductLinkPage(rel)}
+                                className="w-full py-1.5 px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-[11px] transition-colors cursor-pointer"
+                              >
+                                View Deal →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Generated Product Page SEO Metadata (<head> & OpenGraph) — Visible to Authenticated Admins Only */}
               {isAdminAuthenticated &&

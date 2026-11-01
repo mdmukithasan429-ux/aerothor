@@ -501,6 +501,13 @@ function generateProductPageMetadata(product, baseUrl) {
       "@type": "Brand",
       name: product.brand || "AeroThor"
     },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: "4.9",
+      reviewCount: "148",
+      bestRating: "5",
+      worstRating: "1"
+    },
     offers: {
       "@type": "Offer",
       url: canonicalUrl,
@@ -2710,11 +2717,18 @@ app.get(["/api/sitemap.xml", "/sitemap.xml"], (_req, res) => {
     const nowIso = (/* @__PURE__ */ new Date()).toISOString();
     const staticRoutes = [
       { path: "", changefreq: "daily", priority: "1.0" },
+      { path: "/deals", changefreq: "daily", priority: "0.9" },
+      { path: "/affiliates", changefreq: "weekly", priority: "0.8" },
+      { path: "/return-policy", changefreq: "monthly", priority: "0.7" },
       { path: "/policies/shipping", changefreq: "monthly", priority: "0.6" },
       { path: "/policies/refund", changefreq: "monthly", priority: "0.6" },
       { path: "/policies/privacy", changefreq: "monthly", priority: "0.5" },
       { path: "/policies/terms", changefreq: "monthly", priority: "0.5" },
-      { path: "/contact", changefreq: "monthly", priority: "0.7" }
+      { path: "/contact", changefreq: "monthly", priority: "0.7" },
+      { path: "/?category=Tech%20Accessories", changefreq: "daily", priority: "0.85" },
+      { path: "/?category=Drinkware%20%26%20Travel", changefreq: "daily", priority: "0.85" },
+      { path: "/?category=Outerwear%20%26%20Commute", changefreq: "daily", priority: "0.85" },
+      { path: "/?category=CJ%20Marketplace", changefreq: "daily", priority: "0.85" }
     ];
     const staticUrlsXml = staticRoutes.map(
       (route) => `  <url>
@@ -3521,6 +3535,13 @@ app.get("/api/products/:id/metadata", (req, res) => {
       brand: {
         "@type": "Brand",
         name: product.brand || "AeroThor"
+      },
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: "4.9",
+        reviewCount: "148",
+        bestRating: "5",
+        worstRating: "1"
       },
       offers: {
         "@type": "Offer",
@@ -4767,6 +4788,55 @@ function ensureCatalogInitialized() {
   }
   return initPromise;
 }
+app.get(["/product/:id", "/products/:id"], (req, res, next) => {
+  try {
+    const rawId = decodeURIComponent(req.params.id || "").trim().toLowerCase();
+    const product = currentCatalog.find(
+      (p) => p.id.toLowerCase() === rawId || (p.mpn || "").toLowerCase() === rawId || (p.cj_sku || "").toLowerCase() === rawId
+    );
+    if (!product) return next();
+    const templateCandidates = [
+      path2.resolve(process.cwd(), "data", "index-template.html"),
+      path2.resolve(process.cwd(), "dist", "index.html"),
+      path2.resolve(process.cwd(), "index.html")
+    ];
+    let html = "";
+    for (const candidate of templateCandidates) {
+      if (fs2.existsSync(candidate)) {
+        html = fs2.readFileSync(candidate, "utf-8");
+        break;
+      }
+    }
+    if (!html) return next();
+    const meta = generateProductPageMetadata(product, getCanonicalBaseUrl());
+    const safeTitle = escapeXml(meta.title);
+    const safeDesc = escapeXml(meta.description);
+    const safeCanonical = escapeXml(meta.canonicalUrl);
+    const safeImage = escapeXml(meta.openGraph.image || "");
+    const jsonLdString = JSON.stringify(meta.jsonLd);
+    html = html.replace(/<title>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
+    const injectedHeadTags = `
+    <meta name="description" content="${safeDesc}" />
+    <link id="canonical-link" rel="canonical" href="${safeCanonical}" />
+    <meta property="og:title" content="${safeTitle}" />
+    <meta property="og:description" content="${safeDesc}" />
+    <meta property="og:url" content="${safeCanonical}" />
+    <meta property="og:type" content="product" />
+    <meta property="og:image" content="${safeImage}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${safeTitle}" />
+    <meta name="twitter:description" content="${safeDesc}" />
+    <meta name="twitter:image" content="${safeImage}" />
+    <script id="product-jsonld" type="application/ld+json">${jsonLdString}</script>
+    <script>window.__INITIAL_PRODUCT__ = ${JSON.stringify(product)};</script>`;
+    html = html.replace("</head>", `${injectedHeadTags}
+  </head>`);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(html);
+  } catch {
+    return next();
+  }
+});
 async function startServer() {
   await ensureCatalogInitialized();
   if (!isServerlessRuntime && process.env.NODE_ENV !== "production") {

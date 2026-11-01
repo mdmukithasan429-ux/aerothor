@@ -2,25 +2,39 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Script from 'next/script';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://aerothor.vercel.app';
 const GA_MEASUREMENT_ID =
   process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || 'G-0KS0T13HQ7';
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ||
-      'https://aerothor.vercel.app'
-  ),
-  title: 'AeroThor — Minimalist Performance Essentials for High-Velocity Commuters',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'AeroThor — Official US & UK Direct Store | Fast Tracked Shipping',
+    template: '%s | AeroThor Official Store',
+  },
   description:
-    'Grade 1 titanium vessels, 100% pure merino thermal wear, and Qi2 aerospace charging hardware. Direct US & UK domestic warehouse dispatch within 3-7 business days.',
+    'Shop verified AeroThor performance essentials, Qi2 charging hardware, and Amazon partner deals. Free 3–7 business day US & UK tracked shipping and 30-day money-back guarantee.',
+  alternates: {
+    canonical: SITE_URL,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   verification: {
     google: ['googlee6a39edbc64fe5aa', 'XYvXZ1Kd3MsTbTSeQRzyddv22J163MNCsdavsGaW4iE'],
   },
   openGraph: {
-    title: 'AeroThor — Minimalist Performance Essentials',
+    title: 'AeroThor — Minimalist Performance Essentials & Verified Partner Deals',
     description:
       'Direct US & UK domestic warehouse dispatch with real-time tracking and 30-day free returns.',
-    url: 'https://aerothor.vercel.app',
+    url: SITE_URL,
     siteName: 'AeroThor Official Store',
     images: [
       {
@@ -34,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AeroThor — Minimalist Performance Essentials',
+    title: 'AeroThor — Minimalist Performance Essentials & Verified Partner Deals',
     description:
       'Direct US & UK domestic warehouse dispatch with real-time tracking and 30-day free returns.',
     images: [
