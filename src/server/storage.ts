@@ -134,7 +134,16 @@ function slugify(title: string, sku: string): string {
  * Helper to identify synthetic bulk-generated filler products vs real CJ / custom / seed products
  */
 export function isSyntheticBatchProduct(p: GmcProduct): boolean {
-  return /^CJ-(HOME|FIT|TRVL|TECH)-\d{5}$/i.test(p.id);
+  if (!p || !p.id) return false;
+  const id = String(p.id).toUpperCase();
+  const title = String(p.title || '');
+  return (
+    /^AERO-(SKIN|TECH|TRVL|APRL|HOME|FIT)-\d+/i.test(id) ||
+    /^CJ-(HOME|FIT|TRVL|TECH)-\d+/i.test(id) ||
+    /^AFF-AMZ-\d+/i.test(id) ||
+    /Gen-\d+\s+Series/i.test(title) ||
+    /Variant\s+#\d+/i.test(title)
+  );
 }
 
 /**
@@ -475,7 +484,13 @@ export function loadPersistedCatalog(): GmcProduct[] {
           ? parsed.products
           : [];
         if (list.length > 0) {
-          return prioritizeRealProductsFirst(list);
+          const nonSynthetic = list.filter((p) => !isSyntheticBatchProduct(p));
+          const mergedMap = new Map<string, GmcProduct>();
+          INITIAL_PRODUCTS.forEach((p) => mergedMap.set(p.id.toLowerCase(), p));
+          nonSynthetic.forEach((p) => mergedMap.set(p.id.toLowerCase(), p));
+          const cleanCatalog = prioritizeRealProductsFirst(Array.from(mergedMap.values()));
+          savePersistedCatalogToDiskOnly(cleanCatalog);
+          return cleanCatalog;
         }
       }
     }
