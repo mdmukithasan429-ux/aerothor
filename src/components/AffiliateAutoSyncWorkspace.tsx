@@ -33,6 +33,7 @@ import {
   ShoppingBag,
   BarChart3,
 } from 'lucide-react';
+import { AdminRevenueDrilldownModal, DrilldownType } from './AdminRevenueDrilldownModal';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -129,6 +130,7 @@ export const AffiliateAutoSyncWorkspace: React.FC<AffiliateAutoSyncWorkspaceProp
   onOpenStorefront,
 }) => {
   // Main API state
+  const [activeModal, setActiveModal] = useState<DrilldownType>(null);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<SyncStatusData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -594,47 +596,98 @@ export const AffiliateAutoSyncWorkspace: React.FC<AffiliateAutoSyncWorkspaceProp
         {/* Metric Cards: Revenue, Deductions, Projected Commissions & Wallet */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: Retail Revenue (Stripe Inflow) */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View Total Stripe Revenue transaction log"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('stripe_revenue');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('stripe_revenue');
+              }
+            }}
+            className="bg-slate-900/80 border border-slate-800 hover:border-emerald-500/60 rounded-2xl p-4 space-y-2 cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            title="Click to view detailed Stripe revenue transaction log"
+          >
+            <div className="flex items-center justify-between text-xs text-slate-400 group-hover:text-emerald-400 transition-colors pointer-events-none">
               <span>Customer Inflow (Stripe)</span>
               <DollarSign className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 pointer-events-none">
               <span className="text-2xl font-extrabold text-white">
                 ${(data?.financials?.totalRevenueCollected ?? 0).toFixed(2)}
               </span>
               <span className="text-[11px] text-emerald-400 font-medium">100% Direct to Bank</span>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-500 pointer-events-none">
               Collected from {data?.financials?.totalOrders ?? 0} customer checkout orders.
             </p>
           </div>
 
           {/* Card 2: Wholesale Auto-Deductions */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View CJ Wholesale COGS & fulfillment deduction log"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('cj_wholesale');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('cj_wholesale');
+              }
+            }}
+            className="bg-slate-900/80 border border-slate-800 hover:border-amber-500/60 rounded-2xl p-4 space-y-2 cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+            title="Click to view CJ Wholesale COGS & fulfillment deduction log"
+          >
+            <div className="flex items-center justify-between text-xs text-slate-400 group-hover:text-amber-400 transition-colors pointer-events-none">
               <span>Wholesale Auto-Deducted</span>
               <ShoppingBag className="w-4 h-4 text-amber-400" />
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 pointer-events-none">
               <span className="text-2xl font-extrabold text-amber-300">
                 ${(data?.financials?.totalCjWholesaleDeducted ?? 0).toFixed(2)}
               </span>
               <span className="text-[11px] text-amber-400/80 font-medium">CJ Cost</span>
             </div>
-            <p className="text-[11px] text-slate-500">
+            <p className="text-[11px] text-slate-500 pointer-events-none">
               Auto-deducted from CJ balance upon order dispatch.
             </p>
           </div>
 
           {/* Card 3: Net Retained Merchant Profit */}
-          <div className="bg-slate-900/80 border border-emerald-500/30 rounded-2xl p-4 space-y-2 relative overflow-hidden">
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View net profit margin breakdown per order"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('net_profit');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('net_profit');
+              }
+            }}
+            className="bg-slate-900/80 border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 space-y-2 relative overflow-hidden cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            title="Click to view net profit margin breakdown per order"
+          >
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-xl pointer-events-none" />
-            <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="flex items-center justify-between text-xs text-slate-400 group-hover:text-emerald-300 transition-colors pointer-events-none">
               <span>Net Merchant Profit</span>
               <TrendingUp className="w-4 h-4 text-emerald-400" />
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 pointer-events-none">
               <span className="text-2xl font-extrabold text-emerald-400">
                 ${(data?.financials?.netMerchantProfit ?? 0).toFixed(2)}
               </span>
@@ -644,18 +697,35 @@ export const AffiliateAutoSyncWorkspace: React.FC<AffiliateAutoSyncWorkspaceProp
                   : '0.0% Margin'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-400 pointer-events-none">
               Retained in your account after supplier wholesale costs.
             </p>
           </div>
 
           {/* Card 4: CJ Wallet Balance */}
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View CJ Wallet balance, connected card & auto-debit log"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('cj_wallet');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('cj_wallet');
+              }
+            }}
+            className="bg-slate-900/80 border border-slate-800 hover:border-blue-500/60 rounded-2xl p-4 space-y-2 cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            title="Click to view CJ Wallet balance, connected card & auto-debit log"
+          >
+            <div className="flex items-center justify-between text-xs text-slate-400 group-hover:text-blue-400 transition-colors pointer-events-none">
               <span>CJ Wallet Balance</span>
               <Wallet className="w-4 h-4 text-blue-400" />
             </div>
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-baseline gap-2 pointer-events-none">
               <span className="text-2xl font-extrabold text-white">
                 ${(data?.config?.cjWalletBalance ?? 0).toFixed(2)}
               </span>
@@ -664,7 +734,11 @@ export const AffiliateAutoSyncWorkspace: React.FC<AffiliateAutoSyncWorkspaceProp
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>Auto-Deduct: {autoDeduct ? 'Enabled' : 'Disabled'}</span>
               <button
-                onClick={() => handleSaveConfig(!autoDeduct)}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSaveConfig(!autoDeduct);
+                }}
                 className="text-emerald-400 hover:underline cursor-pointer font-medium"
               >
                 Toggle
@@ -1555,6 +1629,16 @@ export const AffiliateAutoSyncWorkspace: React.FC<AffiliateAutoSyncWorkspaceProp
           </div>
         </div>
       </div>
+
+      {/* Root Level Interactive Drill-Down Audit Modal */}
+      {activeModal && (
+        <AdminRevenueDrilldownModal
+          type={activeModal}
+          onClose={() => setActiveModal(null)}
+          orders={[]}
+          cjWalletBalance={data?.config?.cjWalletBalance ?? 2485.50}
+        />
+      )}
     </div>
   );
 };
