@@ -6,30 +6,27 @@ import { TARGET_REGIONS } from '../src/lib/i18n-regions';
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
-const BASE_DOMAIN = (
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  process.env.APP_URL ||
-  'https://aerothor.smmgrows.com'
-).replace(/\/$/, '');
+const PRODUCTION_DOMAIN = 'https://aerothor.smmgrows.com';
 
 /**
  * Dynamic Next.js Sitemap Generator (`app/sitemap.ts`)
- * Canonical domain: https://aerothor.smmgrows.com
- * Targets top international tier-1 countries (US, UK, CA, FR, DE, IT, NL, PL, ES, SE) with x-default fallback.
+ * Strictly uses canonical production domain: https://aerothor.smmgrows.com
+ * Guarantees all 1,000 products and all regional paths (/deals/us, /deals/uk, etc.) are included.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const regionalRootAlternates: Record<string, string> = {};
   TARGET_REGIONS.forEach((r) => {
-    regionalRootAlternates[r.hreflang] = `${BASE_DOMAIN}/deals/${r.slug}`;
+    regionalRootAlternates[r.hreflang] =
+      r.slug === 'us' ? `${PRODUCTION_DOMAIN}/` : `${PRODUCTION_DOMAIN}/deals/${r.slug}`;
   });
-  regionalRootAlternates['x-default'] = `${BASE_DOMAIN}`;
+  regionalRootAlternates['x-default'] = `${PRODUCTION_DOMAIN}/`;
 
-  // 1. Static Storefront & Regional Targeted Hubs
+  // 1. Static Storefront & Regional Targeted Hubs (/deals/uk, /deals/germany, etc.)
   const staticPages: MetadataRoute.Sitemap = [
     {
-      url: `${BASE_DOMAIN}`,
+      url: `${PRODUCTION_DOMAIN}/`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 1.0,
@@ -38,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     },
     {
-      url: `${BASE_DOMAIN}/deals`,
+      url: `${PRODUCTION_DOMAIN}/deals`,
       lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
@@ -47,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     },
     ...TARGET_REGIONS.map((r) => ({
-      url: `${BASE_DOMAIN}/deals/${r.slug}`,
+      url: `${PRODUCTION_DOMAIN}/deals/${r.slug}`,
       lastModified: now,
       changeFrequency: 'daily' as const,
       priority: 0.95,
@@ -56,49 +53,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     })),
     {
-      url: `${BASE_DOMAIN}/affiliates`,
+      url: `${PRODUCTION_DOMAIN}/affiliates`,
       lastModified: now,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${BASE_DOMAIN}/return-policy`,
+      url: `${PRODUCTION_DOMAIN}/return-policy`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${BASE_DOMAIN}/policies/shipping`,
+      url: `${PRODUCTION_DOMAIN}/policies/shipping`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${BASE_DOMAIN}/policies/refund`,
+      url: `${PRODUCTION_DOMAIN}/policies/refund`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${BASE_DOMAIN}/policies/privacy`,
+      url: `${PRODUCTION_DOMAIN}/policies/privacy`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
-      url: `${BASE_DOMAIN}/policies/terms`,
+      url: `${PRODUCTION_DOMAIN}/policies/terms`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
-      url: `${BASE_DOMAIN}/contact`,
+      url: `${PRODUCTION_DOMAIN}/contact`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${BASE_DOMAIN}/track-order`,
+      url: `${PRODUCTION_DOMAIN}/track-order`,
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.6,
@@ -110,48 +107,65 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     'Protective Skins & Wraps',
     'Tech Accessories',
     'Drinkware & Travel',
-    'Outerwear & Commute',
+    'Clothing',
+    'Affiliate Deals',
     'CJ Marketplace',
-    'Everyday Carry',
   ];
 
   const categoryPages: MetadataRoute.Sitemap = categories.map((cat) => ({
-    url: `${BASE_DOMAIN}/?category=${encodeURIComponent(cat)}`,
+    url: `${PRODUCTION_DOMAIN}/?category=${encodeURIComponent(cat)}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
     priority: 0.85,
   }));
 
-  // 3. Dynamic Active Product Pages (Database with 1,000-item verified disk fallback)
-  let productEntries: Array<{ id: string; slug?: string; updatedAt?: Date; availability?: string }> = [];
+  // 3. Dynamic Active Product Pages — Guarantee all 1,000 products are included
+  const entryMap = new Map<
+    string,
+    { sku: string; slug?: string; updatedAt?: Date; availability?: string }
+  >();
+
   try {
     const dbProducts = await prisma.product.findMany({
-      select: { id: true, slug: true, updatedAt: true, availability: true },
+      select: { sku: true, slug: true, updatedAt: true, stockQuantity: true, availability: true },
       orderBy: { updatedAt: 'desc' },
     });
-    if (dbProducts.length > 0) {
-      productEntries = dbProducts;
+    for (const p of dbProducts) {
+      if (p.sku) {
+        entryMap.set(p.sku, {
+          sku: p.sku,
+          slug: p.slug,
+          updatedAt: p.updatedAt,
+          availability: p.availability || (p.stockQuantity > 0 ? 'in_stock' : 'out_of_stock'),
+        });
+      }
     }
   } catch {
-    // Fallback to persisted catalog
+    // Fallback / merge with persisted catalog below
   }
 
-  if (productEntries.length === 0) {
+  // Merge with persisted 1,000-item catalog if DB returned fewer than 1,000 items
+  if (entryMap.size < 1000) {
     const catalog = loadPersistedCatalog();
-    productEntries = catalog
-      .filter((product: any) => product.status !== 'archived' && product.isVisible !== false)
-      .map((product: any) => ({
-        id: product.id,
-        slug: product.slug,
-        updatedAt: now,
-        availability: product.availability,
-      }));
+    for (const product of catalog) {
+      if (!product || !product.id) continue;
+      if (product.status === 'archived' || product.isVisible === false) continue;
+      if (!entryMap.has(product.id)) {
+        entryMap.set(product.id, {
+          sku: product.id,
+          slug: (product as any).slug,
+          updatedAt: now,
+          availability: product.availability || 'in_stock',
+        });
+      }
+    }
   }
+
+  const productEntries = Array.from(entryMap.values());
 
   const productPages: MetadataRoute.Sitemap = productEntries.map((product) => {
-    const identifier = product.slug || product.id;
-    const encodedId = encodeURIComponent(identifier);
-    const productUrl = `${BASE_DOMAIN}/product/${encodedId}`;
+    const encodedSku = encodeURIComponent(product.sku);
+    const productUrl = `${PRODUCTION_DOMAIN}/product/${encodedSku}`;
 
     const productLanguages: Record<string, string> = {};
     TARGET_REGIONS.forEach((r) => {

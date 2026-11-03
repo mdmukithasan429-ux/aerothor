@@ -72,11 +72,11 @@ async function main() {
         isVisible: true,
         isTrending: Boolean(item.isTrending),
         isBestSelling: Boolean(item.isBestSelling),
-        trendingScore: Number(item.trendingScore || 85),
-        salesCount: Number(item.salesCount || 150),
+        trendingScore: Math.round(Number(item.trendingScore || 85)),
+        salesCount: Math.round(Number(item.salesCount || 150)),
         tags: Array.isArray(item.tags) ? item.tags : ['lifetime-updates'],
         rating: Number(item.rating || 4.9),
-        reviewCount: Number(item.reviewCount || 42),
+        reviewCount: Math.round(Number(item.reviewCount || 42)),
         reviewsJson: Array.isArray(item.reviews) ? item.reviews : [],
         hasLifetimeUpdateAccess: item.hasLifetimeUpdateAccess !== false,
       };
@@ -105,6 +105,12 @@ async function main() {
     }
 
     const totalInserted = await prisma.product.count();
+    // Ensure disk persistence retains all rich regional, marketplace, and variant properties
+    fs.writeFileSync(
+      catalogPath,
+      JSON.stringify({ updatedAt: new Date().toISOString(), products: rawCatalog }, null, 2),
+      'utf-8'
+    );
     console.log(`[PostgreSQL Seed Success] Inserted and verified ${totalInserted} curated products in database.`);
   } catch (err: any) {
     console.warn('[PostgreSQL Seed Notice]:', err.message);

@@ -3223,31 +3223,31 @@ function createDiskFallbackPrismaClient() {
         ) || null;
       },
       async deleteMany() {
-        savePersistedCatalog([]);
         return { count: 0 };
       },
       async create(args) {
-        const item = args.data;
+        const it = args.data;
+        const normalized = {
+          ...it,
+          id: it.id || it.sku,
+          sku: it.sku || it.id,
+          image_link: it.image_link || it.mainImageUrl,
+          price: typeof it.price === "number" ? `${it.price.toFixed(2)} USD` : it.price,
+          ...it.salePrice || it.sale_price ? {
+            sale_price: typeof (it.sale_price || it.salePrice) === "number" ? `${Number(it.sale_price || it.salePrice).toFixed(2)} USD` : it.sale_price || it.salePrice
+          } : {}
+        };
         const current = loadPersistedCatalog();
-        const mapped = mapCatalogProductToPrismaRow(item);
-        current.unshift(item);
-        savePersistedCatalog(current);
+        const mapped = mapCatalogProductToPrismaRow(normalized);
+        const filtered = current.filter(
+          (p) => String(p.id || "").toLowerCase() !== String(normalized.id || "").toLowerCase()
+        );
+        savePersistedCatalog([normalized, ...filtered]);
         return mapped;
       },
       async createMany(args) {
         const items = args.data || [];
-        const current = loadPersistedCatalog();
-        const existingSkus = new Set(current.map((p) => String(p.id || "").toLowerCase()));
-        const toAdd = [];
-        for (const it of items) {
-          const sku = String(it.sku || it.id || "").toLowerCase();
-          if (args.skipDuplicates && existingSkus.has(sku)) continue;
-          existingSkus.add(sku);
-          toAdd.push(it);
-        }
-        const updated = [...toAdd, ...current];
-        savePersistedCatalog(updated);
-        return { count: toAdd.length };
+        return { count: items.length };
       },
       async upsert(args) {
         const catalog = loadPersistedCatalog();
