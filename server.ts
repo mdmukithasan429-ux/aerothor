@@ -1647,11 +1647,13 @@ function enrichAndSortCatalogProducts(items: GmcProduct[], rawSort: string): any
     .map((entry) => entry.item);
 }
 
+const EXPRESS_PRODUCTS_CACHE = new Map<string, { expiresAt: number; payload: any }>();
+const EXPRESS_CACHE_TTL_MS = 30_000;
+
 // Products catalog query & batch sync API (supports ?sort=trending|random|latest|price_asc|price_desc, ?tag=trending, ?type=, ?category=, ?q=, and optional ?page=&limit=&skip=&take= pagination)
 app.get('/api/products', (req, res) => {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  const startMs = Date.now();
+  res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=60, stale-while-revalidate=300');
 
   const typeFilter = typeof req.query.type === 'string' ? req.query.type.toLowerCase().trim() : '';
   const category = typeof req.query.category === 'string' ? req.query.category.trim() : 'All';
@@ -1659,6 +1661,20 @@ app.get('/api/products', (req, res) => {
   const sortParam = typeof req.query.sort === 'string' ? req.query.sort.trim() : 'trending';
   const rawQuery = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
   const queryTokens = rawQuery ? rawQuery.split(/\s+/).filter(Boolean) : [];
+
+  const hasPaginationParams =
+    req.query.page !== undefined ||
+    req.query.limit !== undefined ||
+    req.query.take !== undefined ||
+    req.query.skip !== undefined;
+
+  const cacheKey = `list:${currentCatalog.length}:${typeFilter}:${category}:${tagFilter}:${sortParam}:${rawQuery}:${req.query.page || ''}:${req.query.limit || ''}:${req.query.take || ''}:${req.query.skip || ''}:${req.query.all || ''}`;
+  const cached = sortParam !== 'random' ? EXPRESS_PRODUCTS_CACHE.get(cacheKey) : undefined;
+  if (cached && cached.expiresAt > Date.now()) {
+    res.setHeader('X-Cache-Status', 'HIT');
+    res.setHeader('X-Response-Time-Ms', String(Date.now() - startMs));
+    return res.status(200).json(cached.payload);
+  }
 
   const matched = currentCatalog.filter((p) => {
     if (typeFilter === 'affiliate' && p.productType !== 'affiliate') return false;
@@ -1681,12 +1697,6 @@ app.get('/api/products', (req, res) => {
 
   const sortedAndShuffled = enrichAndSortCatalogProducts(matched, sortParam);
 
-  const hasPaginationParams =
-    req.query.page !== undefined ||
-    req.query.limit !== undefined ||
-    req.query.take !== undefined ||
-    req.query.skip !== undefined;
-
   if (hasPaginationParams) {
     const isAll = req.query.limit === 'all' || req.query.all === 'true' || req.query.take === 'all';
     const rawLimit = req.query.limit || req.query.take;
@@ -1705,7 +1715,7 @@ app.get('/api/products', (req, res) => {
         : (page - 1) * take;
     const paginated = sortedAndShuffled.slice(skip, skip + take);
 
-    return res.status(200).json({
+    const payload = {
       success: true,
       sort: sortParam,
       refreshedAt: new Date().toISOString(),
@@ -1717,23 +1727,44 @@ app.get('/api/products', (req, res) => {
       totalPages: Math.max(1, Math.ceil(sortedAndShuffled.length / take)),
       count: paginated.length,
       products: paginated,
-    });
+    };
+
+    if (sortParam !== 'random') {
+      EXPRESS_PRODUCTS_CACHE.set(cacheKey, {
+        expiresAt: Date.now() + EXPRESS_CACHE_TTL_MS,
+        payload,
+      });
+    }
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.setHeader('X-Response-Time-Ms', String(Date.now() - startMs));
+    return res.status(200).json(payload);
   }
 
-  res.status(200).json({
+  const fullPayload = {
     success: true,
     sort: sortParam,
     refreshedAt: new Date().toISOString(),
     totalCount: sortedAndShuffled.length,
     count: sortedAndShuffled.length,
     products: sortedAndShuffled,
-  });
+  };
+
+  if (sortParam !== 'random') {
+    EXPRESS_PRODUCTS_CACHE.set(cacheKey, {
+      expiresAt: Date.now() + EXPRESS_CACHE_TTL_MS,
+      payload: fullPayload,
+    });
+  }
+  res.setHeader('X-Cache-Status', 'MISS');
+  res.setHeader('X-Response-Time-Ms', String(Date.now() - startMs));
+  res.status(200).json(fullPayload);
 });
 
 // Debounced Storefront Product Search API (/api/products/search)
 app.get('/api/products/search', (req, res) => {
+  const startMs = Date.now();
   try {
-    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=60, stale-while-revalidate=300');
     const rawQuery = typeof req.query.q === 'string' ? req.query.q : '';
     const category = typeof req.query.category === 'string' ? req.query.category : 'All';
     const typeFilter = typeof req.query.type === 'string' ? req.query.type.toLowerCase().trim() : '';
@@ -1742,6 +1773,14 @@ app.get('/api/products/search', (req, res) => {
     const skipParam = req.query.skip ? parseInt(String(req.query.skip), 10) : 0;
 
     const normalizedQuery = rawQuery.trim().toLowerCase();
+    const cacheKey = `search:${currentCatalog.length}:${normalizedQuery}:${category}:${typeFilter}:${sortParam}:${limitParam}:${skipParam}`;
+    const cached = sortParam !== 'random' ? EXPRESS_PRODUCTS_CACHE.get(cacheKey) : undefined;
+    if (cached && cached.expiresAt > Date.now()) {
+      res.setHeader('X-Cache-Status', 'HIT');
+      res.setHeader('X-Response-Time-Ms', String(Date.now() - startMs));
+      return res.status(200).json(cached.payload);
+    }
+
     const queryTokens = normalizedQuery ? normalizedQuery.split(/\s+/).filter(Boolean) : [];
 
     const matchedProducts = currentCatalog.filter((p: any) => {
@@ -1779,7 +1818,7 @@ app.get('/api/products/search', (req, res) => {
         ? sortedAndShuffled.slice(startOffset)
         : sortedAndShuffled;
 
-    res.status(200).json({
+    const payload = {
       query: rawQuery,
       category,
       sort: sortParam,
@@ -1788,7 +1827,17 @@ app.get('/api/products/search', (req, res) => {
       count: sortedAndShuffled.length,
       totalCatalogCount: currentCatalog.length,
       products: finalProducts,
-    });
+    };
+
+    if (sortParam !== 'random') {
+      EXPRESS_PRODUCTS_CACHE.set(cacheKey, {
+        expiresAt: Date.now() + EXPRESS_CACHE_TTL_MS,
+        payload,
+      });
+    }
+    res.setHeader('X-Cache-Status', 'MISS');
+    res.setHeader('X-Response-Time-Ms', String(Date.now() - startMs));
+    res.status(200).json(payload);
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Search failed' });
   }

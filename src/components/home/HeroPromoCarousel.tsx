@@ -4,7 +4,9 @@ import { Sparkles, ExternalLink, ChevronLeft, ChevronRight, Tag, ShieldCheck, Me
 import { Campaign, INITIAL_CAMPAIGNS } from '../../lib/campaigns';
 
 export function HeroPromoCarousel() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<Campaign[]>(() =>
+    INITIAL_CAMPAIGNS.filter((c) => c.placement === 'HERO_BANNER' && c.isActive)
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -20,14 +22,9 @@ export function HeroPromoCarousel() {
             return;
           }
         }
-        if (isMounted) {
-          setCampaigns(INITIAL_CAMPAIGNS.filter((c) => c.placement === 'HERO_BANNER' && c.isActive));
-        }
       })
       .catch(() => {
-        if (isMounted) {
-          setCampaigns(INITIAL_CAMPAIGNS.filter((c) => c.placement === 'HERO_BANNER' && c.isActive));
-        }
+        // Fallback already initialized
       });
     return () => {
       isMounted = false;
@@ -44,7 +41,7 @@ export function HeroPromoCarousel() {
 
   if (campaigns.length === 0) return null;
 
-  const current = campaigns[currentIndex];
+  const current = campaigns[currentIndex] || campaigns[0];
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % campaigns.length);
@@ -127,8 +124,14 @@ export function HeroPromoCarousel() {
               className="block relative aspect-[16/10] sm:aspect-[16/9] rounded-2xl overflow-hidden border border-slate-700/80 shadow-2xl group-hover:border-amber-400/60 transition-colors"
             >
               <img
-                src={current.imageUrl}
+                src={current.imageUrl.includes('fm=') ? current.imageUrl : `${current.imageUrl}&fm=webp`}
                 alt={current.brandName}
+                width={800}
+                height={450}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
+                sizes="(max-width: 1024px) 100vw, 42vw"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />

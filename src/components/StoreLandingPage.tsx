@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
 import { GmcProduct, ProductVariantOption, CANONICAL_STORE_URL } from '../lib/gmc-feed';
 import { buildDefaultVariantsForProduct } from '../lib/api-integrations';
 import { ExpressCheckoutDrawer, CheckoutItem } from './ExpressCheckoutDrawer';
@@ -44,11 +44,8 @@ import { SponsoredGridCard } from './home/SponsoredGridCard';
 import { Campaign, INITIAL_CAMPAIGNS } from '../lib/campaigns';
 import { useStoreSettings } from '../lib/useStoreSettings';
 import { HeroPromotionCarousel } from './home/HeroPromotionCarousel';
-import { FlashDealSection } from './home/FlashDealSection';
-import { CorporateAdBanners } from './home/CorporateAdBanners';
 import { PromoCouponDrawer } from './home/PromoCouponDrawer';
 import { NewsletterBanner } from './home/NewsletterBanner';
-import { TrendingDemandSection } from './home/TrendingDemandSection';
 import {
   TARGET_REGIONS,
   getRegionOrDefault,
@@ -56,6 +53,16 @@ import {
   TargetRegionConfig,
   localizeAmazonAffiliateUrl,
 } from '../lib/i18n-regions';
+
+const FlashDealSection = React.lazy(() =>
+  import('./home/FlashDealSection').then((m) => ({ default: m.FlashDealSection }))
+);
+const TrendingDemandSection = React.lazy(() =>
+  import('./home/TrendingDemandSection').then((m) => ({ default: m.TrendingDemandSection }))
+);
+const CorporateAdBanners = React.lazy(() =>
+  import('./home/CorporateAdBanners').then((m) => ({ default: m.CorporateAdBanners }))
+);
 
 interface StoreLandingPageProps {
   products: GmcProduct[];
@@ -76,7 +83,7 @@ interface CartItem {
 const SEARCH_STORAGE_KEY = 'aerothor_store_persistent_search';
 const CATEGORY_STORAGE_KEY = 'aerothor_store_persistent_category';
 const FALLBACK_PRODUCT_IMAGE =
-  'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+  'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80&fm=webp';
 
 function resolveProductImage(rawUrl?: string): string {
   if (!rawUrl || typeof rawUrl !== 'string') return FALLBACK_PRODUCT_IMAGE;
@@ -93,6 +100,9 @@ function resolveProductImage(rawUrl?: string): string {
   }
   if (cleaned.startsWith('http://')) {
     cleaned = cleaned.replace(/^http:\/\//i, 'https://');
+  }
+  if (cleaned.includes('images.unsplash.com') && !cleaned.includes('fm=')) {
+    cleaned += cleaned.includes('?') ? '&fm=webp' : '?auto=format&fit=crop&w=800&q=80&fm=webp';
   }
   return cleaned.startsWith('https://') || cleaned.startsWith('/') ? cleaned : FALLBACK_PRODUCT_IMAGE;
 }
@@ -790,23 +800,29 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
       </section>
 
       {/* Deal of the Day / Flash Sale Countdown Module */}
-      <FlashDealSection
-        products={products}
-        onSelectProduct={(prod) => openProductLinkPage(prod)}
-        onAddToCart={(prod) => addToCart(prod, 'flash_sale_card')}
-        onBuyNow={(prod) => handleBuyNow(prod, 'flash_sale_card')}
-      />
+      <Suspense fallback={<div className="min-h-[320px] rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />}>
+        <FlashDealSection
+          products={products}
+          onSelectProduct={(prod) => openProductLinkPage(prod)}
+          onAddToCart={(prod) => addToCart(prod, 'flash_sale_card')}
+          onBuyNow={(prod) => handleBuyNow(prod, 'flash_sale_card')}
+        />
+      </Suspense>
 
       {/* Today's High Demand Drops Engine with Framer Motion */}
-      <TrendingDemandSection
-        products={products}
-        onSelectProduct={(prod) => openProductLinkPage(prod)}
-        onAddToCart={(prod) => addToCart(prod, 'trending_high_demand')}
-        onBuyNow={(prod) => handleBuyNow(prod, 'trending_high_demand')}
-      />
+      <Suspense fallback={<div className="min-h-[340px] rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />}>
+        <TrendingDemandSection
+          products={products}
+          onSelectProduct={(prod) => openProductLinkPage(prod)}
+          onAddToCart={(prod) => addToCart(prod, 'trending_high_demand')}
+          onBuyNow={(prod) => handleBuyNow(prod, 'trending_high_demand')}
+        />
+      </Suspense>
 
       {/* Curated 3-Column Corporate Promotional Ad Banners */}
-      <CorporateAdBanners onSelectCategory={(cat) => setSelectedCategory(cat)} />
+      <Suspense fallback={<div className="min-h-[180px] rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />}>
+        <CorporateAdBanners onSelectCategory={(cat) => setSelectedCategory(cat)} />
+      </Suspense>
 
 
       {/* Catalog Filter & Showcase */}
@@ -1076,7 +1092,12 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       <img
                         src={displayImage}
                         alt={p.title}
-                        loading="lazy"
+                        width={600}
+                        height={450}
+                        loading={idx < 3 ? 'eager' : 'lazy'}
+                        fetchPriority={idx < 3 ? 'high' : 'auto'}
+                        decoding="async"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         referrerPolicy="no-referrer"
                         onError={(e) => {
                           const target = e.currentTarget;
@@ -1194,7 +1215,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                           href={affiliateLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="min-h-[40px] px-3.5 py-2 bg-[#FF9900] hover:bg-[#e68a00] active:bg-[#cc7a00] text-slate-950 text-xs font-extrabold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 shadow-md shadow-[#FF9900]/20 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
+                          className="min-h-[44px] px-3.5 py-2 bg-[#FF9900] hover:bg-[#e68a00] active:bg-[#cc7a00] text-slate-950 text-xs font-extrabold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 shadow-md shadow-[#FF9900]/20 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
                         >
                           <span>Buy on Amazon</span>
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -1204,7 +1225,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                           <button
                             type="button"
                             onClick={() => addToCart(p)}
-                            className="min-h-[40px] px-2.5 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/70 transition-colors inline-flex items-center justify-center gap-1 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
+                            className="min-h-[44px] px-2.5 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700/70 transition-colors inline-flex items-center justify-center gap-1 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
                             title="Add to cart"
                           >
                             <Plus className="w-3.5 h-3.5 shrink-0" />
@@ -1213,7 +1234,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                           <button
                             type="button"
                             onClick={() => handleBuyNow(p)}
-                            className="min-h-[40px] px-3 py-2 bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-950 text-xs font-bold rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
+                            className="min-h-[44px] px-3 py-2 bg-emerald-400 hover:bg-emerald-300 active:bg-emerald-500 text-slate-950 text-xs font-bold rounded-lg transition-colors inline-flex items-center justify-center gap-1.5 shadow-sm whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
                             title="Express 48h Dispatch / Buy Now via CJ"
                           >
                             <Zap className="w-3.5 h-3.5 fill-current shrink-0" />

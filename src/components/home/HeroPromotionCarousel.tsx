@@ -156,8 +156,14 @@ export const HeroPromotionCarousel: React.FC<HeroPromotionCarouselProps> = ({
             }`}
           >
             <img
-              src={slide.image}
+              src={slide.image.includes('fm=') ? slide.image : `${slide.image}&fm=webp`}
               alt={slide.headline}
+              width={1200}
+              height={675}
+              loading={idx === 0 ? 'eager' : 'lazy'}
+              fetchPriority={idx === 0 ? 'high' : 'low'}
+              decoding={idx === 0 ? 'sync' : 'async'}
+              sizes="100vw"
               className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity scale-105 transition-transform duration-10000"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/40" />

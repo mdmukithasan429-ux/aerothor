@@ -1,28 +1,69 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TopBar, WorkspaceTab } from './components/TopBar';
 import { StoreLandingPage } from './components/StoreLandingPage';
-import { AffiliatesPage } from './components/AffiliatesPage';
-import { OrderTrackingPage } from './components/OrderTrackingPage';
-import { AdminOrdersManager } from './components/AdminOrdersManager';
-import { GmcFeedWorkspace } from './components/GmcFeedWorkspace';
-import { CsvUploadWorkspace } from './components/CsvUploadWorkspace';
-import { NextJsCodeWorkspace } from './components/NextJsCodeWorkspace';
-import { CjSyncWorkspace } from './components/CjSyncWorkspace';
-import { AffiliateAutoSyncWorkspace } from './components/AffiliateAutoSyncWorkspace';
-import { PMaxAuditWorkspace } from './components/PMaxAuditWorkspace';
-import { AiChatWorkspace } from './components/AiChatWorkspace';
-import { CreativeStudioWorkspace } from './components/CreativeStudioWorkspace';
-import { AdminInventoryDashboard } from './components/AdminInventoryDashboard';
-import { AdminSettingsWorkspace } from './components/AdminSettingsWorkspace';
-import { InternationalSeoDashboard } from './components/InternationalSeoDashboard';
-import { AdminRevenueDashboard } from './components/AdminRevenueDashboard';
-import { AdminPaymentGatewayHub } from './components/AdminPaymentGatewayHub';
-import { SeoMetaAuditWorkspace } from './components/SeoMetaAuditWorkspace';
-import { AdminMarketingWorkspace } from './components/AdminMarketingWorkspace';
-import { AdminLoginModal } from './components/AdminLoginModal';
-import { ReturnPolicyView } from './components/ReturnPolicyView';
 import { NewsletterBanner } from './components/home/NewsletterBanner';
+
+const AffiliatesPage = React.lazy(() =>
+  import('./components/AffiliatesPage').then((m) => ({ default: m.AffiliatesPage }))
+);
+const OrderTrackingPage = React.lazy(() =>
+  import('./components/OrderTrackingPage').then((m) => ({ default: m.OrderTrackingPage }))
+);
+const ReturnPolicyView = React.lazy(() =>
+  import('./components/ReturnPolicyView').then((m) => ({ default: m.ReturnPolicyView }))
+);
+const AdminOrdersManager = React.lazy(() =>
+  import('./components/AdminOrdersManager').then((m) => ({ default: m.AdminOrdersManager }))
+);
+const GmcFeedWorkspace = React.lazy(() =>
+  import('./components/GmcFeedWorkspace').then((m) => ({ default: m.GmcFeedWorkspace }))
+);
+const CsvUploadWorkspace = React.lazy(() =>
+  import('./components/CsvUploadWorkspace').then((m) => ({ default: m.CsvUploadWorkspace }))
+);
+const NextJsCodeWorkspace = React.lazy(() =>
+  import('./components/NextJsCodeWorkspace').then((m) => ({ default: m.NextJsCodeWorkspace }))
+);
+const CjSyncWorkspace = React.lazy(() =>
+  import('./components/CjSyncWorkspace').then((m) => ({ default: m.CjSyncWorkspace }))
+);
+const AffiliateAutoSyncWorkspace = React.lazy(() =>
+  import('./components/AffiliateAutoSyncWorkspace').then((m) => ({ default: m.AffiliateAutoSyncWorkspace }))
+);
+const PMaxAuditWorkspace = React.lazy(() =>
+  import('./components/PMaxAuditWorkspace').then((m) => ({ default: m.PMaxAuditWorkspace }))
+);
+const AiChatWorkspace = React.lazy(() =>
+  import('./components/AiChatWorkspace').then((m) => ({ default: m.AiChatWorkspace }))
+);
+const CreativeStudioWorkspace = React.lazy(() =>
+  import('./components/CreativeStudioWorkspace').then((m) => ({ default: m.CreativeStudioWorkspace }))
+);
+const AdminInventoryDashboard = React.lazy(() =>
+  import('./components/AdminInventoryDashboard').then((m) => ({ default: m.AdminInventoryDashboard }))
+);
+const AdminSettingsWorkspace = React.lazy(() =>
+  import('./components/AdminSettingsWorkspace').then((m) => ({ default: m.AdminSettingsWorkspace }))
+);
+const InternationalSeoDashboard = React.lazy(() =>
+  import('./components/InternationalSeoDashboard').then((m) => ({ default: m.InternationalSeoDashboard }))
+);
+const AdminRevenueDashboard = React.lazy(() =>
+  import('./components/AdminRevenueDashboard').then((m) => ({ default: m.AdminRevenueDashboard }))
+);
+const AdminPaymentGatewayHub = React.lazy(() =>
+  import('./components/AdminPaymentGatewayHub').then((m) => ({ default: m.AdminPaymentGatewayHub }))
+);
+const SeoMetaAuditWorkspace = React.lazy(() =>
+  import('./components/SeoMetaAuditWorkspace').then((m) => ({ default: m.SeoMetaAuditWorkspace }))
+);
+const AdminMarketingWorkspace = React.lazy(() =>
+  import('./components/AdminMarketingWorkspace').then((m) => ({ default: m.AdminMarketingWorkspace }))
+);
+const AdminLoginModal = React.lazy(() =>
+  import('./components/AdminLoginModal').then((m) => ({ default: m.AdminLoginModal }))
+);
 import { INITIAL_PRODUCTS } from './server/seed-data';
 import { GmcProduct } from './lib/gmc-feed';
 import { trackPageView } from './lib/analytics';
@@ -386,144 +427,156 @@ export default function App() {
               />
             )}
 
-            {effectiveTab === 'affiliates' && (
-              <AffiliatesPage
-                products={products}
-                onNavigateToStorefront={() => setActiveTab('storefront')}
-                onSelectCategory={(cat) => {
-                  setExternalCategory(cat);
-                  setActiveTab('storefront');
-                }}
-                selectedRegionSlug={selectedRegionSlug}
-                onSelectRegionSlug={(slug) => setSelectedRegionSlug(slug)}
-              />
-            )}
+            <Suspense
+              fallback={
+                <div className="min-h-[360px] flex items-center justify-center text-xs font-mono text-slate-400">
+                  Loading workspace…
+                </div>
+              }
+            >
+              {effectiveTab === 'affiliates' && (
+                <AffiliatesPage
+                  products={products}
+                  onNavigateToStorefront={() => setActiveTab('storefront')}
+                  onSelectCategory={(cat) => {
+                    setExternalCategory(cat);
+                    setActiveTab('storefront');
+                  }}
+                  selectedRegionSlug={selectedRegionSlug}
+                  onSelectRegionSlug={(slug) => setSelectedRegionSlug(slug)}
+                />
+              )}
 
-            {effectiveTab === 'track_order' && (
-              <OrderTrackingPage
-                onBackToStore={() => setActiveTab('storefront')}
-                initialQuery={trackingQueryPrefill}
-              />
-            )}
+              {effectiveTab === 'track_order' && (
+                <OrderTrackingPage
+                  onBackToStore={() => setActiveTab('storefront')}
+                  initialQuery={trackingQueryPrefill}
+                />
+              )}
 
-            {effectiveTab === 'return_policy' && (
-              <ReturnPolicyView
-                onBackToStore={() => setActiveTab('storefront')}
-                onNavigateToTracking={() => setActiveTab('track_order')}
-              />
-            )}
+              {effectiveTab === 'return_policy' && (
+                <ReturnPolicyView
+                  onBackToStore={() => setActiveTab('storefront')}
+                  onNavigateToTracking={() => setActiveTab('track_order')}
+                />
+              )}
 
-            {effectiveTab === 'admin_inventory' && isAdminAuthenticated && (
-              <AdminInventoryDashboard
-                products={products}
-                onAddProduct={handleAddProduct}
-                onUpdateProduct={handleUpdateProduct}
-                onDeleteProduct={handleDeleteProduct}
-                onBatchUpdate={handleBatchUpdate}
-                onBatchDelete={handleBatchDelete}
-                onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
-                onIngestProducts={handleIngestProducts}
-                onNavigateToTab={(t) => setActiveTab(t as any)}
-              />
-            )}
+              {effectiveTab === 'admin_inventory' && isAdminAuthenticated && (
+                <AdminInventoryDashboard
+                  products={products}
+                  onAddProduct={handleAddProduct}
+                  onUpdateProduct={handleUpdateProduct}
+                  onDeleteProduct={handleDeleteProduct}
+                  onBatchUpdate={handleBatchUpdate}
+                  onBatchDelete={handleBatchDelete}
+                  onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
+                  onIngestProducts={handleIngestProducts}
+                  onNavigateToTab={(t) => setActiveTab(t as any)}
+                />
+              )}
 
-            {effectiveTab === 'admin_orders' && isAdminAuthenticated && (
-              <AdminOrdersManager
-                onOpenPublicTracker={(orderNumber) => {
-                  setTrackingQueryPrefill(orderNumber);
-                  setActiveTab('track_order');
-                }}
-              />
-            )}
+              {effectiveTab === 'admin_orders' && isAdminAuthenticated && (
+                <AdminOrdersManager
+                  onOpenPublicTracker={(orderNumber) => {
+                    setTrackingQueryPrefill(orderNumber);
+                    setActiveTab('track_order');
+                  }}
+                />
+              )}
 
-            {effectiveTab === 'gmc_feed' && isAdminAuthenticated && (
-              <GmcFeedWorkspace
-                products={products}
-                onAddProduct={handleAddProduct}
-                onUpdateProduct={handleUpdateProduct}
-                onDeleteProduct={handleDeleteProduct}
-              />
-            )}
+              {effectiveTab === 'gmc_feed' && isAdminAuthenticated && (
+                <GmcFeedWorkspace
+                  products={products}
+                  onAddProduct={handleAddProduct}
+                  onUpdateProduct={handleUpdateProduct}
+                  onDeleteProduct={handleDeleteProduct}
+                />
+              )}
 
-            {effectiveTab === 'csv_upload' && isAdminAuthenticated && (
-              <CsvUploadWorkspace
-                onIngestProducts={handleIngestProducts}
-                currentProductCount={products.length}
-              />
-            )}
+              {effectiveTab === 'csv_upload' && isAdminAuthenticated && (
+                <CsvUploadWorkspace
+                  onIngestProducts={handleIngestProducts}
+                  currentProductCount={products.length}
+                />
+              )}
 
-            {effectiveTab === 'nextjs_code' && isAdminAuthenticated && <NextJsCodeWorkspace />}
+              {effectiveTab === 'nextjs_code' && isAdminAuthenticated && <NextJsCodeWorkspace />}
 
-            {effectiveTab === 'cj_sync' && isAdminAuthenticated && (
-              <CjSyncWorkspace
-                catalogProducts={products}
-                onIngestProducts={handleIngestProducts}
-                onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
-                onOpenStorefront={() => setActiveTab('storefront')}
-              />
-            )}
+              {effectiveTab === 'cj_sync' && isAdminAuthenticated && (
+                <CjSyncWorkspace
+                  catalogProducts={products}
+                  onIngestProducts={handleIngestProducts}
+                  onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
+                  onOpenStorefront={() => setActiveTab('storefront')}
+                />
+              )}
 
-            {effectiveTab === 'affiliate_auto_sync' && isAdminAuthenticated && (
-              <AffiliateAutoSyncWorkspace
-                catalogProducts={products}
-                onIngestProducts={handleIngestProducts}
-                onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
-                onOpenStorefront={() => setActiveTab('storefront')}
-              />
-            )}
+              {effectiveTab === 'affiliate_auto_sync' && isAdminAuthenticated && (
+                <AffiliateAutoSyncWorkspace
+                  catalogProducts={products}
+                  onIngestProducts={handleIngestProducts}
+                  onReplaceCatalog={(nextCatalog) => setProducts(nextCatalog)}
+                  onOpenStorefront={() => setActiveTab('storefront')}
+                />
+              )}
 
-            {effectiveTab === 'admin_revenue' && isAdminAuthenticated && (
-              <AdminRevenueDashboard />
-            )}
+              {effectiveTab === 'admin_revenue' && isAdminAuthenticated && (
+                <AdminRevenueDashboard />
+              )}
 
-            {effectiveTab === 'admin_payments' && isAdminAuthenticated && (
-              <AdminPaymentGatewayHub />
-            )}
+              {effectiveTab === 'admin_payments' && isAdminAuthenticated && (
+                <AdminPaymentGatewayHub />
+              )}
 
-            {effectiveTab === 'marketing' && isAdminAuthenticated && (
-              <AdminMarketingWorkspace />
-            )}
+              {effectiveTab === 'marketing' && isAdminAuthenticated && (
+                <AdminMarketingWorkspace />
+              )}
 
-            {effectiveTab === 'seo_audit' && isAdminAuthenticated && (
-              <SeoMetaAuditWorkspace />
-            )}
+              {effectiveTab === 'seo_audit' && isAdminAuthenticated && (
+                <SeoMetaAuditWorkspace />
+              )}
 
-            {effectiveTab === 'admin_settings' && isAdminAuthenticated && (
-              <AdminSettingsWorkspace />
-            )}
+              {effectiveTab === 'admin_settings' && isAdminAuthenticated && (
+                <AdminSettingsWorkspace />
+              )}
 
-            {effectiveTab === 'international_seo' && isAdminAuthenticated && (
-              <InternationalSeoDashboard />
-            )}
+              {effectiveTab === 'international_seo' && isAdminAuthenticated && (
+                <InternationalSeoDashboard />
+              )}
 
-            {effectiveTab === 'pmax_audit' && isAdminAuthenticated && <PMaxAuditWorkspace />}
+              {effectiveTab === 'pmax_audit' && isAdminAuthenticated && <PMaxAuditWorkspace />}
 
-            {effectiveTab === 'ai_chat' && isAdminAuthenticated && <AiChatWorkspace />}
+              {effectiveTab === 'ai_chat' && isAdminAuthenticated && <AiChatWorkspace />}
 
-            {effectiveTab === 'creative_studio' && isAdminAuthenticated && <CreativeStudioWorkspace />}
+              {effectiveTab === 'creative_studio' && isAdminAuthenticated && <CreativeStudioWorkspace />}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>
 
-      {/* Admin Portal Authentication Modal */}
-      <AdminLoginModal
-        isOpen={isAdminLoginModalOpen}
-        onClose={() => {
-          setIsAdminLoginModalOpen(false);
-          setPendingAdminTab(null);
-        }}
-        onSuccess={() => {
-          setIsAdminAuthenticated(true);
-          setIsCustomerPreviewMode(false);
-          setIsAdminLoginModalOpen(false);
-          if (pendingAdminTab) {
-            setActiveTab(pendingAdminTab);
-            setPendingAdminTab(null);
-          } else {
-            setActiveTab('admin_inventory');
-          }
-        }}
-      />
+      {/* Admin Portal Authentication Modal (Loaded on demand) */}
+      {isAdminLoginModalOpen && (
+        <Suspense fallback={null}>
+          <AdminLoginModal
+            isOpen={isAdminLoginModalOpen}
+            onClose={() => {
+              setIsAdminLoginModalOpen(false);
+              setPendingAdminTab(null);
+            }}
+            onSuccess={() => {
+              setIsAdminAuthenticated(true);
+              setIsCustomerPreviewMode(false);
+              setIsAdminLoginModalOpen(false);
+              if (pendingAdminTab) {
+                setActiveTab(pendingAdminTab);
+                setPendingAdminTab(null);
+              } else {
+                setActiveTab('admin_inventory');
+              }
+            }}
+          />
+        </Suspense>
+      )}
 
       {/* Persistent Newsletter Signup Banner for Lead Collection */}
       {isCurrentTabPublic && <NewsletterBanner />}

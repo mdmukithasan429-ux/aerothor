@@ -336,12 +336,17 @@ export function buildProductPrismaWhere(params: {
   return andConditions.length > 0 ? { AND: andConditions } : {};
 }
 
+export const sortStorefrontProducts = sortAndShuffleStorefrontProducts;
+
+const ROUTE_MEMORY_CACHE = new Map<string, { expiresAt: number; payload: any }>();
+const ROUTE_CACHE_TTL_MS = 30_000;
+
 /**
  * GET /api/products
- * Dynamically refreshes storefront products on every request using a weighted shuffle of
- * 'trending' and 'best-selling' metrics (or explicit sort modes).
+ * Dynamically serves storefront products with sub-100ms in-memory + Edge caching.
  */
 export async function GET(req: NextRequest) {
+  const startTime = Date.now();
   try {
     const { searchParams } = new URL(req.url);
     const hasExplicitLimit = searchParams.has('limit') || searchParams.has('take');
@@ -380,6 +385,18 @@ export async function GET(req: NextRequest) {
       rawSort === 'price_desc'
         ? rawSort
         : 'trending';
+
+    const cacheKey = `${category}|${query}|${type}|${tag}|${sortMode}|${skip}|${take}`;
+    const cachedEntry = sortMode !== 'random' ? ROUTE_MEMORY_CACHE.get(cacheKey) : undefined;
+    if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
+      return NextResponse.json(cachedEntry.payload, {
+        headers: {
+          'Cache-Control': 'public, max-age=15, s-maxage=60, stale-while-revalidate=300',
+          'X-Cache-Status': 'HIT',
+          'X-Response-Time-Ms': String(Date.now() - startTime),
+        },
+      });
+    }
 
     let matchedItems: any[] = [];
 
@@ -448,30 +465,36 @@ export async function GET(req: NextRequest) {
     const paginatedItems = sortedAndShuffled.slice(skip, skip + take);
     const totalPages = Math.max(1, Math.ceil(totalCount / take));
 
-    return NextResponse.json(
-      {
-        success: true,
-        sort: sortMode,
-        refreshedAt: new Date().toISOString(),
-        page,
-        pageSize: take,
-        skip,
-        take,
-        totalCount,
-        totalPages,
-        category,
-        query,
-        count: paginatedItems.length,
-        products: paginatedItems,
+    const payload = {
+      success: true,
+      sort: sortMode,
+      refreshedAt: new Date().toISOString(),
+      page,
+      pageSize: take,
+      skip,
+      take,
+      totalCount,
+      totalPages,
+      category,
+      query,
+      count: paginatedItems.length,
+      products: paginatedItems,
+    };
+
+    if (sortMode !== 'random') {
+      ROUTE_MEMORY_CACHE.set(cacheKey, {
+        expiresAt: Date.now() + ROUTE_CACHE_TTL_MS,
+        payload,
+      });
+    }
+
+    return NextResponse.json(payload, {
+      headers: {
+        'Cache-Control': 'public, max-age=15, s-maxage=60, stale-while-revalidate=300',
+        'X-Cache-Status': 'MISS',
+        'X-Response-Time-Ms': String(Date.now() - startTime),
       },
-      {
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          Pragma: 'no-cache',
-          Expires: '0',
-        },
-      }
-    );
+    });
   } catch (error: any) {
     return NextResponse.json(
       {
@@ -482,3 +505,4 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+

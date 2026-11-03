@@ -1,19 +1,19 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0KS0T13HQ7"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-0KS0T13HQ7', {
-        send_page_view: true,
-        cookie_flags: 'SameSite=None;Secure'
-      });
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020617" />
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="image"
+      href="https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=1200&q=80&fm=webp"
+      fetchpriority="high"
+    />
     <meta name="google-site-verification" content="googlee6a39edbc64fe5aa" />
     <meta name="google-site-verification" content="googlee6a39edbc64fe5aa.html" />
     <meta name="google-site-verification" content="XYvXZ1Kd3MsTbTSeQRzyddv22J163MNCsdavsGaW4iE" />
@@ -56,11 +56,11 @@
     <meta property="og:url" content="https://aerothor.smmgrows.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="AeroThor Commerce" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80" />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80&fm=webp" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="AeroThor — Official US &amp; UK Direct Store" />
     <meta name="twitter:description" content="Shop verified AeroThor performance essentials, tech accessories, and lifestyle gear. Free 3-7 business day US &amp; UK tracked shipping and 30-day money-back guarantee." />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80" />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80&fm=webp" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -80,7 +80,7 @@
       "@type": "Organization",
       "name": "AeroThor Commerce Inc.",
       "url": "https://aerothor.smmgrows.com/",
-      "logo": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80",
+      "logo": "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80&fm=webp",
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+1-800-555-0199",
@@ -91,12 +91,36 @@
       }
     }
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    </noscript>
   </head>
   <body class="bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Deferred non-blocking Google Analytics 4 (TBT = 0ms) -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      function initDeferredAnalytics() {
+        var s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-0KS0T13HQ7';
+        s.async = true;
+        document.head.appendChild(s);
+        gtag('js', new Date());
+        gtag('config', 'G-0KS0T13HQ7', {
+          send_page_view: true,
+          cookie_flags: 'SameSite=None;Secure'
+        });
+      }
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(initDeferredAnalytics, { timeout: 3500 });
+      } else {
+        window.addEventListener('load', function() {
+          setTimeout(initDeferredAnalytics, 1500);
+        });
+      }
+    </script>
   </body>
 </html>

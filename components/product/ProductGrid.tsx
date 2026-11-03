@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import {
   Search,
   ChevronLeft,
@@ -12,6 +13,8 @@ import {
   X,
   Star,
   RefreshCw,
+  Truck,
+  Zap,
 } from 'lucide-react';
 import { SocialShare } from './SocialShare';
 
@@ -383,12 +386,16 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {displayedProducts.map((product) => {
+          {displayedProducts.map((product, idx) => {
             const sku = product.id || product.sku || '';
-            const imageUrl =
+            const rawImageUrl =
               product.image_link ||
               product.mainImageUrl ||
               'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80';
+            const imageUrl =
+              rawImageUrl.includes('images.unsplash.com') && !rawImageUrl.includes('fm=webp')
+                ? `${rawImageUrl}${rawImageUrl.includes('?') ? '&' : '?'}fm=webp`
+                : rawImageUrl;
             const isAffiliate =
               product.productType === 'affiliate' ||
               Boolean(product.affiliateUrl || product.affiliate_url) ||
@@ -409,12 +416,26 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                     onClick={() => onSelectProduct && onSelectProduct(product)}
                     className="relative aspect-[4/3] bg-slate-950 overflow-hidden cursor-pointer"
                   >
-                    <img
+                    <Image
                       src={imageUrl}
                       alt={product.title}
-                      loading="lazy"
+                      width={600}
+                      height={450}
+                      priority={idx < 4}
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
+                    {isAffiliate ? (
+                      <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider rounded shadow-sm inline-flex items-center gap-1">
+                        <Tag className="w-3 h-3 fill-current" />
+                        <span>Buy on Amazon</span>
+                      </span>
+                    ) : (
+                      <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-extrabold tracking-wide rounded shadow-sm inline-flex items-center gap-1">
+                        <Truck className="w-3 h-3" />
+                        <span>Express 48h Dispatch</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-4 space-y-2">
@@ -486,7 +507,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                         }
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1.5"
+                        className="min-h-[44px] px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center justify-center gap-1.5 touch-manipulation"
                       >
                         <span>Buy on Amazon</span>
                         <ExternalLink className="w-3 h-3" />
@@ -495,10 +516,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       <button
                         type="button"
                         onClick={() => onAddToCart && onAddToCart(product)}
-                        className="px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1.5 cursor-pointer"
+                        className="min-h-[44px] px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Add to Cart</span>
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Buy Now via CJ</span>
                       </button>
                     )}
                   </div>
