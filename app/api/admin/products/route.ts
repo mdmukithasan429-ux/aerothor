@@ -49,15 +49,46 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
+
+    // Support single SKU / ID direct query
+    const targetSku = searchParams.get('sku') || searchParams.get('id');
+    if (targetSku) {
+      const singleProduct = await prisma.product.findUnique({
+        where: { sku: targetSku },
+        include: { variants: true },
+      });
+      if (singleProduct) {
+        return NextResponse.json({ success: true, product: singleProduct });
+      }
+    }
+
+    const hasPaginationParams =
+      searchParams.has('page') ||
+      searchParams.has('limit') ||
+      searchParams.has('take') ||
+      searchParams.has('skip');
+
+    const isAll =
+      searchParams.get('all') === 'true' ||
+      searchParams.get('limit') === 'all' ||
+      searchParams.get('take') === 'all' ||
+      !hasPaginationParams;
+
+    const rawLimit = searchParams.get('limit') || searchParams.get('take');
+    const parsedLimit = rawLimit ? parseInt(rawLimit, 10) : NaN;
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
-    const take = Math.min(
-      100,
-      Math.max(1, parseInt(searchParams.get('limit') || searchParams.get('take') || '20', 10) || 20)
-    );
+    const take = isAll
+      ? 2000
+      : !isNaN(parsedLimit)
+      ? Math.min(2000, Math.max(1, parsedLimit))
+      : 24;
+
     const explicitSkip = searchParams.get('skip');
     const skip =
       explicitSkip !== null && !isNaN(parseInt(explicitSkip, 10))
         ? Math.max(0, parseInt(explicitSkip, 10))
+        : isAll
+        ? 0
         : (page - 1) * take;
 
     const category = searchParams.get('category') || 'All';

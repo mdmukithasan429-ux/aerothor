@@ -3505,7 +3505,7 @@ app.get(["/googlee6a39edbc64fe5aa.html", "/googlee6a39edbc64fe5aa"], (req, res) 
   res.send("google-site-verification: googlee6a39edbc64fe5aa.html");
 });
 function getCanonicalBaseUrl() {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || "https://aerothor.vercel.app";
+  const raw = process.env.NEXT_PUBLIC_SITE_URL || process.env.APP_URL || CANONICAL_STORE_URL;
   if (raw.includes("e-commerce-dropshiping-store.vercel.app") || raw.includes("aerothor.com") || raw.includes("example-store.com") || raw.includes(".run.app")) {
     return CANONICAL_STORE_URL;
   }
@@ -4940,6 +4940,57 @@ app.get(["/product/:id", "/products/:id"], (req, res) => {
   } catch (err) {
     console.error("[Product Page SSR Error]:", err);
     return res.status(200).send(loadHtmlShellForProductPage());
+  }
+});
+app.get(["/api/admin/products", "/api/admin/product"], async (req, res) => {
+  if (!validateAdminBearer(req, res)) return;
+  try {
+    const rawSku = req.query.sku || req.query.id;
+    if (rawSku && typeof rawSku === "string") {
+      const targetSku = rawSku.trim().toLowerCase();
+      const match = currentCatalog.find(
+        (p) => String(p.id || "").toLowerCase() === targetSku || String(p.gtin || "").toLowerCase() === targetSku
+      );
+      if (match) {
+        return res.status(200).json({ success: true, product: match });
+      }
+      return res.status(404).json({ error: `Product ${rawSku} not found` });
+    }
+    const hasPaginationParams = req.query.page !== void 0 || req.query.limit !== void 0 || req.query.take !== void 0 || req.query.skip !== void 0;
+    const isAll = req.query.limit === "all" || req.query.all === "true" || req.query.take === "all" || !hasPaginationParams;
+    const rawLimit = req.query.limit || req.query.take;
+    const parsedLimit = rawLimit ? parseInt(String(rawLimit), 10) : NaN;
+    const page = Math.max(1, parseInt(String(req.query.page || "1"), 10) || 1);
+    const take = isAll ? 2e3 : !isNaN(parsedLimit) ? Math.min(2e3, Math.max(1, parsedLimit)) : 24;
+    const category = typeof req.query.category === "string" ? req.query.category : "All";
+    const rawQuery = typeof req.query.q === "string" ? req.query.q.trim().toLowerCase() : "";
+    const typeFilter = typeof req.query.type === "string" ? req.query.type.toLowerCase().trim() : "";
+    const filtered = currentCatalog.filter((p) => {
+      if (typeFilter === "affiliate" && p.productType !== "affiliate") return false;
+      if (typeFilter === "dropshipping" && p.productType === "affiliate") return false;
+      if (category !== "All" && !matchesServerProductCategory(p, category)) return false;
+      if (rawQuery) {
+        const hay = `${p.title || ""} ${p.description || ""} ${p.id || ""} ${p.brand || ""}`.toLowerCase();
+        if (!hay.includes(rawQuery)) return false;
+      }
+      return true;
+    });
+    const skip = req.query.skip !== void 0 && !isNaN(parseInt(String(req.query.skip), 10)) ? Math.max(0, parseInt(String(req.query.skip), 10)) : isAll ? 0 : (page - 1) * take;
+    const paginated = isAll ? filtered : filtered.slice(skip, skip + take);
+    res.status(200).json({
+      success: true,
+      page: isAll ? 1 : page,
+      pageSize: isAll ? filtered.length : take,
+      skip,
+      take: isAll ? filtered.length : take,
+      totalCount: filtered.length,
+      totalPages: isAll ? 1 : Math.max(1, Math.ceil(filtered.length / take)),
+      count: paginated.length,
+      category,
+      products: paginated
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to fetch admin inventory" });
   }
 });
 app.post(["/api/admin/products", "/api/admin/product"], (req, res) => {

@@ -92,10 +92,16 @@ export const GlobalFooter: React.FC = () => {
           </ul>
         </div>
 
-        {/* Integration & Feeds */}
+        {/* Integration, SEO Sitemaps & Feeds */}
         <div>
-          <h4 className="text-white font-semibold text-xs tracking-wider uppercase mb-3">Merchant Integrations</h4>
+          <h4 className="text-white font-semibold text-xs tracking-wider uppercase mb-3">SEO &amp; Indexation</h4>
           <ul className="space-y-2">
+            <li>
+              <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                <span className="font-semibold text-white">XML Sitemap</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40">1,023 URLs</span>
+              </a>
+            </li>
             <li>
               <a href="/api/feed.xml" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                 <span>Google Merchant XML Feed</span>
@@ -103,13 +109,19 @@ export const GlobalFooter: React.FC = () => {
               </a>
             </li>
             <li>
-              <span className="text-slate-500">CJ Dropshipping Automated API</span>
+              <Link href="/deals/us" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                <span>United States Storefront (USPS Priority)</span>
+              </Link>
             </li>
             <li>
-              <span className="text-slate-500">PostgreSQL / Supabase Storage</span>
+              <Link href="/deals/uk" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                <span>United Kingdom Storefront (Royal Mail 48)</span>
+              </Link>
             </li>
             <li>
-              <span className="text-slate-500">PMax High-CRP Margin Engine</span>
+              <Link href="/deals/canada" className="hover:text-emerald-400 transition-colors">
+                Canada &amp; Global Express Hubs
+              </Link>
             </li>
           </ul>
         </div>

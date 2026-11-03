@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { prisma } from '../src/lib/prisma';
 import { loadPersistedCatalog } from '../src/server/storage';
+import { TARGET_REGIONS } from '../src/lib/i18n-regions';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
@@ -14,18 +15,18 @@ const BASE_DOMAIN = (
 /**
  * Dynamic Next.js Sitemap Generator (`app/sitemap.ts`)
  * Canonical domain: https://aerothor.smmgrows.com
- * Strictly targets US (en-US) and UK (en-GB) search indexing with x-default fallback.
+ * Targets top international tier-1 countries (US, UK, CA, FR, DE, IT, NL, PL, ES, SE) with x-default fallback.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
-  const usUkRootAlternates: Record<string, string> = {
-    'en-US': `${BASE_DOMAIN}/deals/us`,
-    'en-GB': `${BASE_DOMAIN}/deals/uk`,
-    'x-default': `${BASE_DOMAIN}`,
-  };
+  const regionalRootAlternates: Record<string, string> = {};
+  TARGET_REGIONS.forEach((r) => {
+    regionalRootAlternates[r.hreflang] = `${BASE_DOMAIN}/deals/${r.slug}`;
+  });
+  regionalRootAlternates['x-default'] = `${BASE_DOMAIN}`;
 
-  // 1. Static Storefront & Regional US/UK Hubs
+  // 1. Static Storefront & Regional Targeted Hubs
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: `${BASE_DOMAIN}`,
@@ -33,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 1.0,
       alternates: {
-        languages: usUkRootAlternates,
+        languages: regionalRootAlternates,
       },
     },
     {
@@ -42,27 +43,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.9,
       alternates: {
-        languages: usUkRootAlternates,
+        languages: regionalRootAlternates,
       },
     },
-    {
-      url: `${BASE_DOMAIN}/deals/us`,
+    ...TARGET_REGIONS.map((r) => ({
+      url: `${BASE_DOMAIN}/deals/${r.slug}`,
       lastModified: now,
-      changeFrequency: 'hourly',
+      changeFrequency: 'daily' as const,
       priority: 0.95,
       alternates: {
-        languages: usUkRootAlternates,
+        languages: regionalRootAlternates,
       },
-    },
-    {
-      url: `${BASE_DOMAIN}/deals/uk`,
-      lastModified: now,
-      changeFrequency: 'hourly',
-      priority: 0.95,
-      alternates: {
-        languages: usUkRootAlternates,
-      },
-    },
+    })),
     {
       url: `${BASE_DOMAIN}/affiliates`,
       lastModified: now,
@@ -74,6 +66,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
+    },
+    {
+      url: `${BASE_DOMAIN}/policies/shipping`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_DOMAIN}/policies/refund`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${BASE_DOMAIN}/policies/privacy`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+    {
+      url: `${BASE_DOMAIN}/policies/terms`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
     {
       url: `${BASE_DOMAIN}/contact`,
@@ -106,11 +122,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  // 3. Dynamic Active Product Pages (Live Prisma DB with 1,060-item verified disk fallback)
-  let productEntries: Array<{ id: string; updatedAt?: Date; availability?: string }> = [];
+  // 3. Dynamic Active Product Pages (Database with 1,000-item verified disk fallback)
+  let productEntries: Array<{ id: string; slug?: string; updatedAt?: Date; availability?: string }> = [];
   try {
     const dbProducts = await prisma.product.findMany({
-      select: { id: true, updatedAt: true },
+      select: { id: true, slug: true, updatedAt: true, availability: true },
       orderBy: { updatedAt: 'desc' },
     });
     if (dbProducts.length > 0) {
@@ -126,24 +142,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter((product: any) => product.status !== 'archived' && product.isVisible !== false)
       .map((product: any) => ({
         id: product.id,
+        slug: product.slug,
         updatedAt: now,
         availability: product.availability,
       }));
   }
 
   const productPages: MetadataRoute.Sitemap = productEntries.map((product) => {
-    const encodedId = encodeURIComponent(product.id);
+    const identifier = product.slug || product.id;
+    const encodedId = encodeURIComponent(identifier);
+    const productUrl = `${BASE_DOMAIN}/product/${encodedId}`;
+
+    const productLanguages: Record<string, string> = {};
+    TARGET_REGIONS.forEach((r) => {
+      productLanguages[r.hreflang] =
+        r.slug === 'us' ? productUrl : `${productUrl}?region=${r.slug}`;
+    });
+    productLanguages['x-default'] = productUrl;
+
     return {
-      url: `${BASE_DOMAIN}/product/${encodedId}`,
+      url: productUrl,
       lastModified: product.updatedAt || now,
       changeFrequency: 'daily' as const,
       priority: product.availability === 'out_of_stock' ? 0.6 : 0.9,
       alternates: {
-        languages: {
-          'en-US': `${BASE_DOMAIN}/product/${encodedId}?region=US`,
-          'en-GB': `${BASE_DOMAIN}/product/${encodedId}?region=UK`,
-          'x-default': `${BASE_DOMAIN}/product/${encodedId}`,
-        },
+        languages: productLanguages,
       },
     };
   });

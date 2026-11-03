@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+Allow: /product/
+Allow: /deals/
+Allow: /affiliates
+Allow: /return-policy
+Allow: /policies/
+Allow: /api/feed.xml
+Disallow: /admin/
+Disallow: /api/admin/
+Disallow: /api/webhooks/
+Disallow: /checkout/
+
+# Block aggressive scrapers
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+# Google Search Console & Googlebot Sitemap Index
+Sitemap: https://aerothor.smmgrows.com/sitemap.xml
+Sitemap: https://aerothor.smmgrows.com/api/sitemap.xml
+Host: https://aerothor.smmgrows.com

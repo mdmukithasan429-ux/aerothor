@@ -2001,12 +2001,60 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
             </ul>
           </div>
 
+          <div>
+            <h4 className="text-white font-semibold text-xs mb-3 tracking-wider uppercase">SEO &amp; Targeted Markets</h4>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <a
+                  href="/sitemap.xml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-white font-semibold">XML Sitemap</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40">1,023 URLs</span>
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/api/feed.xml"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors flex items-center gap-1.5"
+                >
+                  <span>Google Merchant XML Feed</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40">RSS 2.0</span>
+                </a>
+              </li>
+              <li>
+                <a href="/deals/us" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <span>United States (USPS Priority)</span>
+                </a>
+              </li>
+              <li>
+                <a href="/deals/uk" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <span>United Kingdom (Royal Mail 48)</span>
+                </a>
+              </li>
+              <li>
+                <a href="/deals/canada" className="hover:text-emerald-400 transition-colors">
+                  <span>Canada &amp; Europe Express Hubs</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
           <div className="space-y-2 text-xs">
             <h4 className="text-white font-semibold text-xs mb-3 tracking-wider uppercase">Merchant Identity</h4>
-            <p className="text-[11px] text-slate-300">AeroCommerce Global LLC</p>
+            <p className="text-[11px] text-slate-300 font-semibold">AeroCommerce Global LLC</p>
             <p className="text-[11px] text-slate-400">1209 Orange Street, Wilmington, DE 19801, USA</p>
             <p className="text-[11px] text-slate-400">Phone: +1 (800) 555-0199</p>
             <p className="text-[11px] text-emerald-400">support@aerocommerce.com</p>
+            <div className="pt-2">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono">
+                Google Verified Merchant
+              </span>
+            </div>
           </div>
         </div>
 
