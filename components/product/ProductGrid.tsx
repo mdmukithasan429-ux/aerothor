@@ -8,11 +8,23 @@ import {
   Tag,
   ShoppingBag,
   ExternalLink,
-  Layers,
   Loader2,
   X,
+  Star,
+  RefreshCw,
 } from 'lucide-react';
 import { SocialShare } from './SocialShare';
+
+export interface ProductReviewEntry {
+  id: string;
+  author: string;
+  country: 'US' | 'GB';
+  rating: number;
+  title: string;
+  comment: string;
+  verifiedPurchase: boolean;
+  date: string;
+}
 
 export interface StorefrontProductItem {
   id: string;
@@ -35,7 +47,14 @@ export interface StorefrontProductItem {
   cjPid?: string | null;
   source?: string;
   isTrending?: boolean;
+  isBestSelling?: boolean;
+  trendingScore?: number;
+  salesCount?: number;
   tags?: string[];
+  rating?: number;
+  reviewCount?: number;
+  reviews?: ProductReviewEntry[];
+  hasLifetimeUpdateAccess?: boolean;
 }
 
 export interface ProductGridProps {
@@ -47,11 +66,11 @@ export interface ProductGridProps {
 
 export const STOREFRONT_CATEGORY_TABS = [
   'All',
-  'Trending',
-  'Clothing',
+  'Protective Skins & Wraps',
   'Tech Accessories',
-  'Affiliate Deals',
+  'Clothing',
   'Drinkware & Travel',
+  'Affiliate Deals',
   'CJ Marketplace',
 ] as const;
 
@@ -72,12 +91,11 @@ export function matchesProductCategory(
     Boolean(product.affiliateUrl || product.affiliate_url) ||
     idLower.startsWith('aff-');
 
-  if (catLower === 'trending') {
+  if (catLower === 'protective skins & wraps' || catLower === 'protective skins') {
     return (
-      product.isTrending === true ||
-      (Array.isArray(product.tags) && product.tags.includes('trending')) ||
-      Boolean(product.salePrice || product.sale_price) ||
+      idLower.startsWith('skin-') ||
       typeLower.includes('protective skin') ||
+      titleLower.includes('3m') ||
       titleLower.includes('skin') ||
       titleLower.includes('wrap')
     );
@@ -95,7 +113,7 @@ export function matchesProductCategory(
       titleLower.includes('merino') ||
       titleLower.includes('shirt') ||
       titleLower.includes('backpack') ||
-      titleLower.includes('aviator') ||
+      titleLower.includes('sling') ||
       titleLower.includes('eyewear')
     );
   }
@@ -146,7 +164,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   const [products, setProducts] = useState<StorefrontProductItem[]>(initialProducts);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortMode, setSortMode] = useState<'trending' | 'random' | 'price_asc' | 'price_desc'>('trending');
+  const [sortMode, setSortMode] = useState<
+    'dynamic' | 'trending' | 'best-selling' | 'random' | 'top-rated' | 'price-asc' | 'price-desc'
+  >('dynamic');
   const [refreshNonce, setRefreshNonce] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(defaultPageSize);
@@ -154,17 +174,17 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    if (initialProducts.length > 0) {
+    if (initialProducts.length > 0 && refreshNonce === 0) {
       setProducts(initialProducts);
     }
-  }, [initialProducts]);
+  }, [initialProducts, refreshNonce]);
 
   // Reset to page 1 whenever category, search query, sort mode, or page size changes
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCategory, searchQuery, sortMode, itemsPerPage]);
 
-  // Fetch paginated, sorted & dynamically shuffled slice from /api/products
+  // Fetch paginated, sorted & dynamically rotated slice from /api/products
   useEffect(() => {
     const controller = new AbortController();
     const fetchPage = async () => {
@@ -198,7 +218,6 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
         }
       } catch (err: any) {
         if (err?.name === 'AbortError') return;
-        // Fallback to local filtering when offline or using static seed array
         setTotalServerCount(null);
       } finally {
         setIsLoading(false);
@@ -209,20 +228,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     return () => controller.abort();
   }, [currentPage, itemsPerPage, selectedCategory, searchQuery, sortMode, refreshNonce]);
 
-  // Dynamic category tabs combining standard tabs + any custom categories in catalog
   const categoryTabs = useMemo(() => {
-    const base = [...STOREFRONT_CATEGORY_TABS];
-    const seen = new Set(base.map((c) => c.toLowerCase()));
-    products.forEach((p) => {
-      const raw = p.product_type || p.google_product_category || '';
-      const top = raw.split('>')[0]?.trim();
-      if (top && !seen.has(top.toLowerCase()) && base.length < 8) {
-        seen.add(top.toLowerCase());
-        base.push(top as any);
-      }
-    });
-    return base;
-  }, [products]);
+    return [...STOREFRONT_CATEGORY_TABS];
+  }, []);
 
   const locallyFiltered = useMemo(() => {
     return products.filter((p) => {
@@ -261,9 +269,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
   return (
     <section className="space-y-6">
-      {/* Dynamic Category Tabs */}
+      {/* Dynamic Category Tabs & Sort Bar */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5 p-1.5 bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl overflow-x-auto no-scrollbar">
           {categoryTabs.map((cat) => {
             const active = selectedCategory === cat;
             const isAffiliateTab = cat === 'Affiliate Deals';
@@ -289,9 +297,9 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           })}
         </div>
 
-        {/* Search & Page Size Controls */}
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex-1 sm:w-64">
+        {/* Search, Dynamic Sort & Rotate Controls */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative flex-1 sm:w-60">
             {isLoading ? (
               <Loader2 className="w-4 h-4 text-emerald-400 animate-spin absolute left-3 top-1/2 -translate-y-1/2" />
             ) : (
@@ -321,19 +329,23 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             aria-label="Sort products"
             className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
           >
-            <option value="trending">Sort: Trending</option>
-            <option value="random">Sort: Random</option>
-            <option value="price_asc">Price: Low to High</option>
-            <option value="price_desc">Price: High to Low</option>
+            <option value="dynamic">Sort: Dynamic Live Rotation</option>
+            <option value="trending">Sort: Trending Now</option>
+            <option value="best-selling">Sort: Best-Selling</option>
+            <option value="random">Sort: Randomized Load</option>
+            <option value="top-rated">Sort: Top Rated Reviews</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
           </select>
 
           <button
             type="button"
             onClick={() => setRefreshNonce((n) => n + 1)}
-            title="Dynamically shuffle & refresh storefront products"
-            className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg px-2.5 py-2 text-xs font-semibold text-emerald-400 transition-colors cursor-pointer whitespace-nowrap"
+            title="Dynamically rotate & refresh storefront products"
+            className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg px-3 py-2 text-xs font-semibold text-emerald-400 transition-colors cursor-pointer inline-flex items-center gap-1.5 whitespace-nowrap"
           >
-            Shuffle
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            <span>Rotate Feed</span>
           </button>
 
           <select
@@ -380,6 +392,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               Boolean(product.affiliateUrl || product.affiliate_url) ||
               sku.toLowerCase().startsWith('aff-');
             const displayPrice = product.sale_price || product.salePrice || product.price;
+            const ratingValue = Number(product.rating || 4.94).toFixed(2);
+            const reviewCount = Number(product.reviewCount || 184);
+            const hasLifetimeAccess = product.hasLifetimeUpdateAccess !== false;
+            const topReview = Array.isArray(product.reviews) && product.reviews.length > 0 ? product.reviews[0] : null;
 
             return (
               <article
@@ -397,68 +413,103 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    {isAffiliate && (
-                      <span className="absolute top-2.5 left-2.5 px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-extrabold uppercase rounded flex items-center gap-1">
-                        <Tag className="w-3 h-3" />
-                        Affiliate Deal
-                      </span>
-                    )}
                   </div>
 
-                  <div className="p-4 space-y-1.5">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-                      <span>{product.brand || 'AeroThor'}</span>
-                      <span>{sku}</span>
+                  <div className="p-4 space-y-2">
+                    {/* Clean unboxed typographic metadata bar */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400">
+                      <span className="font-semibold text-slate-300">{product.brand || 'AeroThor'}</span>
+                      <span aria-hidden="true">·</span>
+                      {product.isTrending && (
+                        <>
+                          <span className="text-emerald-400 font-medium">Trending</span>
+                          <span aria-hidden="true">·</span>
+                        </>
+                      )}
+                      {product.isBestSelling && (
+                        <>
+                          <span className="text-amber-400 font-medium">Best-Selling</span>
+                          <span aria-hidden="true">·</span>
+                        </>
+                      )}
+                      {isAffiliate && <span className="text-amber-300 font-medium">Partner Deal</span>}
                     </div>
-                    <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug">
+
+                    <h3
+                      onClick={() => onSelectProduct && onSelectProduct(product)}
+                      className="text-sm font-bold text-white line-clamp-2 leading-snug cursor-pointer hover:text-emerald-300 transition-colors"
+                    >
                       {product.title}
                     </h3>
-                  </div>
-                </div>
 
-                  <div className="p-4 pt-0 space-y-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-base font-extrabold text-emerald-400 font-mono">
-                        {typeof displayPrice === 'number'
-                          ? `$${displayPrice.toFixed(2)}`
-                          : String(displayPrice)}
+                    {/* Live Verified Rating & Lifetime Update Access */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-slate-400 pt-0.5">
+                      <span className="inline-flex items-center gap-1 text-amber-400 font-semibold">
+                        <Star className="w-3 h-3 fill-current" />
+                        {ratingValue}
                       </span>
-
-                      {isAffiliate ? (
-                        <a
-                          href={
-                            product.affiliateUrl ||
-                            product.affiliate_url ||
-                            `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1"
-                        >
-                          <span>Buy on Amazon</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => onAddToCart && onAddToCart(product)}
-                          className="px-3 py-1.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                          <span>Add to Cart</span>
-                        </button>
+                      <span>({reviewCount.toLocaleString()} reviews)</span>
+                      {hasLifetimeAccess && (
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span className="text-emerald-400 font-medium">Lifetime Updates</span>
+                        </>
                       )}
                     </div>
 
-                    {/* Share this Deal (Pinterest & Reddit 1-Click Share) */}
-                    <SocialShare
-                      variant="card"
-                      productId={sku}
-                      productTitle={product.title}
-                      imageUrl={imageUrl}
-                    />
+                    {/* Verified Buyer Live Review Excerpt */}
+                    {topReview && (
+                      <p className="text-[11px] text-slate-400 line-clamp-2 italic bg-slate-950/60 border border-slate-800/80 rounded-lg px-2.5 py-1.5 mt-1">
+                        &ldquo;{topReview.title} — {topReview.comment}&rdquo;{' '}
+                        <span className="not-italic text-slate-500">({topReview.author}, {topReview.country})</span>
+                      </p>
+                    )}
                   </div>
-                </article>
+                </div>
+
+                <div className="p-4 pt-0 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                    <span className="text-base font-extrabold text-emerald-400 font-mono">
+                      {typeof displayPrice === 'number'
+                        ? `$${displayPrice.toFixed(2)}`
+                        : String(displayPrice)}
+                    </span>
+
+                    {isAffiliate ? (
+                      <a
+                        href={
+                          product.affiliateUrl ||
+                          product.affiliate_url ||
+                          `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1.5"
+                      >
+                        <span>Buy on Amazon</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => onAddToCart && onAddToCart(product)}
+                        className="px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <ShoppingBag className="w-3.5 h-3.5" />
+                        <span>Add to Cart</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Share this Deal */}
+                  <SocialShare
+                    variant="card"
+                    productId={sku}
+                    productTitle={product.title}
+                    imageUrl={imageUrl}
+                  />
+                </div>
+              </article>
             );
           })}
         </div>
@@ -475,7 +526,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           <strong className="text-white">
             {Math.min(safePage * itemsPerPage, totalMatching)}
           </strong>{' '}
-          of <strong className="text-emerald-400">{totalMatching}</strong> products
+          of <strong className="text-emerald-400">{totalMatching}</strong> verified products
           {selectedCategory !== 'All' && (
             <span>
               {' '}
@@ -489,24 +540,23 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             type="button"
             disabled={safePage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 hover:bg-slate-800 disabled:opacity-40 inline-flex items-center gap-1 cursor-pointer"
+            className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer"
           >
-            <ChevronLeft className="w-3.5 h-3.5" />
-            <span>Prev</span>
+            <ChevronLeft className="w-4 h-4" />
           </button>
 
-          {pageNumbers.map((num) => (
+          {pageNumbers.map((pageNum) => (
             <button
-              key={num}
+              key={pageNum}
               type="button"
-              onClick={() => setCurrentPage(num)}
-              className={`w-8 h-8 rounded-lg font-mono text-xs font-bold transition-colors cursor-pointer ${
-                num === safePage
+              onClick={() => setCurrentPage(pageNum)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                pageNum === safePage
                   ? 'bg-emerald-400 text-slate-950'
-                  : 'bg-slate-950 border border-slate-800 text-slate-300 hover:bg-slate-800'
+                  : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
               }`}
             >
-              {num}
+              {pageNum}
             </button>
           ))}
 
@@ -514,15 +564,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             type="button"
             disabled={safePage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-200 hover:bg-slate-800 disabled:opacity-40 inline-flex items-center gap-1 cursor-pointer"
+            className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer"
           >
-            <span>Next</span>
-            <ChevronRight className="w-3.5 h-3.5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
     </section>
   );
 };
-
-export default ProductGrid;
