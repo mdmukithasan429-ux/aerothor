@@ -457,6 +457,23 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
     });
   };
 
+  const isCurrentPageAllSelected = useMemo(() => {
+    if (paginatedProducts.length === 0) return false;
+    return paginatedProducts.every((p) => selectedSkus.has(p.id));
+  }, [paginatedProducts, selectedSkus]);
+
+  const handleSelectCurrentPage = () => {
+    setSelectedSkus((prev) => {
+      const next = new Set(prev);
+      if (isCurrentPageAllSelected) {
+        paginatedProducts.forEach((p) => next.delete(p.id));
+      } else {
+        paginatedProducts.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
+  };
+
   const handleSelectAll = () => {
     if (selectedSkus.size === filteredProducts.length && filteredProducts.length > 0) {
       setSelectedSkus(new Set());
@@ -2935,12 +2952,14 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-mono text-[11px]">
               <tr>
-                <th className="p-3.5 w-10 text-center">
+                <th className="p-3.5 w-12 text-center">
                   <input
                     type="checkbox"
-                    checked={selectedSkus.size === filteredProducts.length && filteredProducts.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
+                    aria-label="Select all products on current page"
+                    title="Select / deselect all products on this page"
+                    checked={isCurrentPageAllSelected}
+                    onChange={handleSelectCurrentPage}
+                    className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
                   />
                 </th>
                 <th className="p-3.5">Product &amp; Image</th>
@@ -2975,9 +2994,10 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                       <td className="p-3.5 text-center">
                         <input
                           type="checkbox"
+                          aria-label={`Select ${p.title}`}
                           checked={isSelected}
                           onChange={() => handleToggleSelect(p.id)}
-                          className="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
+                          className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
                         />
                       </td>
 
@@ -3857,7 +3877,66 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
         </div>
       )}
 
-      {/* In-App Batch Product Deletion Modal (Iframe-Safe) */}
+      {/* Floating 'Delete Selected' Action Bar */}
+      {selectedSkus.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[94vw] max-w-3xl bg-slate-950/95 backdrop-blur-md border border-rose-500/40 rounded-2xl px-4 py-3 shadow-2xl shadow-black/80 flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 font-mono text-xs font-extrabold">
+              {selectedSkus.size}
+            </span>
+            <div>
+              <p className="text-xs font-bold text-white">
+                {selectedSkus.size === 1 ? '1 Product Selected' : `${selectedSkus.size} Products Selected`}
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Batch inventory action bar · Syncs with PostgreSQL &amp; GMC XML feed
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleSelectCurrentPage}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              {isCurrentPageAllSelected ? 'Unselect Page' : `Select Page (${paginatedProducts.length})`}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSelectAll}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              {selectedSkus.size === filteredProducts.length
+                ? 'Unselect All'
+                : `Select All (${filteredProducts.length})`}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSelectedSkus(new Set())}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Clear
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsBatchDeleteModalOpen(true)}
+              disabled={isOperating}
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {isOperating ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5" />
+              )}
+              <span>Delete Selected ({selectedSkus.size})</span>
+            </button>
+          </div>
+        </div>
+      )}
       {isBatchDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-md bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">

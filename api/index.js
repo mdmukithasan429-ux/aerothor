@@ -3593,6 +3593,7 @@ var currentCatalog = normalizeCatalogLinks(loadPersistedCatalog());
 var currentOrders = loadPersistedOrders();
 function persistAndRefreshFeed(catalog, changedSubset) {
   currentCatalog = normalizeCatalogLinks(prioritizeRealProductsFirst(catalog));
+  EXPRESS_PRODUCTS_CACHE.clear();
   savePersistedCatalog(currentCatalog, changedSubset);
   executeFeedRefresh(currentCatalog, "inventory_change", getCanonicalBaseUrl());
 }
@@ -5458,6 +5459,8 @@ app.delete("/api/admin/products", async (req, res) => {
       const deletedCount2 = beforeLen2 - nextCatalog2.length;
       persistAndRefreshFeed(nextCatalog2, []);
       deleteSkusFromPostgres(combinedSkus).catch(console.warn);
+      prisma_default.product.deleteMany({ where: { sku: { in: combinedSkus } } }).catch(() => {
+      });
       return res.status(200).json({
         success: true,
         message: `Batch deleted ${deletedCount2} products permanently.`,
@@ -5477,6 +5480,8 @@ app.delete("/api/admin/products", async (req, res) => {
     const deletedCount = beforeLen - nextCatalog.length;
     persistAndRefreshFeed(nextCatalog, []);
     deleteSkusFromPostgres([targetId]).catch(console.warn);
+    prisma_default.product.deleteMany({ where: { sku: targetId } }).catch(() => {
+    });
     res.status(200).json({
       success: true,
       message: `Product ${targetId} deleted permanently.`,

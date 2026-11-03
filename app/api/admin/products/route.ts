@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { validateAdminPassword } from '../auth/route';
-import { buildProductPrismaWhere } from '../../products/route';
+import { buildProductPrismaWhere, clearRouteMemoryCache } from '../../products/route';
+import { deleteSkusFromPostgres } from '@/src/server/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -385,16 +386,20 @@ export async function DELETE(req: NextRequest) {
     ];
 
     if (combinedSkus.length > 0) {
-      const result = await prisma.product.deleteMany({
-        where: {
-          sku: { in: combinedSkus },
-        },
-      });
+      const [result] = await Promise.all([
+        prisma.product.deleteMany({
+          where: {
+            sku: { in: combinedSkus },
+          },
+        }),
+        deleteSkusFromPostgres(combinedSkus).catch(() => 0),
+      ]);
+      clearRouteMemoryCache();
 
       return NextResponse.json({
         success: true,
-        message: `Batch deleted ${result.count} products from catalog and GMC feed.`,
-        deletedCount: result.count,
+        message: `Batch deleted ${result.count || combinedSkus.length} products from catalog and GMC feed.`,
+        deletedCount: result.count || combinedSkus.length,
         deletedSkus: combinedSkus,
       });
     }
@@ -409,6 +414,10 @@ export async function DELETE(req: NextRequest) {
     const deleted = await prisma.product.delete({
       where: id ? { id } : { sku: sku! },
     });
+    if (deleted?.sku) {
+      await deleteSkusFromPostgres([deleted.sku]).catch(() => 0);
+    }
+    clearRouteMemoryCache();
 
     return NextResponse.json({
       success: true,

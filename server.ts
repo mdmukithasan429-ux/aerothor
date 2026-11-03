@@ -397,6 +397,7 @@ let currentOrders: PersistedOrder[] = loadPersistedOrders();
 
 function persistAndRefreshFeed(catalog: GmcProduct[], changedSubset?: GmcProduct[]) {
   currentCatalog = normalizeCatalogLinks(prioritizeRealProductsFirst(catalog));
+  EXPRESS_PRODUCTS_CACHE.clear();
   savePersistedCatalog(currentCatalog, changedSubset);
   executeFeedRefresh(currentCatalog, 'inventory_change', getCanonicalBaseUrl());
 }
@@ -2964,6 +2965,7 @@ app.delete('/api/admin/products', async (req, res) => {
       const deletedCount = beforeLen - nextCatalog.length;
       persistAndRefreshFeed(nextCatalog, []);
       deleteSkusFromPostgres(combinedSkus).catch(console.warn);
+      prisma.product.deleteMany({ where: { sku: { in: combinedSkus } } }).catch(() => {});
 
       return res.status(200).json({
         success: true,
@@ -2993,6 +2995,7 @@ app.delete('/api/admin/products', async (req, res) => {
     const deletedCount = beforeLen - nextCatalog.length;
     persistAndRefreshFeed(nextCatalog, []);
     deleteSkusFromPostgres([targetId]).catch(console.warn);
+    prisma.product.deleteMany({ where: { sku: targetId } }).catch(() => {});
 
     res.status(200).json({
       success: true,

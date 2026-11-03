@@ -21,7 +21,9 @@ import {
   AlertCircle,
   Globe,
   Tag,
+  Trash2,
 } from 'lucide-react';
+import { getAdminToken } from '../../../src/lib/admin-auth';
 import { parseProductCsv, validateCsvHeaders } from '../../../src/lib/csv-importer';
 import { InternationalSeoDashboard } from '../../components/InternationalSeoDashboard';
 import {
@@ -67,6 +69,8 @@ export default function AdminInventoryPage() {
   const [csvRawContent, setCsvRawContent] = useState<string>(SAMPLE_CSV_TEMPLATE);
   const [csvFileName, setCsvFileName] = useState<string | null>('sample-supplier-catalog.csv');
   const [isIngestingCsv, setIsIngestingCsv] = useState(false);
+  const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -195,6 +199,71 @@ export default function AdminInventoryPage() {
     const start = (safePage - 1) * itemsPerPage;
     return filteredProducts.slice(start, start + itemsPerPage);
   }, [filteredProducts, safePage, itemsPerPage]);
+
+  const isCurrentPageAllSelected = useMemo(() => {
+    if (paginatedProducts.length === 0) return false;
+    return paginatedProducts.every((p) => selectedSkus.has(p.id));
+  }, [paginatedProducts, selectedSkus]);
+
+  const handleToggleSelect = (sku: string) => {
+    setSelectedSkus((prev) => {
+      const next = new Set(prev);
+      if (next.has(sku)) next.delete(sku);
+      else next.add(sku);
+      return next;
+    });
+  };
+
+  const handleSelectPage = () => {
+    setSelectedSkus((prev) => {
+      const next = new Set(prev);
+      if (isCurrentPageAllSelected) {
+        paginatedProducts.forEach((p) => next.delete(p.id));
+      } else {
+        paginatedProducts.forEach((p) => next.add(p.id));
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllFiltered = () => {
+    if (selectedSkus.size === filteredProducts.length && filteredProducts.length > 0) {
+      setSelectedSkus(new Set());
+    } else {
+      setSelectedSkus(new Set(filteredProducts.map((p) => p.id)));
+    }
+  };
+
+  const handleBatchDeleteSelected = async () => {
+    if (selectedSkus.size === 0 || isDeletingBatch) return;
+    const skusToDelete = Array.from(selectedSkus);
+    setIsDeletingBatch(true);
+
+    try {
+      const token = getAdminToken();
+      const res = await fetch('/api/admin/products', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token.trim()}`,
+        },
+        body: JSON.stringify({ skus: skusToDelete }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete selected products');
+      }
+
+      const lowerRemoved = new Set(skusToDelete.map((s) => s.toLowerCase()));
+      setProducts((prev) => prev.filter((p) => !lowerRemoved.has(String(p.id || '').toLowerCase())));
+      setSelectedSkus(new Set());
+      showToast(`Deleted ${skusToDelete.length} selected product(s) from inventory.`);
+    } catch (err: any) {
+      showToast(err.message || 'Batch deletion failed', 'error');
+    } finally {
+      setIsDeletingBatch(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-8">
@@ -362,6 +431,15 @@ export default function AdminInventoryPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th className="py-3.5 px-4 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all products on current page"
+                      checked={isCurrentPageAllSelected}
+                      onChange={handleSelectPage}
+                      className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
+                    />
+                  </th>
                   <th className="py-3.5 px-4">Product / SKU</th>
                   <th className="py-3.5 px-4">Category</th>
                   <th className="py-3.5 px-4">Fulfillment Type</th>
@@ -373,18 +451,19 @@ export default function AdminInventoryPage() {
               <tbody className="divide-y divide-slate-800/70 text-sm">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
                       Loading paginated catalog...
                     </td>
                   </tr>
                 ) : paginatedProducts.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-12 text-center text-slate-400">
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
                       No products match your active category or search filters.
                     </td>
                   </tr>
                 ) : (
                   paginatedProducts.map((product) => {
+                    const isSelected = selectedSkus.has(product.id);
                     const isAffiliate =
                       product.productSource === 'affiliate' ||
                       product.productType === 'affiliate' ||
@@ -399,8 +478,19 @@ export default function AdminInventoryPage() {
                     return (
                       <tr
                         key={product.id}
-                        className="hover:bg-slate-800/40 transition-colors"
+                        className={`hover:bg-slate-800/40 transition-colors ${
+                          isSelected ? 'bg-emerald-950/20' : ''
+                        }`}
                       >
+                        <td className="py-3.5 px-4 text-center">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select ${product.title}`}
+                            checked={isSelected}
+                            onChange={() => handleToggleSelect(product.id)}
+                            className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
+                          />
+                        </td>
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             {product.image_link ? (
@@ -516,6 +606,62 @@ export default function AdminInventoryPage() {
           </div>
         </div>
       </div>
+
+      {/* Floating 'Delete Selected' Action Bar */}
+      {selectedSkus.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[94vw] max-w-2xl bg-slate-950/95 backdrop-blur-md border border-rose-500/40 rounded-2xl px-4 py-3 shadow-2xl shadow-black/80 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 font-mono text-xs font-extrabold">
+              {selectedSkus.size}
+            </span>
+            <div>
+              <p className="text-xs font-bold text-white">
+                {selectedSkus.size === 1 ? '1 Product Selected' : `${selectedSkus.size} Products Selected`}
+              </p>
+              <p className="text-[11px] text-slate-400">Batch removal action bar</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleSelectPage}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              {isCurrentPageAllSelected ? 'Unselect Page' : `Select Page (${paginatedProducts.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={handleSelectAllFiltered}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              {selectedSkus.size === filteredProducts.length
+                ? 'Unselect All'
+                : `Select All (${filteredProducts.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedSkus(new Set())}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={handleBatchDeleteSelected}
+              disabled={isDeletingBatch}
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition-all inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              {isDeletingBatch ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="w-3.5 h-3.5" />
+              )}
+              <span>Delete Selected ({selectedSkus.size})</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Import CSV Modal */}
       {isImportCsvModalOpen && (

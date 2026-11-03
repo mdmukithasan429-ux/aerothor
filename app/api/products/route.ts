@@ -341,6 +341,10 @@ export const sortStorefrontProducts = sortAndShuffleStorefrontProducts;
 const ROUTE_MEMORY_CACHE = new Map<string, { expiresAt: number; payload: any }>();
 const ROUTE_CACHE_TTL_MS = 30_000;
 
+export function clearRouteMemoryCache(): void {
+  ROUTE_MEMORY_CACHE.clear();
+}
+
 /**
  * GET /api/products
  * Dynamically serves storefront products with sub-100ms in-memory + Edge caching.

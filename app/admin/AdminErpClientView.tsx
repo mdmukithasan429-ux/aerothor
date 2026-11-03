@@ -38,8 +38,10 @@ import {
   X,
   Download,
   FileSpreadsheet,
+  Trash2,
 } from 'lucide-react';
 import { ProductForm } from '@/components/admin/ProductForm';
+import { getAdminToken } from '@/src/lib/admin-auth';
 
 interface AdminErpClientViewProps {
   initialMetrics: {
@@ -99,6 +101,70 @@ export default function AdminErpClientView({
 
     return matchesSearch;
   });
+
+  // Batch checkbox selection state for inventory table
+  const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
+
+  const isAllFilteredSelected =
+    filteredProducts.length > 0 &&
+    filteredProducts.every((p) => selectedSkus.has(p.sku || p.id));
+
+  const handleToggleSelect = (sku: string) => {
+    if (!sku) return;
+    setSelectedSkus((prev) => {
+      const next = new Set(prev);
+      if (next.has(sku)) next.delete(sku);
+      else next.add(sku);
+      return next;
+    });
+  };
+
+  const handleSelectAllFiltered = () => {
+    if (isAllFilteredSelected) {
+      setSelectedSkus(new Set());
+    } else {
+      setSelectedSkus(new Set(filteredProducts.map((p) => p.sku || p.id).filter(Boolean)));
+    }
+  };
+
+  const handleBatchDeleteSelected = async () => {
+    const skusToDelete = Array.from(selectedSkus).filter(Boolean);
+    if (skusToDelete.length === 0) return;
+
+    setIsDeletingBatch(true);
+    try {
+      const token = getAdminToken();
+      const res = await fetch('/api/admin/products', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ skus: skusToDelete }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to delete selected products');
+      }
+
+      const lowerDeleted = new Set(skusToDelete.map((s) => String(s).toLowerCase()));
+      setProducts((prev) =>
+        prev.filter((p) => !lowerDeleted.has(String(p.sku || p.id || '').toLowerCase()))
+      );
+      setSelectedSkus(new Set());
+      setQuickNotification(
+        data.message || `Batch deleted ${skusToDelete.length} selected products from inventory.`
+      );
+      setTimeout(() => setQuickNotification(null), 3500);
+    } catch (err: any) {
+      setQuickNotification(`Delete error: ${err.message || 'Batch deletion failed'}`);
+      setTimeout(() => setQuickNotification(null), 4000);
+    } finally {
+      setIsDeletingBatch(false);
+    }
+  };
 
   const [chartMetricMode, setChartMetricMode] = useState<'both' | 'daily' | 'cumulative'>('both');
 
@@ -844,6 +910,16 @@ export default function AdminErpClientView({
                 <table className="w-full text-left text-xs">
                   <thead className="bg-slate-900 text-slate-400 font-semibold border-b border-slate-800">
                     <tr>
+                      <th className="py-3 px-4 w-10 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isAllFilteredSelected}
+                          onChange={handleSelectAllFiltered}
+                          title="Select or deselect all filtered products"
+                          aria-label="Select all products"
+                          className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer accent-emerald-500"
+                        />
+                      </th>
                       <th className="py-3 px-4">Item &amp; Image</th>
                       <th className="py-3 px-4">SKU / Model</th>
                       <th className="py-3 px-4">Channel Model</th>
@@ -857,9 +933,25 @@ export default function AdminErpClientView({
                     {filteredProducts.map((p) => {
                       const isFree = p.isFreeShipping !== false;
                       const isAffiliate = p.productType === 'affiliate';
+                      const rowSku = p.sku || p.id;
+                      const isSelected = selectedSkus.has(rowSku);
 
                       return (
-                        <tr key={p.id || p.sku} className="hover:bg-slate-800/40 transition-colors">
+                        <tr
+                          key={p.id || p.sku}
+                          className={`hover:bg-slate-800/40 transition-colors ${
+                            isSelected ? 'bg-emerald-950/20' : ''
+                          }`}
+                        >
+                          <td className="py-3 px-4 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleSelect(rowSku)}
+                              aria-label={`Select product ${rowSku}`}
+                              className="w-4 h-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer accent-emerald-500"
+                            />
+                          </td>
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-lg bg-slate-950 border border-slate-800 overflow-hidden shrink-0">
@@ -944,6 +1036,55 @@ export default function AdminErpClientView({
                 </table>
               </div>
             </div>
+
+            {/* Floating 'Delete Selected' Batch Action Bar */}
+            {selectedSkus.size > 0 && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-2xl bg-slate-950/95 backdrop-blur-xl border border-red-500/50 rounded-2xl px-5 py-3.5 shadow-2xl shadow-red-950/60 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 font-mono text-xs font-bold">
+                    {selectedSkus.size}
+                  </span>
+                  <div>
+                    <p className="text-xs font-bold text-white">
+                      {selectedSkus.size} {selectedSkus.size === 1 ? 'Product' : 'Products'} Selected
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Ready for permanent batch removal from inventory &amp; feed
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSelectAllFiltered}
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    {isAllFilteredSelected ? 'Deselect All' : `Select All (${filteredProducts.length})`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSkus(new Set())}
+                    className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleBatchDeleteSelected}
+                    disabled={isDeletingBatch}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-red-900/40 cursor-pointer"
+                  >
+                    {isDeletingBatch ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-3.5 h-3.5" />
+                    )}
+                    <span>Delete Selected ({selectedSkus.size})</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
