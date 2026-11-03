@@ -442,13 +442,25 @@ export default function AdminErpClientView({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Card 1: Total Stripe Revenue */}
-            <button
-              type="button"
-              onClick={() => setActiveModal('stripe_revenue')}
-              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-emerald-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="View Total Stripe Revenue transaction log"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveModal('stripe_revenue');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveModal('stripe_revenue');
+                }
+              }}
+              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-emerald-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40 select-none"
               title="Click to drill down into Stripe Revenue transaction logs"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 pointer-events-none">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-emerald-400 transition-colors">
                   Total Stripe Revenue
                 </span>
@@ -459,26 +471,38 @@ export default function AdminErpClientView({
                   </span>
                 </div>
               </div>
-              <div className="text-2xl font-black text-white font-mono">
+              <div className="text-2xl font-black text-white font-mono pointer-events-none">
                 ${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <div className="flex items-center justify-between mt-2 text-xs text-emerald-400">
+              <div className="flex items-center justify-between mt-2 text-xs text-emerald-400 pointer-events-none">
                 <span className="flex items-center gap-1">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                   <span>Stripe Gross Processed</span>
                 </span>
                 <span className="text-[10px] text-slate-500 underline group-hover:text-emerald-300">Drill down &rarr;</span>
               </div>
-            </button>
+            </div>
 
             {/* Card 2: CJ Wholesale Deducted */}
-            <button
-              type="button"
-              onClick={() => setActiveModal('cj_wholesale')}
-              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-amber-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-amber-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="View CJ Wholesale COGS & fulfillment deduction log"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveModal('cj_wholesale');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveModal('cj_wholesale');
+                }
+              }}
+              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-amber-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-amber-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/40 select-none"
               title="Click to drill down into CJ Wholesale COGS & fulfillment deductions"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 pointer-events-none">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-amber-400 transition-colors">
                   CJ Wholesale Deducted
                 </span>
@@ -489,26 +513,38 @@ export default function AdminErpClientView({
                   </span>
                 </div>
               </div>
-              <div className="text-2xl font-black text-amber-400 font-mono">
+              <div className="text-2xl font-black text-amber-400 font-mono pointer-events-none">
                 -${(metrics.totalRevenue * 0.42).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <div className="flex items-center justify-between mt-2 text-xs text-amber-300">
+              <div className="flex items-center justify-between mt-2 text-xs text-amber-300 pointer-events-none">
                 <span className="flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Auto-Fulfillment COGS</span>
                 </span>
                 <span className="text-[10px] text-slate-500 underline group-hover:text-amber-300">Drill down &rarr;</span>
               </div>
-            </button>
+            </div>
 
             {/* Card 3: Net Merchant Profit */}
-            <button
-              type="button"
-              onClick={() => setActiveModal('net_profit')}
-              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-sky-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-sky-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="View net profit margin breakdown per order"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveModal('net_profit');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveModal('net_profit');
+                }
+              }}
+              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-sky-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-sky-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40 select-none"
               title="Click to view net profit margin waterfall per order"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 pointer-events-none">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-sky-400 transition-colors">
                   Net Merchant Profit
                 </span>
@@ -519,23 +555,35 @@ export default function AdminErpClientView({
                   </span>
                 </div>
               </div>
-              <div className="text-2xl font-black text-emerald-400 font-mono">
+              <div className="text-2xl font-black text-emerald-400 font-mono pointer-events-none">
                 ${(metrics.totalRevenue * 0.55).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <div className="flex items-center justify-between mt-2 text-xs text-sky-300">
+              <div className="flex items-center justify-between mt-2 text-xs text-sky-300 pointer-events-none">
                 <span>55.0% Net Profit Margin</span>
                 <span className="text-[10px] text-slate-500 underline group-hover:text-sky-300">Drill down &rarr;</span>
               </div>
-            </button>
+            </div>
 
             {/* Card 4: CJ Wallet Status */}
-            <button
-              type="button"
-              onClick={() => setActiveModal('cj_wallet')}
-              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-purple-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-purple-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+            <div
+              role="button"
+              tabIndex={0}
+              aria-label="View CJ Wallet balance, connected card & auto-debit log"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveModal('cj_wallet');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveModal('cj_wallet');
+                }
+              }}
+              className="p-5 bg-slate-900/80 border border-slate-800 rounded-2xl relative overflow-hidden group hover:border-purple-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-purple-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40 select-none"
               title="Click to view CJ Wallet balance, connected card & auto-debit log"
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 pointer-events-none">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 group-hover:text-purple-400 transition-colors">
                   CJ Wallet Status
                 </span>
@@ -546,20 +594,20 @@ export default function AdminErpClientView({
                   </span>
                 </div>
               </div>
-              <div className="text-2xl font-black text-purple-400 font-mono flex items-center justify-between">
+              <div className="text-2xl font-black text-purple-400 font-mono flex items-center justify-between pointer-events-none">
                 <span>$2,485.50</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/30 font-sans font-bold">
                   Active
                 </span>
               </div>
-              <div className="flex items-center justify-between mt-2 text-xs text-purple-300">
+              <div className="flex items-center justify-between mt-2 text-xs text-purple-300 pointer-events-none">
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Auto-Debit: Visa •••• 4242</span>
                 </span>
                 <span className="text-[10px] text-slate-500 underline group-hover:text-purple-300">Drill down &rarr;</span>
               </div>
-            </button>
+            </div>
           </div>
         </section>
 
