@@ -386,13 +386,19 @@ function main() {
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
+  const payload = {
+    updatedAt: new Date().toISOString(),
+    products: catalog,
+  };
+  const serialized = JSON.stringify(payload, null, 2);
+
   const targetFile = path.join(dataDir, 'catalog-db.json');
-  fs.writeFileSync(targetFile, JSON.stringify(catalog, null, 2), 'utf-8');
+  fs.writeFileSync(targetFile, serialized, 'utf-8');
 
   const tmpDir = '/tmp/aerothor-data';
   try {
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    fs.writeFileSync(path.join(tmpDir, 'catalog-db.json'), JSON.stringify(catalog, null, 2), 'utf-8');
+    fs.writeFileSync(path.join(tmpDir, 'catalog-db.json'), serialized, 'utf-8');
   } catch {}
 
   const trendingCount = catalog.filter((p) => p.isTrending).length;

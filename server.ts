@@ -1676,14 +1676,20 @@ app.get('/api/products', (req, res) => {
     req.query.skip !== undefined;
 
   if (hasPaginationParams) {
+    const isAll = req.query.limit === 'all' || req.query.all === 'true' || req.query.take === 'all';
+    const rawLimit = req.query.limit || req.query.take;
+    const parsedLimit = rawLimit ? parseInt(String(rawLimit), 10) : NaN;
     const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
-    const take = Math.min(
-      100,
-      Math.max(1, parseInt(String(req.query.limit || req.query.take || '20'), 10) || 20)
-    );
+    const take = isAll
+      ? 2000
+      : !isNaN(parsedLimit)
+      ? Math.min(2000, Math.max(1, parsedLimit))
+      : 24;
     const skip =
       req.query.skip !== undefined && !isNaN(parseInt(String(req.query.skip), 10))
         ? Math.max(0, parseInt(String(req.query.skip), 10))
+        : isAll
+        ? 0
         : (page - 1) * take;
     const paginated = sortedAndShuffled.slice(skip, skip + take);
 

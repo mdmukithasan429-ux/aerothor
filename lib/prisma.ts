@@ -153,6 +153,29 @@ function createDiskFallbackPrismaClient() {
         savePersistedCatalog([]);
         return { count: 0 };
       },
+      async create(args: { data: any }) {
+        const item = args.data;
+        const current = loadPersistedCatalog();
+        const mapped = mapCatalogProductToPrismaRow(item);
+        current.unshift(item);
+        savePersistedCatalog(current);
+        return mapped;
+      },
+      async createMany(args: { data: any[]; skipDuplicates?: boolean }) {
+        const items = args.data || [];
+        const current = loadPersistedCatalog();
+        const existingSkus = new Set(current.map((p) => String(p.id || '').toLowerCase()));
+        const toAdd: any[] = [];
+        for (const it of items) {
+          const sku = String(it.sku || it.id || '').toLowerCase();
+          if (args.skipDuplicates && existingSkus.has(sku)) continue;
+          existingSkus.add(sku);
+          toAdd.push(it);
+        }
+        const updated = [...toAdd, ...current];
+        savePersistedCatalog(updated);
+        return { count: toAdd.length };
+      },
       async upsert(args: { where: { sku?: string; id?: string }; update: any; create: any }) {
         const catalog = loadPersistedCatalog();
         const sku = String(args.where.sku || args.where.id || args.create.sku || args.create.id);
@@ -165,6 +188,12 @@ function createDiskFallbackPrismaClient() {
     productVariant: {
       async deleteMany() {
         return { count: 0 };
+      },
+      async createMany(args: { data: any[]; skipDuplicates?: boolean }) {
+        return { count: args.data?.length || 0 };
+      },
+      async create(args: { data: any }) {
+        return args.data;
       },
     },
     order: {

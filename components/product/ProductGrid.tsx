@@ -355,8 +355,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
           >
             <option value={12}>12 / page</option>
-            <option value={20}>20 / page</option>
-            <option value={40}>40 / page</option>
+            <option value={24}>24 / page</option>
+            <option value={48}>48 / page</option>
+            <option value={96}>96 / page</option>
+            <option value={1000}>All 1,000 Products</option>
           </select>
         </div>
       </div>

@@ -2553,8 +2553,9 @@ function loadPersistedCatalog() {
       if (fs.existsSync(candidate)) {
         const raw = fs.readFileSync(candidate, "utf-8");
         const parsed = JSON.parse(raw);
-        if (parsed && Array.isArray(parsed.products) && parsed.products.length > 0) {
-          return prioritizeRealProductsFirst(parsed.products);
+        const list = Array.isArray(parsed) ? parsed : Array.isArray(parsed?.products) ? parsed.products : [];
+        if (list.length > 0) {
+          return prioritizeRealProductsFirst(list);
         }
       }
     }
@@ -4106,12 +4107,12 @@ app.get("/api/products", (req, res) => {
   const sortedAndShuffled = enrichAndSortCatalogProducts(matched, sortParam);
   const hasPaginationParams = req.query.page !== void 0 || req.query.limit !== void 0 || req.query.take !== void 0 || req.query.skip !== void 0;
   if (hasPaginationParams) {
+    const isAll = req.query.limit === "all" || req.query.all === "true" || req.query.take === "all";
+    const rawLimit = req.query.limit || req.query.take;
+    const parsedLimit = rawLimit ? parseInt(String(rawLimit), 10) : NaN;
     const page = Math.max(1, parseInt(String(req.query.page || "1"), 10) || 1);
-    const take = Math.min(
-      100,
-      Math.max(1, parseInt(String(req.query.limit || req.query.take || "20"), 10) || 20)
-    );
-    const skip = req.query.skip !== void 0 && !isNaN(parseInt(String(req.query.skip), 10)) ? Math.max(0, parseInt(String(req.query.skip), 10)) : (page - 1) * take;
+    const take = isAll ? 2e3 : !isNaN(parsedLimit) ? Math.min(2e3, Math.max(1, parsedLimit)) : 24;
+    const skip = req.query.skip !== void 0 && !isNaN(parseInt(String(req.query.skip), 10)) ? Math.max(0, parseInt(String(req.query.skip), 10)) : isAll ? 0 : (page - 1) * take;
     const paginated = sortedAndShuffled.slice(skip, skip + take);
     return res.status(200).json({
       success: true,

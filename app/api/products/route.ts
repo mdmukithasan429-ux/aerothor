@@ -344,15 +344,27 @@ export function buildProductPrismaWhere(params: {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
+    const hasExplicitLimit = searchParams.has('limit') || searchParams.has('take');
+    const isAllRequested =
+      searchParams.get('all') === 'true' ||
+      searchParams.get('limit') === 'all' ||
+      searchParams.get('take') === 'all';
+    const rawLimit = searchParams.get('limit') || searchParams.get('take');
+    const parsedLimit = rawLimit ? parseInt(rawLimit, 10) : NaN;
+
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1);
-    const take = Math.min(
-      100,
-      Math.max(1, parseInt(searchParams.get('limit') || searchParams.get('take') || '20', 10) || 20)
-    );
+    const take = isAllRequested
+      ? 2000
+      : !hasExplicitLimit && !searchParams.has('page')
+      ? 2000
+      : Math.min(2000, Math.max(1, !isNaN(parsedLimit) ? parsedLimit : 20));
+
     const explicitSkip = searchParams.get('skip');
     const skip =
       explicitSkip !== null && !isNaN(parseInt(explicitSkip, 10))
         ? Math.max(0, parseInt(explicitSkip, 10))
+        : isAllRequested || (!hasExplicitLimit && !searchParams.has('page'))
+        ? 0
         : (page - 1) * take;
 
     const category = searchParams.get('category') || 'All';
@@ -394,38 +406,41 @@ export async function GET(req: NextRequest) {
           salePrice: p.salePrice ? Number(p.salePrice) : null,
           image_link: p.mainImageUrl,
           reviews: Array.isArray(p.reviewsJson) ? p.reviewsJson : [],
+          hasLifetimeUpdateAccess: p.hasLifetimeUpdateAccess ?? true,
         }));
       }
     } catch {
       // Fallback to verified persisted catalog if Prisma is unreachable
     }
 
-    if (matchedItems.length === 0) {
+    if (matchedItems.length < 50) {
       const persisted = loadPersistedCatalog();
-      const catLower = category.trim().toLowerCase();
-      const qLower = query.trim().toLowerCase();
-      const tagLower = tag.trim().toLowerCase();
+      if (persisted.length > matchedItems.length) {
+        const catLower = category.trim().toLowerCase();
+        const qLower = query.trim().toLowerCase();
+        const tagLower = tag.trim().toLowerCase();
 
-      matchedItems = persisted.filter((p: any) => {
-        if (p.status === 'archived' || p.isVisible === false) return false;
-        if (type === 'affiliate' && p.productType !== 'affiliate') return false;
-        if (type === 'dropshipping' && p.productType === 'affiliate') return false;
-        if ((tagLower === 'trending' || catLower === 'trending') && !isTrendingProduct(p)) {
-          return false;
-        }
-        if ((tagLower === 'best-selling' || catLower === 'best-selling') && !isBestSellingProduct(p)) {
-          return false;
-        }
-        if (catLower && catLower !== 'all' && catLower !== 'trending' && catLower !== 'best-selling') {
-          const hayCat = `${p.product_type || ''} ${p.productType || ''} ${p.title || ''} ${p.description || ''}`.toLowerCase();
-          if (!hayCat.includes(catLower)) return false;
-        }
-        if (qLower) {
-          const hayQ = `${p.title || ''} ${p.description || ''} ${p.id || ''} ${p.brand || ''}`.toLowerCase();
-          if (!hayQ.includes(qLower)) return false;
-        }
-        return true;
-      });
+        matchedItems = persisted.filter((p: any) => {
+          if (p.status === 'archived' || p.isVisible === false) return false;
+          if (type === 'affiliate' && p.productType !== 'affiliate') return false;
+          if (type === 'dropshipping' && p.productType === 'affiliate') return false;
+          if ((tagLower === 'trending' || catLower === 'trending') && !isTrendingProduct(p)) {
+            return false;
+          }
+          if ((tagLower === 'best-selling' || catLower === 'best-selling') && !isBestSellingProduct(p)) {
+            return false;
+          }
+          if (catLower && catLower !== 'all' && catLower !== 'trending' && catLower !== 'best-selling') {
+            const hayCat = `${p.product_type || ''} ${p.productType || ''} ${p.title || ''} ${p.description || ''}`.toLowerCase();
+            if (!hayCat.includes(catLower)) return false;
+          }
+          if (qLower) {
+            const hayQ = `${p.title || ''} ${p.description || ''} ${p.id || ''} ${p.brand || ''}`.toLowerCase();
+            if (!hayQ.includes(qLower)) return false;
+          }
+          return true;
+        });
+      }
     }
 
     const sortedAndShuffled = sortAndShuffleStorefrontProducts(matchedItems, sortMode);

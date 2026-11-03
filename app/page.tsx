@@ -20,7 +20,8 @@ interface StorefrontPageProps {
 export default async function StorefrontHomePage({ searchParams }: StorefrontPageProps) {
   const resolvedParams = searchParams ? await searchParams : {};
   const page = Math.max(1, parseInt(resolvedParams.page || '1', 10) || 1);
-  const take = Math.min(100, Math.max(1, parseInt(resolvedParams.limit || '20', 10) || 20));
+  const isAll = resolvedParams.limit === 'all' || !resolvedParams.limit;
+  const take = isAll ? 1000 : Math.min(1000, Math.max(1, parseInt(resolvedParams.limit || '24', 10) || 24));
   const skip = (page - 1) * take;
   const category = resolvedParams.category || 'All';
   const query = resolvedParams.q || '';
@@ -42,7 +43,7 @@ export default async function StorefrontHomePage({ searchParams }: StorefrontPag
     });
 
     const sorted = sortStorefrontProducts(fetched, sort);
-    const paginated = sorted.slice(skip, skip + take);
+    const paginated = isAll ? sorted : sorted.slice(skip, skip + take);
 
     initialProducts = paginated.map((p: any) => ({
       id: p.sku || p.id,

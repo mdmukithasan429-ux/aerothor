@@ -444,9 +444,14 @@ export function loadPersistedCatalog(): GmcProduct[] {
     for (const candidate of candidatePaths) {
       if (fs.existsSync(candidate)) {
         const raw = fs.readFileSync(candidate, 'utf-8');
-        const parsed = JSON.parse(raw) as PersistedDatabaseState;
-        if (parsed && Array.isArray(parsed.products) && parsed.products.length > 0) {
-          return prioritizeRealProductsFirst(parsed.products);
+        const parsed: any = JSON.parse(raw);
+        const list: GmcProduct[] = Array.isArray(parsed)
+          ? parsed
+          : Array.isArray(parsed?.products)
+          ? parsed.products
+          : [];
+        if (list.length > 0) {
+          return prioritizeRealProductsFirst(list);
         }
       }
     }
