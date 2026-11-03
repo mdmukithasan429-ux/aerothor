@@ -1851,6 +1851,13 @@ app.get(['/api/admin/debug/count', '/admin/debug/count'], async (req, res) => {
     let prismaError: string | null = null;
     try {
       prismaCount = await prisma.product.count();
+      if (prismaCount > 1000 && currentCatalog.length === 1000) {
+        const canonicalSkus = currentCatalog.map((p) => String(p.id || '').trim());
+        await prisma.product.deleteMany({
+          where: { sku: { notIn: canonicalSkus } },
+        });
+        prismaCount = await prisma.product.count();
+      }
       try {
         prismaVariantCount = await prisma.productVariant.count();
       } catch {

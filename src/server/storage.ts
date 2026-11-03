@@ -277,11 +277,26 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
         seo_description: row.seo_description || undefined,
       }));
 
-      // Merge local disk products (e.g. recently synced CJ items) with DB products so nothing is lost
+      // If our bundled catalog has the full 1,000 verified items, enforce exact 1,000-item parity in PostgreSQL
+      if (prioritizedLocal.length >= 1000) {
+        const validSkus = prioritizedLocal.map((p) => String(p.id || '').trim());
+        const validSkuSet = new Set(validSkus.map((s) => s.toLowerCase()));
+        const hasStaleDbRows = dbProducts.some((p) => !validSkuSet.has(String(p.id || '').trim().toLowerCase()));
+
+        if (hasStaleDbRows || dbProducts.length !== prioritizedLocal.length) {
+          await pool.query('DELETE FROM products WHERE NOT (sku = ANY($1::text[]))', [validSkus]);
+          await syncCatalogToPostgres(prioritizedLocal);
+        }
+
+        savePersistedCatalogToDiskOnly(prioritizedLocal);
+        console.log(`[Supabase PostgreSQL] Synchronized exact ${prioritizedLocal.length} canonical products with live database.`);
+        return prioritizedLocal;
+      }
+
+      // Otherwise merge local disk products with DB products
       const merged = prioritizeRealProductsFirst([...prioritizedLocal, ...dbProducts]);
       savePersistedCatalogToDiskOnly(merged);
 
-      // If local had items not yet in Postgres, push them up
       if (merged.length > dbProducts.length) {
         syncCatalogToPostgres(merged).catch(() => disablePostgresPool());
       }

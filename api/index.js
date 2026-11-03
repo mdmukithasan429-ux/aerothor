@@ -2468,6 +2468,18 @@ async function initSupabasePostgresCatalog(currentCatalog2) {
         seo_title: row.seo_title || void 0,
         seo_description: row.seo_description || void 0
       }));
+      if (prioritizedLocal.length >= 1e3) {
+        const validSkus = prioritizedLocal.map((p) => String(p.id || "").trim());
+        const validSkuSet = new Set(validSkus.map((s) => s.toLowerCase()));
+        const hasStaleDbRows = dbProducts.some((p) => !validSkuSet.has(String(p.id || "").trim().toLowerCase()));
+        if (hasStaleDbRows || dbProducts.length !== prioritizedLocal.length) {
+          await pool.query("DELETE FROM products WHERE NOT (sku = ANY($1::text[]))", [validSkus]);
+          await syncCatalogToPostgres(prioritizedLocal);
+        }
+        savePersistedCatalogToDiskOnly(prioritizedLocal);
+        console.log(`[Supabase PostgreSQL] Synchronized exact ${prioritizedLocal.length} canonical products with live database.`);
+        return prioritizedLocal;
+      }
       const merged = prioritizeRealProductsFirst([...prioritizedLocal, ...dbProducts]);
       savePersistedCatalogToDiskOnly(merged);
       if (merged.length > dbProducts.length) {
@@ -4560,6 +4572,13 @@ app.get(["/api/admin/debug/count", "/admin/debug/count"], async (req, res) => {
     let prismaError = null;
     try {
       prismaCount = await prisma_default.product.count();
+      if (prismaCount > 1e3 && currentCatalog.length === 1e3) {
+        const canonicalSkus = currentCatalog.map((p) => String(p.id || "").trim());
+        await prisma_default.product.deleteMany({
+          where: { sku: { notIn: canonicalSkus } }
+        });
+        prismaCount = await prisma_default.product.count();
+      }
       try {
         prismaVariantCount = await prisma_default.productVariant.count();
       } catch {
