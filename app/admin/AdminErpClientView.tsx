@@ -83,6 +83,81 @@ export default function AdminErpClientView({
   const [quickNotification, setQuickNotification] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<DrilldownType>(null);
 
+  // Inline Quick-Edit States for Price and Stock
+  const [inlineQuickDrafts, setInlineQuickDrafts] = useState<
+    Record<string, { price: string; stockQuantity: string }>
+  >({});
+  const [savingQuickSku, setSavingQuickSku] = useState<string | null>(null);
+
+  const handleSaveInlineQuickEdit = async (p: any) => {
+    const rowKey = p.id || p.sku;
+    const draft = inlineQuickDrafts[rowKey];
+    if (!draft) return;
+
+    setSavingQuickSku(rowKey);
+    try {
+      const rawPriceNum = parseFloat(String(draft.price).replace(/[^0-9.]/g, ''));
+      const rawStockNum = parseInt(String(draft.stockQuantity), 10);
+
+      if (isNaN(rawPriceNum) || rawPriceNum < 0) {
+        setQuickNotification('Please enter a valid positive price');
+        setTimeout(() => setQuickNotification(null), 3000);
+        setSavingQuickSku(null);
+        return;
+      }
+
+      const nextStock = isNaN(rawStockNum) || rawStockNum < 0 ? 0 : rawStockNum;
+      const nextAvailability = nextStock > 0 ? 'in_stock' : 'out_of_stock';
+      const token = getAdminToken();
+
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          id: rowKey,
+          sku: rowKey,
+          price: rawPriceNum,
+          stockQuantity: nextStock,
+          availability: nextAvailability,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update product');
+
+      setProducts((prev) =>
+        prev.map((item) => {
+          if ((item.id || item.sku) === rowKey) {
+            return {
+              ...item,
+              price: rawPriceNum,
+              stockQuantity: nextStock,
+              availability: nextAvailability,
+            };
+          }
+          return item;
+        })
+      );
+
+      setInlineQuickDrafts((prev) => {
+        const next = { ...prev };
+        delete next[rowKey];
+        return next;
+      });
+
+      setQuickNotification(`Saved ${rowKey}: Price $${rawPriceNum.toFixed(2)} | Stock ${nextStock}`);
+      setTimeout(() => setQuickNotification(null), 3500);
+    } catch (err: any) {
+      setQuickNotification(`Quick edit error: ${err.message}`);
+      setTimeout(() => setQuickNotification(null), 4000);
+    } finally {
+      setSavingQuickSku(null);
+    }
+  };
+
   // Filter orders
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -1080,10 +1155,60 @@ export default function AdminErpClientView({
                             )}
                           </td>
 
+                          {/* Quick-Edit Retail Price */}
                           <td className="py-3 px-4 font-mono font-bold text-white">
-                            ${Number(p.price || 0).toFixed(2)}
+                            {(() => {
+                              const rowKey = p.id || p.sku;
+                              const draft = inlineQuickDrafts[rowKey];
+                              return (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-slate-400 font-bold text-xs">$</span>
+                                  <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={
+                                      draft
+                                        ? draft.price
+                                        : String(Number(p.price || 0).toFixed(2))
+                                    }
+                                    onChange={(e) =>
+                                      setInlineQuickDrafts((prev) => ({
+                                        ...prev,
+                                        [rowKey]: {
+                                          price: e.target.value,
+                                          stockQuantity:
+                                            prev[rowKey]?.stockQuantity ??
+                                            String(p.stockQuantity ?? 99),
+                                        },
+                                      }))
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveInlineQuickEdit(p);
+                                    }}
+                                    className="w-20 bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-lg px-2 py-1 text-xs text-white font-bold text-right"
+                                    title="Press Enter or click checkmark to save price"
+                                  />
+                                  {draft && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveInlineQuickEdit(p)}
+                                      disabled={savingQuickSku === rowKey}
+                                      className="p-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer shrink-0"
+                                      title="Save price change"
+                                    >
+                                      {savingQuickSku === rowKey ? (
+                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Check className="w-3 h-3 font-bold" />
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()}
                             {p.salePrice && (
-                              <span className="block text-[10px] text-amber-400 line-through">
+                              <span className="block text-[10px] text-amber-400 line-through mt-0.5">
                                 ${Number(p.salePrice).toFixed(2)}
                               </span>
                             )}
@@ -1104,16 +1229,66 @@ export default function AdminErpClientView({
                             )}
                           </td>
 
+                          {/* Quick-Edit Stock Quantity */}
                           <td className="py-3 px-4">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                                (p.stockQuantity ?? 99) > 0
-                                  ? 'bg-emerald-950/50 text-emerald-400'
-                                  : 'bg-red-950/50 text-red-400'
-                              }`}
-                            >
-                              {p.stockQuantity ?? 99} in stock
-                            </span>
+                            {(() => {
+                              const rowKey = p.id || p.sku;
+                              const draft = inlineQuickDrafts[rowKey];
+                              const currentQty = draft
+                                ? draft.stockQuantity
+                                : String(p.stockQuantity ?? 99);
+                              const isStock = Number(currentQty) > 0;
+
+                              return (
+                                <div className="flex items-center gap-1.5 font-mono">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    value={currentQty}
+                                    onChange={(e) =>
+                                      setInlineQuickDrafts((prev) => ({
+                                        ...prev,
+                                        [rowKey]: {
+                                          price:
+                                            prev[rowKey]?.price ??
+                                            String(Number(p.price || 0).toFixed(2)),
+                                          stockQuantity: e.target.value,
+                                        },
+                                      }))
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveInlineQuickEdit(p);
+                                    }}
+                                    className="w-16 bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-lg px-2 py-1 text-xs text-white font-bold text-center"
+                                    title="Press Enter or click checkmark to save stock quantity"
+                                  />
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                      isStock
+                                        ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
+                                        : 'bg-rose-950/80 text-rose-400 border border-rose-500/30'
+                                    }`}
+                                  >
+                                    {isStock ? 'In' : 'Out'}
+                                  </span>
+                                  {draft && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveInlineQuickEdit(p)}
+                                      disabled={savingQuickSku === rowKey}
+                                      className="p-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer shrink-0"
+                                      title="Save stock change"
+                                    >
+                                      {savingQuickSku === rowKey ? (
+                                        <RefreshCw className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Check className="w-3 h-3 font-bold" />
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           <td className="py-3 px-4 text-right">

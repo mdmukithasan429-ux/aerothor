@@ -120,8 +120,12 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
   // Selection for Batch Operations
   const [selectedSkus, setSelectedSkus] = useState<Set<string>>(new Set());
 
-  // Modal States
+  // Modal & Inline Quick-Edit States
   const [activeModal, setActiveModal] = useState<DrilldownType>(null);
+  const [inlineQuickDrafts, setInlineQuickDrafts] = useState<
+    Record<string, { price: string; stockQuantity: string }>
+  >({});
+  const [savingQuickSku, setSavingQuickSku] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<GmcProduct | null>(null);
@@ -644,6 +648,89 @@ export const AdminInventoryDashboard: React.FC<AdminInventoryDashboardProps> = (
       showToast(err.message, 'error');
     } finally {
       setIsOperating(false);
+    }
+  };
+
+  const handleInlineQuickDraftChange = (
+    p: GmcProduct,
+    field: 'price' | 'stockQuantity',
+    value: string
+  ) => {
+    setInlineQuickDrafts((prev) => {
+      const existing = prev[p.id] || {
+        price: p.price ? p.price.replace(/[^0-9.]/g, '') : '0.00',
+        stockQuantity: String(p.stockQuantity ?? (p.availability === 'in_stock' ? 99 : 0)),
+      };
+      return {
+        ...prev,
+        [p.id]: {
+          ...existing,
+          [field]: value,
+        },
+      };
+    });
+  };
+
+  const handleSaveInlineQuickEdit = async (p: GmcProduct) => {
+    const draft = inlineQuickDrafts[p.id];
+    if (!draft) return;
+
+    setSavingQuickSku(p.id);
+    try {
+      const rawPriceNum = parseFloat(draft.price.replace(/[^0-9.]/g, ''));
+      const rawStockNum = parseInt(draft.stockQuantity, 10);
+
+      if (isNaN(rawPriceNum) || rawPriceNum < 0) {
+        showToast('Please enter a valid positive price', 'error');
+        setSavingQuickSku(null);
+        return;
+      }
+
+      const nextStock = isNaN(rawStockNum) || rawStockNum < 0 ? 0 : rawStockNum;
+      const nextAvailability = nextStock > 0 ? 'in_stock' : 'out_of_stock';
+
+      const res = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken.trim()}`,
+        },
+        body: JSON.stringify({
+          id: p.id,
+          sku: p.id,
+          price: rawPriceNum,
+          stockQuantity: nextStock,
+          availability: nextAvailability,
+        }),
+      });
+
+      const data = await res.json();
+      addLog('PATCH', '/api/admin/products', res.status, data.message || `Inline updated price/stock for ${p.id}`);
+
+      if (!res.ok) throw new Error(data.error || 'Failed to update product');
+
+      const updatedProduct: GmcProduct = data.product
+        ? data.product
+        : {
+            ...p,
+            price: `${rawPriceNum.toFixed(2)} USD`,
+            stockQuantity: nextStock,
+            availability: nextAvailability,
+          };
+
+      onUpdateProduct(updatedProduct);
+
+      setInlineQuickDrafts((prev) => {
+        const next = { ...prev };
+        delete next[p.id];
+        return next;
+      });
+
+      showToast(`Quick-edit saved for ${p.id}: $${rawPriceNum.toFixed(2)} | Stock ${nextStock}`);
+    } catch (err: any) {
+      showToast(`Quick-edit error: ${err.message}`, 'error');
+    } finally {
+      setSavingQuickSku(null);
     }
   };
 
@@ -3047,7 +3134,8 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 <th className="p-3.5">Product &amp; Image</th>
                 <th className="p-3.5">SKU / ID</th>
                 <th className="p-3.5">Brand</th>
-                <th className="p-3.5">Price (Retail / Sale)</th>
+                <th className="p-3.5">Quick-Edit Price ($)</th>
+                <th className="p-3.5">Stock &amp; Qty</th>
                 <th className="p-3.5">GMC Availability</th>
                 <th className="p-3.5">Identifiers</th>
                 <th className="p-3.5 text-right">Share &amp; Actions</th>
@@ -3056,7 +3144,7 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
             <tbody className="divide-y divide-slate-800/60 font-sans">
               {paginatedProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-500">
+                  <td colSpan={9} className="p-8 text-center text-slate-500">
                     No products matching search criteria &quot;{searchQuery}&quot;.
                   </td>
                 </tr>
@@ -3064,6 +3152,7 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                 paginatedProducts.map((p) => {
                   const isSelected = selectedSkus.has(p.id);
                   const isStock = p.availability === 'in_stock';
+                  const draft = inlineQuickDrafts[p.id];
 
                   return (
                     <tr
@@ -3140,28 +3229,95 @@ CJ_API_KEY=CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7`;
                         </span>
                       </td>
 
-                      {/* Price & Shipping */}
+                      {/* Inline Quick-Edit Price */}
                       <td className="p-3.5 font-mono">
-                        <div>
-                          <span className="font-bold text-white">{formatPriceForDisplay(p.price)}</span>
-                          {p.sale_price && (
-                            <div className="text-[10px] text-emerald-400 font-medium">
-                              Sale: {formatPriceForDisplay(p.sale_price)}
-                            </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-400 font-bold text-xs">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            value={
+                              draft
+                                ? draft.price
+                                : (p.price ? p.price.replace(/[^0-9.]/g, '') : '0.00')
+                            }
+                            onChange={(e) =>
+                              handleInlineQuickDraftChange(p, 'price', e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveInlineQuickEdit(p);
+                            }}
+                            className="w-20 bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-2 py-1 text-xs text-white font-bold text-right"
+                            title="Press Enter or click checkmark to save price"
+                          />
+                          {draft && (
+                            <button
+                              type="button"
+                              onClick={() => handleSaveInlineQuickEdit(p)}
+                              disabled={savingQuickSku === p.id}
+                              className="p-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer shrink-0"
+                              title="Save price change"
+                            >
+                              {savingQuickSku === p.id ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Check className="w-3 h-3 font-bold" />
+                              )}
+                            </button>
                           )}
-                          <div className="mt-1">
-                            {p.isFreeShipping !== false ? (
-                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 font-sans font-semibold border border-emerald-500/30">
-                                <Truck className="w-2.5 h-2.5" />
-                                <span>Free Shipping</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 font-sans font-semibold border border-amber-500/30">
-                                <Truck className="w-2.5 h-2.5" />
-                                <span>+${Number(p.shippingCost || 0).toFixed(2)} Ship</span>
-                              </span>
-                            )}
+                        </div>
+                        {p.sale_price && (
+                          <div className="text-[10px] text-emerald-400 font-medium mt-0.5">
+                            Sale: {formatPriceForDisplay(p.sale_price)}
                           </div>
+                        )}
+                      </td>
+
+                      {/* Inline Quick-Edit Stock Quantity */}
+                      <td className="p-3.5 font-mono">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="number"
+                            min="0"
+                            value={
+                              draft
+                                ? draft.stockQuantity
+                                : String(p.stockQuantity ?? (isStock ? 99 : 0))
+                            }
+                            onChange={(e) =>
+                              handleInlineQuickDraftChange(p, 'stockQuantity', e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveInlineQuickEdit(p);
+                            }}
+                            className="w-16 bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-2 py-1 text-xs text-white font-bold text-center"
+                            title="Press Enter or click checkmark to save stock quantity"
+                          />
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                              isStock
+                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-rose-950 text-rose-300 border border-rose-500/30'
+                            }`}
+                          >
+                            {isStock ? 'In' : 'Out'}
+                          </span>
+                          {draft && (
+                            <button
+                              type="button"
+                              onClick={() => handleSaveInlineQuickEdit(p)}
+                              disabled={savingQuickSku === p.id}
+                              className="p-1 rounded bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-colors cursor-pointer shrink-0"
+                              title="Save stock change"
+                            >
+                              {savingQuickSku === p.id ? (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <Check className="w-3 h-3 font-bold" />
+                              )}
+                            </button>
+                          )}
                         </div>
                       </td>
 

@@ -27,6 +27,8 @@ export interface GmcProduct {
   identifier_exists?: boolean;
   google_product_category?: string;
   product_type?: string;
+  stockQuantity?: number;
+  stock_quantity?: number;
   cj_pid?: string;
   cj_vid?: string;
   cj_sku?: string;
