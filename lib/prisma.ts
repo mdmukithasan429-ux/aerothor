@@ -186,6 +186,10 @@ function createDiskFallbackPrismaClient() {
       },
     },
     productVariant: {
+      async count() {
+        const catalog = loadPersistedCatalog();
+        return catalog.reduce((acc, p) => acc + (Array.isArray(p.variants) ? p.variants.length : 0), 0);
+      },
       async deleteMany() {
         return { count: 0 };
       },

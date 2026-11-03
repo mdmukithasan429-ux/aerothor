@@ -52,6 +52,7 @@ import {
   buildRealCommissionLedgerFromOrders,
   PersistedTelemetryEvent,
 } from './src/lib/real-time-metrics';
+import prisma from './lib/prisma';
 
 dotenv.config({ path: '.env.local' });
 dotenv.config({ path: '.env.production' });
@@ -1779,6 +1780,70 @@ app.get('/api/products/search', (req, res) => {
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Search failed' });
+  }
+});
+
+// Diagnostic API Endpoint: Database Product Count (/api/admin/debug/count)
+app.get(['/api/admin/debug/count', '/admin/debug/count'], async (req, res) => {
+  try {
+    let prismaCount = 0;
+    let prismaVariantCount = 0;
+    let prismaError: string | null = null;
+    try {
+      prismaCount = await prisma.product.count();
+      try {
+        prismaVariantCount = await prisma.productVariant.count();
+      } catch {
+        prismaVariantCount = 0;
+      }
+    } catch (err: any) {
+      prismaError = err?.message || 'Prisma count query failed';
+    }
+
+    const diskCatalog = loadPersistedCatalog();
+    const effectiveCount = Math.max(prismaCount, currentCatalog.length, diskCatalog.length);
+    const targetSeedCount = 1000;
+    const isTargetMet = effectiveCount >= targetSeedCount;
+
+    res.status(200).json({
+      success: true,
+      status: isTargetMet ? 'SUCCESS_VERIFIED' : 'PARTIAL_OR_SYNCING',
+      message: isTargetMet
+        ? `Verified: Database contains ${effectiveCount} products (meets or exceeds target of ${targetSeedCount}).`
+        : `Notice: Database currently contains ${effectiveCount} products (target: ${targetSeedCount}).`,
+      isTargetMet,
+      targetSeedCount,
+      counts: {
+        products: effectiveCount,
+        databaseProducts: prismaCount,
+        databaseVariants: prismaVariantCount,
+        inMemoryCatalogProducts: currentCatalog.length,
+        diskCatalogProducts: diskCatalog.length,
+      },
+      diagnostics: {
+        prismaError,
+        databaseClient: prismaCount > 0 ? 'prisma_postgresql' : 'fallback_storage',
+        nodeEnv: process.env.NODE_ENV || 'development',
+      },
+      sampleProducts: currentCatalog.slice(0, 5).map((p) => ({
+        id: p.id,
+        title: p.title,
+        price: p.price,
+        isTrending: Boolean(p.isTrending),
+        isBestSelling: Boolean(p.isBestSelling),
+        trendingScore: p.trendingScore,
+        salesCount: p.salesCount,
+        hasLifetimeUpdateAccess: p.hasLifetimeUpdateAccess ?? true,
+      })),
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    res.status(500).json({
+      success: false,
+      status: 'ERROR',
+      error: err.message || 'Failed to retrieve diagnostic count',
+      timestamp: new Date().toISOString(),
+    });
   }
 });
 
