@@ -49,6 +49,13 @@ import { CorporateAdBanners } from './home/CorporateAdBanners';
 import { PromoCouponDrawer } from './home/PromoCouponDrawer';
 import { NewsletterBanner } from './home/NewsletterBanner';
 import { TrendingDemandSection } from './home/TrendingDemandSection';
+import {
+  TARGET_REGIONS,
+  getRegionOrDefault,
+  formatRegionalPrice,
+  TargetRegionConfig,
+  localizeAmazonAffiliateUrl,
+} from '../lib/i18n-regions';
 
 interface StoreLandingPageProps {
   products: GmcProduct[];
@@ -57,6 +64,8 @@ interface StoreLandingPageProps {
   externalCategory?: string | null;
   onClearExternalCategory?: () => void;
   onOpenAdminPortal?: () => void;
+  activeRegionSlug?: string | null;
+  onSelectRegionSlug?: (slug: string) => void;
 }
 
 interface CartItem {
@@ -177,7 +186,10 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
   externalCategory,
   onClearExternalCategory,
   onOpenAdminPortal,
+  activeRegionSlug,
+  onSelectRegionSlug,
 }) => {
+  const currentRegion = useMemo(() => getRegionOrDefault(activeRegionSlug), [activeRegionSlug]);
   const [selectedCategory, setSelectedCategory] = useState<string>(() => {
     try {
       return localStorage.getItem(CATEGORY_STORAGE_KEY) || 'All';
@@ -471,13 +483,54 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
     setCurrentPage(1);
   }, [selectedCategory, debouncedQuery, itemsPerPage]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
+  // Strict Zero-Duplicate Image, Title, & SKU Filter + Regional Inventory Prioritization
+  const deduplicatedProducts = useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenTitles = new Set<string>();
+    const seenImages = new Set<string>();
+    const uniqueList: GmcProduct[] = [];
+
+    const activeIso = currentRegion.isoCode.toUpperCase();
+
+    // Sort to prioritize products configured for current target region or marketplace
+    const sorted = [...filteredProducts].sort((a, b) => {
+      const aRegions = (a as any).targetRegions;
+      const bRegions = (b as any).targetRegions;
+      const aMatch = Array.isArray(aRegions) && aRegions.includes(activeIso) ? 1 : 0;
+      const bMatch = Array.isArray(bRegions) && bRegions.includes(activeIso) ? 1 : 0;
+      return bMatch - aMatch;
+    });
+
+    for (const p of sorted) {
+      if (!p || !p.id) continue;
+      const normId = String(p.id).trim().toLowerCase();
+      const normTitle = String(p.title || '').trim().toLowerCase();
+      const normImage = resolveProductImage(p.image_link).trim().toLowerCase();
+
+      // Zero duplicate IDs
+      if (seenIds.has(normId)) continue;
+      // Zero duplicate product titles
+      if (normTitle && seenTitles.has(normTitle)) continue;
+      // Zero duplicate product images across catalog grid
+      if (normImage && seenImages.has(normImage)) continue;
+
+      seenIds.add(normId);
+      if (normTitle) seenTitles.add(normTitle);
+      if (normImage) seenImages.add(normImage);
+
+      uniqueList.push(p);
+    }
+
+    return uniqueList;
+  }, [filteredProducts, currentRegion.isoCode]);
+
+  const totalPages = Math.max(1, Math.ceil(deduplicatedProducts.length / itemsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
   const paginatedProducts = useMemo(() => {
     const startIndex = (safeCurrentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredProducts, safeCurrentPage, itemsPerPage]);
+    return deduplicatedProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [deduplicatedProducts, safeCurrentPage, itemsPerPage]);
 
   const visiblePageNumbers = useMemo(() => {
     const pages: number[] = [];
@@ -758,6 +811,76 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
       {/* Catalog Filter & Showcase */}
       <section id="catalog" className="space-y-6">
+        {/* Country-Specific Multi-Marketplace & Domestic Fulfillment Status Bar */}
+        <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 p-4 shadow-lg shadow-black/40">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3">
+              <span className="text-3xl select-none shrink-0" aria-hidden="true">
+                {currentRegion.flag}
+              </span>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <span>{currentRegion.countryName} Regional Inventory &amp; Multi-Marketplace Feed</span>
+                  </h3>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                    Currency: {currentRegion.currencyCode} ({currentRegion.currencySymbol})
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                    Carrier: {currentRegion.carrierName}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 mt-1 flex items-center gap-2">
+                  <span className="text-emerald-400 font-semibold">{currentRegion.dispatchBannerText}</span>
+                  <span className="text-slate-500">·</span>
+                  <span className="text-slate-400">{currentRegion.transitDays}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Country Switcher Bar */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] text-slate-400 font-semibold mr-1">Switch Region:</span>
+              {TARGET_REGIONS.map((r) => {
+                const isActive = currentRegion.slug === r.slug;
+                return (
+                  <button
+                    key={r.slug}
+                    type="button"
+                    onClick={() => onSelectRegionSlug?.(r.slug)}
+                    title={`${r.flag} ${r.countryName} (${r.currencyCode})`}
+                    className={`px-2 py-1 rounded text-xs font-semibold flex items-center gap-1 transition-all ${
+                      isActive
+                        ? 'bg-emerald-500 text-slate-950 shadow-md font-bold'
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
+                    }`}
+                  >
+                    <span>{r.flag}</span>
+                    <span className="text-[10px] uppercase font-mono">{r.isoCode}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Region-Specific Marketplace Channels */}
+          {currentRegion.marketplaces && currentRegion.marketplaces.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center gap-2 flex-wrap text-xs">
+              <span className="text-slate-400 text-[11px] font-mono shrink-0">Integrated Channels:</span>
+              {currentRegion.marketplaces.map((mp) => (
+                <span
+                  key={mp.id}
+                  className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-950 border border-slate-800 text-slate-300 flex items-center gap-1"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>{mp.name}</span>
+                  <span className="text-slate-500 text-[10px]">({mp.carrier})</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Featured Gear &amp; Hardware</h2>
@@ -845,10 +968,10 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
             <span className="text-xs text-slate-400 font-mono whitespace-nowrap">
               Showing{' '}
               <span className="text-emerald-400 font-semibold">
-                {filteredProducts.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1}–
-                {Math.min(safeCurrentPage * itemsPerPage, filteredProducts.length)}
+                {deduplicatedProducts.length === 0 ? 0 : (safeCurrentPage - 1) * itemsPerPage + 1}–
+                {Math.min(safeCurrentPage * itemsPerPage, deduplicatedProducts.length)}
               </span>{' '}
-              of <span className="text-slate-200 font-semibold">{filteredProducts.length}</span> items
+              of <span className="text-slate-200 font-semibold">{deduplicatedProducts.length}</span> unique items
             </span>
             <select
               value={itemsPerPage}
@@ -878,7 +1001,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
         </div>
 
         {/* Product Cards Grid */}
-        {filteredProducts.length === 0 ? (
+        {deduplicatedProducts.length === 0 ? (
           <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center space-y-3">
             <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center mx-auto text-slate-400">
               <Search className="w-5 h-5" />
@@ -918,10 +1041,13 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                 Boolean(p.affiliateUrl) ||
                 Boolean(p.affiliate_url) ||
                 p.id.toLowerCase().startsWith('aff-');
-              const affiliateLink =
-                p.affiliateUrl ||
-                p.affiliate_url ||
-                `https://www.amazon.com/s?k=${encodeURIComponent(p.title)}`;
+              const affiliateLink = localizeAmazonAffiliateUrl(
+                p.affiliateUrl || p.affiliate_url,
+                p.title,
+                currentRegion
+              );
+              const regPrice = formatRegionalPrice(p.price, currentRegion);
+              const regSalePrice = p.sale_price ? formatRegionalPrice(p.sale_price, currentRegion) : null;
 
               const injectSponsored = inGridCampaigns.length > 0 && (idx + 1) % 5 === 0;
               const campaignToInject = injectSponsored
@@ -964,11 +1090,11 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       {isAffiliate ? (
                         <span className="absolute top-3 left-3 px-2.5 py-1 bg-amber-500 text-slate-950 text-[10px] font-black uppercase tracking-wider rounded shadow-md flex items-center gap-1">
                           <Tag className="w-3 h-3 fill-current" />
-                          Affiliate Deal
+                          <span>{currentRegion.flag} Amazon {currentRegion.isoCode}</span>
                         </span>
                       ) : p.sale_price ? (
                         <span className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-extrabold tracking-wide rounded shadow-sm">
-                          SALE
+                          SALE · {currentRegion.currencyCode}
                         </span>
                       ) : null}
                       <span
@@ -979,7 +1105,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                             : 'border border-slate-800/80 text-slate-300'
                         }`}
                       >
-                        {isAffiliate ? 'Amazon Partner' : p.id}
+                        {isAffiliate ? `${currentRegion.flag} Amazon Partner` : `${currentRegion.flag} ${p.id.split('-')[0]}`}
                       </span>
                     </div>
 
@@ -998,7 +1124,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                             isAffiliate ? 'text-amber-300' : 'text-emerald-400'
                           }`}
                         >
-                          {isAffiliate ? 'Verified Partner' : 'In Stock'}
+                          {isAffiliate ? `${currentRegion.flag} Verified Partner` : `${currentRegion.flag} Domestic 48h`}
                         </span>
                       </div>
 
@@ -1041,22 +1167,22 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                   <div className="px-4 py-3.5 sm:px-5 border-t border-slate-800/80 bg-slate-950/40 space-y-2.5 mt-auto">
                     <div className="flex items-center justify-between gap-3">
                       <div className="font-mono tabular-nums min-w-0">
-                        {p.sale_price ? (
+                        {regSalePrice ? (
                           <div className="flex flex-col leading-tight">
                             <span
                               className={`text-base font-extrabold whitespace-nowrap ${
                                 isAffiliate ? 'text-amber-400' : 'text-emerald-400'
                               }`}
                             >
-                              {formatPriceForDisplay(p.sale_price)}
+                              {regSalePrice.formatted}
                             </span>
                             <span className="text-[11px] line-through text-slate-500 whitespace-nowrap">
-                              {formatPriceForDisplay(p.price)}
+                              {regPrice.formatted}
                             </span>
                           </div>
                         ) : (
                           <span className="text-base font-extrabold text-white whitespace-nowrap">
-                            {formatPriceForDisplay(p.price)}
+                            {regPrice.formatted}
                           </span>
                         )}
                       </div>
@@ -1069,7 +1195,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                           rel="noopener noreferrer"
                           className="min-h-[40px] px-3.5 py-2 bg-[#FF9900] hover:bg-[#e68a00] active:bg-[#cc7a00] text-slate-950 text-xs font-extrabold rounded-lg transition-all inline-flex items-center justify-center gap-1.5 shadow-md shadow-[#FF9900]/20 whitespace-nowrap shrink-0 cursor-pointer touch-manipulation"
                         >
-                          <span>Buy on Amazon</span>
+                          <span>Buy on Amazon {currentRegion.isoCode}</span>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       ) : (
@@ -1445,15 +1571,16 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                 <div className="space-y-2 pt-4 border-t border-slate-800">
                   <div className="flex items-baseline gap-2">
                     <span className="text-xl font-extrabold font-mono text-emerald-400">
-                      {formatPriceForDisplay(
+                      {formatRegionalPrice(
                         selectedVariant
                           ? selectedVariant.sale_price || selectedVariant.price
-                          : quickViewProduct.sale_price || quickViewProduct.price
-                      )}
+                          : quickViewProduct.sale_price || quickViewProduct.price,
+                        currentRegion
+                      ).formatted}
                     </span>
                     {selectedVariant?.sale_price && (
                       <span className="text-xs font-mono line-through text-slate-500">
-                        {formatPriceForDisplay(selectedVariant.price)}
+                        {formatRegionalPrice(selectedVariant.price, currentRegion).formatted}
                       </span>
                     )}
                   </div>
@@ -1611,15 +1738,16 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                   {/* Dynamic Price Display */}
                   <div className="flex items-baseline gap-2.5">
                     <span className="text-2xl font-extrabold text-emerald-400 font-mono">
-                      {formatPriceForDisplay(
+                      {formatRegionalPrice(
                         selectedVariant
                           ? selectedVariant.sale_price || selectedVariant.price
-                          : fullPdpProduct.sale_price || fullPdpProduct.price
-                      )}
+                          : fullPdpProduct.sale_price || fullPdpProduct.price,
+                        currentRegion
+                      ).formatted}
                     </span>
                     {selectedVariant?.sale_price && (
                       <span className="text-sm font-mono line-through text-slate-500">
-                        {formatPriceForDisplay(selectedVariant.price)}
+                        {formatRegionalPrice(selectedVariant.price, currentRegion).formatted}
                       </span>
                     )}
                   </div>
@@ -1641,7 +1769,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       Only 3 left in stock - order soon
                     </span>
                     <span className="text-emerald-400 font-mono font-semibold">
-                      InStock · Ships Today
+                      {currentRegion.flag} In Stock · Dispatches via {currentRegion.carrierName}
                     </span>
                   </div>
 
@@ -1704,16 +1832,16 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       Boolean(fullPdpProduct.affiliateUrl) ||
                       Boolean(fullPdpProduct.affiliate_url)) && (
                       <a
-                        href={
-                          fullPdpProduct.affiliateUrl ||
-                          fullPdpProduct.affiliate_url ||
-                          `https://www.amazon.com/s?k=${encodeURIComponent(fullPdpProduct.title)}&tag=aerothor-20`
-                        }
+                        href={localizeAmazonAffiliateUrl(
+                          fullPdpProduct.affiliateUrl || fullPdpProduct.affiliate_url,
+                          fullPdpProduct.title,
+                          currentRegion
+                        )}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full py-3.5 px-5 bg-[#FF9900] hover:bg-[#e68a00] active:bg-[#cc7a00] text-slate-950 font-black text-xs uppercase tracking-wide rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#FF9900]/25 cursor-pointer"
                       >
-                        <span>Buy on Amazon</span>
+                        <span>Buy on Amazon {currentRegion.isoCode} ({currentRegion.amazonDomain})</span>
                         <ExternalLink className="w-4 h-4 stroke-[2.5]" />
                       </a>
                     )}
@@ -1745,11 +1873,12 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                         <Zap className="w-4 h-4 fill-current text-emerald-600" />
                         <span>
                           Buy Now —{' '}
-                          {formatPriceForDisplay(
+                          {formatRegionalPrice(
                             selectedVariant
                               ? selectedVariant.sale_price || selectedVariant.price
-                              : fullPdpProduct.sale_price || fullPdpProduct.price
-                          )}
+                              : fullPdpProduct.sale_price || fullPdpProduct.price,
+                            currentRegion
+                          ).formatted}
                         </span>
                       </button>
                     </div>
@@ -1776,7 +1905,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
                       </div>
                       <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-2 text-slate-200">
                         <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="font-semibold">3–7 Day US/UK Dispatch</span>
+                        <span className="font-semibold">{currentRegion.flag} {currentRegion.carrierName}</span>
                       </div>
                     </div>
                   </div>

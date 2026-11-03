@@ -381,6 +381,8 @@ export default function App() {
                 externalCategory={externalCategory}
                 onClearExternalCategory={() => setExternalCategory(null)}
                 onOpenAdminPortal={() => handleProtectedTabChange('admin_inventory')}
+                activeRegionSlug={selectedRegionSlug}
+                onSelectRegionSlug={(slug) => setSelectedRegionSlug(slug)}
               />
             )}
 

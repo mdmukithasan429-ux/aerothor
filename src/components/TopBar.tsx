@@ -93,7 +93,7 @@ export const TopBar: React.FC<TopBarProps> = ({
               10-Country Deals:
             </span>
             {TARGET_REGIONS.map((region) => {
-              const isSelected = activeGeoRegion.slug === region.slug && activeTab === 'affiliates';
+              const isSelected = activeGeoRegion.slug === region.slug;
               return (
                 <button
                   key={region.slug}
@@ -102,14 +102,13 @@ export const TopBar: React.FC<TopBarProps> = ({
                     if (onSelectRegionSlug) {
                       onSelectRegionSlug(region.slug);
                     }
-                    onTabChange('affiliates');
                   }}
                   className={`px-1.5 py-0.5 rounded font-mono text-[10px] transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-400 text-slate-950 font-bold'
+                      ? 'bg-emerald-400 text-slate-950 font-bold ring-1 ring-emerald-300 shadow-sm'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
-                  title={`${region.localizedDealsH1} (/deals/${region.slug})`}
+                  title={`${region.countryName} (${region.currencyCode} · ${region.currencySymbol}): ${region.dispatchBannerText}`}
                 >
                   {region.flag} {region.isoCode}
                 </button>
