@@ -599,13 +599,13 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
         </div>
 
         {/* Modal Controls & Search Bar */}
-        <div className="p-4 px-6 bg-slate-900 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-3 sm:p-4 sm:px-6 bg-slate-900 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
           {type === 'cj_wallet' ? (
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs overflow-x-auto pb-1 sm:pb-0 scrollbar-none w-full shrink-0">
               <button
                 type="button"
                 onClick={() => setWalletTab('debits')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   walletTab === 'debits'
                     ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
                     : 'bg-slate-800 text-slate-400 hover:text-white'
@@ -616,7 +616,7 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
               <button
                 type="button"
                 onClick={() => setWalletTab('topups')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   walletTab === 'topups'
                     ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
                     : 'bg-slate-800 text-slate-400 hover:text-white'
@@ -627,7 +627,7 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
               <button
                 type="button"
                 onClick={() => setWalletTab('card')}
-                className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   walletTab === 'card'
                     ? 'bg-purple-500 text-white shadow-md shadow-purple-500/20'
                     : 'bg-slate-800 text-slate-400 hover:text-white'
@@ -649,33 +649,33 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-xs text-slate-400 self-end sm:self-auto">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-400 self-end sm:self-auto shrink-0">
             <span>Showing {filteredEnriched.length} entries</span>
           </div>
         </div>
 
         {/* Modal Body / Table Content */}
-        <div className="p-6 overflow-y-auto max-h-[50vh] space-y-4">
+        <div className="p-3.5 sm:p-6 overflow-y-auto max-h-[60vh] sm:max-h-[65vh] space-y-4">
           {type === 'cj_wallet' && walletTab === 'card' ? (
             /* Connected Card View */
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-2">
-              <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/40 border border-purple-500/30 space-y-6 shadow-xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 p-1 sm:p-2">
+              <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/40 border border-purple-500/30 space-y-4 sm:space-y-6 shadow-xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-purple-400">
+                  <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-purple-400">
                     Auto-Debit Primary Card
                   </span>
-                  <ShieldCheck className="w-6 h-6 text-emerald-400" />
+                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
                 </div>
                 <div className="space-y-1">
-                  <div className="text-2xl font-mono font-black text-white tracking-widest">
+                  <div className="text-lg sm:text-2xl font-mono font-black text-white tracking-widest truncate">
                     •••• •••• •••• 4242
                   </div>
-                  <div className="flex justify-between text-xs text-slate-400 font-mono pt-2">
+                  <div className="flex flex-col sm:flex-row justify-between text-[11px] sm:text-xs text-slate-400 font-mono pt-1 sm:pt-2 gap-1">
                     <span>Cardholder: AeroThor Commerce LLC</span>
                     <span>Expires: 12/28</span>
                   </div>
                 </div>
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] sm:text-xs text-slate-400">
                   <span>Billing Country: 🇺🇸 United States</span>
                   <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30">
                     Active &amp; Verified
