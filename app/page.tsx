@@ -126,12 +126,13 @@ export default async function StorefrontHomePage({ searchParams }: StorefrontPag
         </div>
         <div className="lg:col-span-5 relative aspect-[16/9] rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
           <Image
-            src="https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1000&q=80&fm=webp"
-            alt="AeroThor Titanium & Smart Hardware Collection"
-            fill
+            src="https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?auto=format&fit=crop&w=1200&q=80&fm=webp"
+            alt="AeroThor CNC Aluminum Workstation & Precision Tech Hardware Collection"
+            width={1200}
+            height={675}
             priority
             sizes="(max-width: 1024px) 100vw, 40vw"
-            className="object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
       </section>

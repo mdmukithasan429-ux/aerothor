@@ -283,6 +283,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => setSelectedCategory(cat)}
+                aria-label={`Filter products by category: ${cat}`}
+                aria-pressed={active}
                 className={`px-3.5 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                   active
                     ? isAffiliateTab
@@ -290,10 +292,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                       : 'bg-emerald-400 text-slate-950 font-bold shadow-sm'
                     : isAffiliateTab
                     ? 'text-amber-300 hover:text-amber-200 hover:bg-slate-800/80'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
                 }`}
               >
-                {isAffiliateTab && <Tag className="w-3.5 h-3.5" />}
+                {isAffiliateTab && <Tag className="w-3.5 h-3.5" aria-hidden="true" />}
                 <span>{cat}</span>
               </button>
             );
@@ -313,15 +315,17 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search SKU or title..."
-              className="w-full pl-9 pr-8 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+              aria-label="Search products by SKU or title"
+              className="w-full pl-9 pr-8 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                aria-label="Clear search query"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
             )}
           </div>
@@ -418,7 +422,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                   >
                     <Image
                       src={imageUrl}
-                      alt={product.title}
+                      alt={`${product.title} — ${product.brand || 'AeroThor'} (${sku})`}
                       width={600}
                       height={450}
                       priority={idx < 4}
@@ -507,18 +511,20 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
                         }
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`Buy ${product.title} on Amazon`}
                         className="min-h-[44px] px-3.5 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center justify-center gap-1.5 touch-manipulation"
                       >
                         <span>Buy on Amazon</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <ExternalLink className="w-3 h-3" aria-hidden="true" />
                       </a>
                     ) : (
                       <button
                         type="button"
                         onClick={() => onAddToCart && onAddToCart(product)}
+                        aria-label={`Buy ${product.title} now via CJ Dropshipping Express 48h Dispatch`}
                         className="min-h-[44px] px-3.5 py-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-xs rounded-lg inline-flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation"
                       >
-                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <Zap className="w-3.5 h-3.5 fill-current" aria-hidden="true" />
                         <span>Buy Now via CJ</span>
                       </button>
                     )}
@@ -563,9 +569,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             type="button"
             disabled={safePage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            aria-label="Previous product page"
             className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           </button>
 
           {pageNumbers.map((pageNum) => (
@@ -573,10 +580,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               key={pageNum}
               type="button"
               onClick={() => setCurrentPage(pageNum)}
+              aria-label={`Go to product page ${pageNum}`}
+              aria-current={pageNum === safePage ? 'page' : undefined}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                 pageNum === safePage
                   ? 'bg-emerald-400 text-slate-950'
-                  : 'bg-slate-950 border border-slate-800 text-slate-400 hover:text-white'
+                  : 'bg-slate-950 border border-slate-800 text-slate-300 hover:text-white'
               }`}
             >
               {pageNum}
@@ -587,9 +596,10 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
             type="button"
             disabled={safePage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+            aria-label="Next product page"
             className="p-2 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 hover:text-white disabled:opacity-40 cursor-pointer"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

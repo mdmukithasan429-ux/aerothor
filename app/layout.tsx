@@ -127,12 +127,12 @@ export default async function RootLayout({
         <link rel="alternate" hrefLang="en-US" href={`${BASE_DOMAIN}/deals/us`} />
         <link rel="alternate" hrefLang="en-GB" href={`${BASE_DOMAIN}/deals/uk`} />
 
-        {/* Google Analytics 4 (GA4) Tracking Script */}
+        {/* Google Analytics 4 (GA4) Tracking Script — Deferred via lazyOnload for 0ms TBT */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+        <Script id="google-analytics" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -163,20 +163,22 @@ export default async function RootLayout({
               <span className="text-[11px] text-slate-400 hidden md:inline">Target Markets:</span>
               <a
                 href="/deals/us"
+                aria-label="Switch target market to United States (USD)"
                 className={`text-[11px] font-mono px-2 py-0.5 rounded transition-colors ${
                   detectedCountryCode === 'US'
                     ? 'bg-emerald-500/20 text-emerald-300 font-bold'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 🇺🇸 US (USD)
               </a>
               <a
                 href="/deals/uk"
+                aria-label="Switch target market to United Kingdom (GBP)"
                 className={`text-[11px] font-mono px-2 py-0.5 rounded transition-colors ${
                   detectedCountryCode === 'GB'
                     ? 'bg-emerald-500/20 text-emerald-300 font-bold'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 🇬🇧 UK (GBP)

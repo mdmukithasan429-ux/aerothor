@@ -1396,7 +1396,7 @@ var SAMPLE_CJ_RAW_PRODUCTS = [
     productName: "Fast Qi2 3-in-1 Foldable Wireless Charging Station for Apple Devices",
     productNameEn: "Qi2 Certified 3-in-1 Foldable Magnetic Wireless Charging Stand 15W",
     productSku: "CJ-MAG-FOLD-QI2",
-    productImage: "https://images.unsplash.com/photo-1622445262464-84b152477381?auto=format&fit=crop&w=800&q=80",
+    productImage: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=800&q=80&fm=webp",
     sellPrice: "19.80",
     categoryName: "Consumer Electronics > Phone Accessories",
     categoryId: "1205",
@@ -1420,7 +1420,7 @@ var SAMPLE_CJ_RAW_PRODUCTS = [
     productName: "Ultra-Light Titanium Key Carabiner Multitool with Bottle Opener & Pry",
     productNameEn: "Aerospace Grade 5 Titanium Minimalist EDC Key Carabiner Multitool",
     productSku: "CJ-TI-CARAB-01",
-    productImage: "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80",
+    productImage: "https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=800&q=80&fm=webp",
     sellPrice: "8.40",
     categoryName: "Sports & Outdoors > EDC Gear",
     categoryId: "1904",
@@ -1845,7 +1845,7 @@ var RAW_SEED_PRODUCTS = [
     title: "3-in-1 Foldable Magnetic Wireless Charging Stand 15W Qi2 - Fast 2-Day Shipping",
     description: "CNC aerospace-grade aluminum wireless charging station engineered for iPhone, Apple Watch, and AirPods simultaneously. Official Qi2 certified fast charging with thermal cooling dissipation.",
     link: `${CANONICAL_STORE_URL}/product/SKU-MAG-DOCK-03`,
-    image_link: "https://images.unsplash.com/photo-1622445262464-84b1456045b6?auto=format&fit=crop&w=800&q=80",
+    image_link: "https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=800&q=80&fm=webp",
     price: "89.99 USD",
     sale_price: "74.99 USD",
     wholesale_price: 24,
@@ -2103,7 +2103,7 @@ var RAW_SEED_PRODUCTS = [
     title: "Anker MagGo 3-in-1 Foldable Qi2 15W Ultra-Fast Wireless Charging Station",
     description: "Official Apple 15W Qi2 fast magnetic charging station with Wireless PowerIQ. Foldable aerospace hinge charges iPhone, Apple Watch Ultra, and AirPods simultaneously. Available directly on Amazon with Prime next-day delivery.",
     link: `${CANONICAL_STORE_URL}/product/AFF-ANKER-QI2-01`,
-    image_link: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80",
+    image_link: "https://images.unsplash.com/photo-1615526675159-e248c3021d3f?auto=format&fit=crop&w=800&q=80&fm=webp",
     price: "109.99 USD",
     sale_price: "89.99 USD",
     availability: "in_stock",
@@ -2131,7 +2131,7 @@ var RAW_SEED_PRODUCTS = [
     title: "Stanley IceFlow Stainless Steel 30oz Straw Tumbler \u2014 Cold for 12 Hours",
     description: "Double-wall vacuum insulation keeps iced drinks cold for up to 2 days. Features leak-resistant Flip Straw 2.0, ergonomic folding handle, and car cup-holder compatible base. Verified authentic Stanley on Amazon.",
     link: `${CANONICAL_STORE_URL}/product/AFF-STANLEY-TUMBLER-02`,
-    image_link: "https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=800&q=80",
+    image_link: "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80&fm=webp",
     price: "45.00 USD",
     sale_price: "38.00 USD",
     availability: "in_stock",
@@ -2470,8 +2470,14 @@ async function initSupabasePostgresCatalog(currentCatalog2) {
       }));
       if (prioritizedLocal.length >= 1e3) {
         const validSkus = prioritizedLocal.map((p) => String(p.id || "").trim());
-        const validSkuSet = new Set(validSkus.map((s) => s.toLowerCase()));
-        const hasStaleDbRows = dbProducts.some((p) => !validSkuSet.has(String(p.id || "").trim().toLowerCase()));
+        const localBySku = new Map(
+          prioritizedLocal.map((p) => [String(p.id || "").trim().toLowerCase(), p])
+        );
+        const hasStaleDbRows = dbProducts.some((p) => {
+          const localMatch = localBySku.get(String(p.id || "").trim().toLowerCase());
+          if (!localMatch) return true;
+          return localMatch.title !== p.title || localMatch.image_link !== p.image_link;
+        });
         if (hasStaleDbRows || dbProducts.length !== prioritizedLocal.length) {
           await pool.query("DELETE FROM products WHERE NOT (sku = ANY($1::text[]))", [validSkus]);
           await syncCatalogToPostgres(prioritizedLocal);
@@ -2885,7 +2891,7 @@ var INITIAL_CAMPAIGNS = [
     id: "cmp-impact-001",
     brandName: "EcoFlow Official",
     promoTitle: "DELTA Pro 3 Portable Power Station & 400W Solar Kit - Up to $800 Off",
-    imageUrl: "https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80",
+    imageUrl: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1200&q=80&fm=webp",
     vanityLink: "https://impact.com/v/aerothor-ecoflow-delta-pro",
     placement: "HERO_BANNER",
     isActive: true,

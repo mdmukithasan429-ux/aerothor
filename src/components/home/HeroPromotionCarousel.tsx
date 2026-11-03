@@ -44,7 +44,7 @@ const PROMO_SLIDES: PromoSlide[] = [
     tagline: 'Official US & UK Warehouse Clearance',
     couponCode: 'POWER40',
     discountText: 'INSTANT $30 DISCOUNT',
-    image: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?auto=format&fit=crop&w=1200&q=80',
+    image: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=1200&q=80&fm=webp',
     targetCategory: 'Tech Accessories',
     featuredProductId: 'AERO-TECH-001',
     primaryCtaText: 'Claim 40% Off Power Station',

@@ -103,14 +103,16 @@ export const TopBar: React.FC<TopBarProps> = ({
                       onSelectRegionSlug(region.slug);
                     }
                   }}
+                  aria-label={`Select ${region.countryName} marketplace (${region.currencyCode})`}
+                  aria-pressed={isSelected}
                   className={`px-1.5 py-0.5 rounded font-mono text-[10px] transition-colors cursor-pointer ${
                     isSelected
                       ? 'bg-emerald-400 text-slate-950 font-bold ring-1 ring-emerald-300 shadow-sm'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
                   }`}
                   title={`${region.countryName} (${region.currencyCode} · ${region.currencySymbol}): ${region.dispatchBannerText}`}
                 >
-                  {region.flag} {region.isoCode}
+                  <span aria-hidden="true">{region.flag}</span> {region.isoCode}
                 </button>
               );
             })}

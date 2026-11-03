@@ -19,7 +19,7 @@ export const INITIAL_CAMPAIGNS: Campaign[] = [
     id: 'cmp-impact-001',
     brandName: 'EcoFlow Official',
     promoTitle: 'DELTA Pro 3 Portable Power Station & 400W Solar Kit - Up to $800 Off',
-    imageUrl: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?auto=format&fit=crop&w=1200&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=1200&q=80&fm=webp',
     vanityLink: 'https://impact.com/v/aerothor-ecoflow-delta-pro',
     placement: 'HERO_BANNER',
     isActive: true,

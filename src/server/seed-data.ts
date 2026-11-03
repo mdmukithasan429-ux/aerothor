@@ -280,7 +280,7 @@ const RAW_SEED_PRODUCTS: GmcProduct[] = [
     description:
       'CNC aerospace-grade aluminum wireless charging station engineered for iPhone, Apple Watch, and AirPods simultaneously. Official Qi2 certified fast charging with thermal cooling dissipation.',
     link: `${CANONICAL_STORE_URL}/product/SKU-MAG-DOCK-03`,
-    image_link: 'https://images.unsplash.com/photo-1622445262464-84b1456045b6?auto=format&fit=crop&w=800&q=80',
+    image_link: 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=800&q=80&fm=webp',
     price: '89.99 USD',
     sale_price: '74.99 USD',
     wholesale_price: 24.00,
@@ -547,7 +547,7 @@ const RAW_SEED_PRODUCTS: GmcProduct[] = [
     description:
       'Official Apple 15W Qi2 fast magnetic charging station with Wireless PowerIQ. Foldable aerospace hinge charges iPhone, Apple Watch Ultra, and AirPods simultaneously. Available directly on Amazon with Prime next-day delivery.',
     link: `${CANONICAL_STORE_URL}/product/AFF-ANKER-QI2-01`,
-    image_link: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80',
+    image_link: 'https://images.unsplash.com/photo-1615526675159-e248c3021d3f?auto=format&fit=crop&w=800&q=80&fm=webp',
     price: '109.99 USD',
     sale_price: '89.99 USD',
     availability: 'in_stock',
@@ -576,7 +576,7 @@ const RAW_SEED_PRODUCTS: GmcProduct[] = [
     description:
       'Double-wall vacuum insulation keeps iced drinks cold for up to 2 days. Features leak-resistant Flip Straw 2.0, ergonomic folding handle, and car cup-holder compatible base. Verified authentic Stanley on Amazon.',
     link: `${CANONICAL_STORE_URL}/product/AFF-STANLEY-TUMBLER-02`,
-    image_link: 'https://images.unsplash.com/photo-1517668808822-9ebb02f2a0e6?auto=format&fit=crop&w=800&q=80',
+    image_link: 'https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80&fm=webp',
     price: '45.00 USD',
     sale_price: '38.00 USD',
     availability: 'in_stock',

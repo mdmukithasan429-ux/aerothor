@@ -277,11 +277,20 @@ export async function initSupabasePostgresCatalog(currentCatalog: GmcProduct[]):
         seo_description: row.seo_description || undefined,
       }));
 
-      // If our bundled catalog has the full 1,000 verified items, enforce exact 1,000-item parity in PostgreSQL
+      // If our bundled catalog has the full 1,000 verified items, enforce exact 1,000-item title & image parity in PostgreSQL
       if (prioritizedLocal.length >= 1000) {
         const validSkus = prioritizedLocal.map((p) => String(p.id || '').trim());
-        const validSkuSet = new Set(validSkus.map((s) => s.toLowerCase()));
-        const hasStaleDbRows = dbProducts.some((p) => !validSkuSet.has(String(p.id || '').trim().toLowerCase()));
+        const localBySku = new Map(
+          prioritizedLocal.map((p) => [String(p.id || '').trim().toLowerCase(), p])
+        );
+        const hasStaleDbRows = dbProducts.some((p) => {
+          const localMatch = localBySku.get(String(p.id || '').trim().toLowerCase());
+          if (!localMatch) return true;
+          return (
+            localMatch.title !== p.title ||
+            localMatch.image_link !== p.image_link
+          );
+        });
 
         if (hasStaleDbRows || dbProducts.length !== prioritizedLocal.length) {
           await pool.query('DELETE FROM products WHERE NOT (sku = ANY($1::text[]))', [validSkus]);
