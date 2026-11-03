@@ -46,7 +46,10 @@ export interface DrilldownOrder {
 interface AdminRevenueDrilldownModalProps {
   type: DrilldownType;
   onClose: () => void;
-  orders: DrilldownOrder[];
+  orders?: DrilldownOrder[] | any[];
+  products?: any[];
+  initialOrders?: DrilldownOrder[] | any[];
+  initialProducts?: any[];
   cjWalletBalance?: number;
 }
 
@@ -178,6 +181,9 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
   type,
   onClose,
   orders,
+  products,
+  initialOrders,
+  initialProducts,
   cjWalletBalance = 2485.5,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -194,36 +200,75 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
-  // Target orders array (fallback to DEFAULT_AUDIT_ORDERS if empty)
-  const targetOrders = useMemo(() => {
-    return Array.isArray(orders) && orders.length > 0 ? orders : DEFAULT_AUDIT_ORDERS;
-  }, [orders]);
+  // Memoized product lookup map (enables O(1) matching against initialProducts/products)
+  const productMap = useMemo(() => {
+    const rawProds = (products && products.length > 0) ? products : (initialProducts || []);
+    const map = new Map<string, any>();
+    if (Array.isArray(rawProds)) {
+      rawProds.forEach((p) => {
+        if (p.sku) map.set(String(p.sku).toLowerCase(), p);
+        if (p.id) map.set(String(p.id).toLowerCase(), p);
+      });
+    }
+    return map;
+  }, [products, initialProducts]);
 
-  // Enrich order items with calculated fields
+  // Memoized target orders source selector (orders prop -> initialOrders -> DEFAULT_AUDIT_ORDERS)
+  const sourceOrders = useMemo(() => {
+    if (Array.isArray(orders) && orders.length > 0) return orders;
+    if (Array.isArray(initialOrders) && initialOrders.length > 0) return initialOrders;
+    return DEFAULT_AUDIT_ORDERS;
+  }, [orders, initialOrders]);
+
+  // Memoized breakdown selector: derives transaction logs, origin flags, Stripe fees & wholesale COGS
   const enrichedOrders = useMemo(() => {
-    return targetOrders.map((o, idx) => {
+    return sourceOrders.map((o: any, idx: number) => {
       const gross =
         typeof o.totalAmount === 'number'
           ? o.totalAmount
           : parseFloat(String(o.totalAmount || '0').replace(/[^0-9.]/g, '')) || 0;
 
-      // Estimate Stripe fee: 2.9% + $0.30
+      // Stripe fee estimate: 2.9% + $0.30
       const stripeFee = gross > 0 ? Number((gross * 0.029 + 0.3).toFixed(2)) : 0;
 
-      // Calculate items & wholesale COGS
+      // Extract items and match against productMap
       const items = Array.isArray(o.items) && o.items.length > 0 ? o.items : [];
       let cogs = 0;
-      let primaryProduct = 'AeroThor Protective Gear';
+      let primaryProduct = 'AeroThor Tactical Modular Gear';
+      let productSku = 'AT-SPEC-01';
 
       if (items.length > 0) {
-        primaryProduct = items[0].title || primaryProduct;
-        items.forEach((it) => {
-          const w =
-            typeof it.wholesale_price === 'number'
-              ? it.wholesale_price
-              : parseFloat(String(it.wholesale_price || '0')) || gross * 0.42;
-          cogs += w * (it.quantity || 1);
+        const first = items[0];
+        primaryProduct = first.title || first.name || primaryProduct;
+        productSku = first.sku || productSku;
+
+        items.forEach((it: any) => {
+          const lookupKey = String(it.sku || '').toLowerCase();
+          const matchedProd = productMap.get(lookupKey);
+
+          let itemWholesale = 0;
+          if (typeof it.wholesale_price === 'number') {
+            itemWholesale = it.wholesale_price;
+          } else if (matchedProd && typeof matchedProd.wholesale_price === 'number') {
+            itemWholesale = matchedProd.wholesale_price;
+          } else if (matchedProd && typeof matchedProd.price === 'number') {
+            itemWholesale = matchedProd.price * 0.42;
+          } else {
+            const itemPrice = typeof it.price === 'number' ? it.price : (gross / (items.length || 1));
+            itemWholesale = itemPrice * 0.42;
+          }
+
+          cogs += itemWholesale * (it.quantity || 1);
         });
+      } else if (Array.isArray(o.purchasedSkus) && o.purchasedSkus.length > 0) {
+        productSku = o.purchasedSkus[0];
+        const matchedProd = productMap.get(String(productSku).toLowerCase());
+        if (matchedProd) {
+          primaryProduct = matchedProd.title || primaryProduct;
+          cogs = matchedProd.wholesale_price ? matchedProd.wholesale_price : gross * 0.42;
+        } else {
+          cogs = gross * 0.42;
+        }
       } else {
         cogs = gross * 0.42;
       }
@@ -231,6 +276,7 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
       cogs = Number(cogs.toFixed(2));
       const netProfit = Number((gross - stripeFee - cogs).toFixed(2));
       const margin = gross > 0 ? Number(((netProfit / gross) * 100).toFixed(1)) : 0;
+
       const formattedDate = o.createdAt
         ? new Date(o.createdAt).toLocaleString('en-US', {
             month: 'short',
@@ -243,22 +289,33 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
           }) + ' UTC'
         : '2026-11-03 12:00:00 UTC';
 
+      const countryCode = o.shippingCountry || o.country || 'US';
+
       return {
         ...o,
+        id: o.id || `ord_${idx + 100}`,
+        orderNumber: o.orderNumber || o.id || `AERO-8890${idx + 20}`,
+        customerName: o.customerName || 'Verified Customer',
+        customerEmail: o.customerEmail || 'customer@aerothor-checkout.com',
+        shippingCountry: countryCode,
+        shippingCity: o.shippingCity || 'Austin, TX',
+        paymentMethod: o.paymentMethod || 'Stripe Card (Visa)',
+        createdAt: o.createdAt || new Date().toISOString(),
         gross,
         stripeFee,
         cogs,
         netProfit,
         margin,
         primaryProduct,
+        productSku,
         formattedDate,
-        countryFlag: getCountryFlag(o.shippingCountry),
+        countryFlag: getCountryFlag(countryCode),
         refId: `CJ-DEBIT-${890000 + idx}`,
       };
     });
-  }, [targetOrders]);
+  }, [sourceOrders, productMap]);
 
-  // Filtered orders based on search term
+  // Memoized filter selector for search queries
   const filteredEnriched = useMemo(() => {
     if (!searchTerm.trim()) return enrichedOrders;
     const term = searchTerm.toLowerCase();
@@ -268,12 +325,13 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
         o.customerName?.toLowerCase().includes(term) ||
         o.customerEmail?.toLowerCase().includes(term) ||
         o.primaryProduct?.toLowerCase().includes(term) ||
+        o.productSku?.toLowerCase().includes(term) ||
         o.shippingCountry?.toLowerCase().includes(term) ||
         o.paymentMethod?.toLowerCase().includes(term)
     );
   }, [enrichedOrders, searchTerm]);
 
-  // Calculated Overall Totals
+  // Memoized selector for card totals and KPI metrics
   const totals = useMemo(() => {
     const grossTotal = enrichedOrders.reduce((sum, o) => sum + o.gross, 0);
     const stripeFeeTotal = enrichedOrders.reduce((sum, o) => sum + o.stripeFee, 0);

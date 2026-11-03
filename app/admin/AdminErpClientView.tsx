@@ -1383,6 +1383,9 @@ export default function AdminErpClientView({
           type={activeModal}
           onClose={() => setActiveModal(null)}
           orders={orders}
+          products={products}
+          initialOrders={initialOrders}
+          initialProducts={initialProducts}
           cjWalletBalance={2485.5}
         />
       )}
