@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Product {
+  id             String           @id @default(uuid())
+  sku            String           @unique
+  cjPid          String?          @unique @map("cj_pid")
+  title          String
+  description    String           @db.Text
+  slug           String           @unique
+  brand          String           @default("AeroThor")
+  price          Decimal          @db.Decimal(10, 2)
+  salePrice      Decimal?         @map("sale_price") @db.Decimal(10, 2)
+  currency       String           @default("USD")
+  stockQuantity  Int              @default(99) @map("stock_quantity")
+  availability   String           @default("in_stock")
+  mainImageUrl   String           @map("main_image_url")
+  additionalImgs Json             @default("[]") @map("additional_images")
+  seoTitle       String?          @map("seo_title")
+  seoDescription String?          @map("seo_description") @db.Text
+  productType    String           @default("dropshipping") @map("product_type") @db.VarChar(64)
+  affiliateUrl   String?          @map("affiliate_url") @db.Text
+  isFreeShipping Boolean          @default(true) @map("is_free_shipping")
+  shippingCost   Float            @default(0) @map("shipping_cost")
+  isVisible      Boolean          @default(true) @map("is_visible")
+  variants       ProductVariant[]
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@index([sku])
+  @@index([cjPid])
+  @@index([slug])
+  @@index([productType])
+  @@map("products")
+}
+
+model ProductVariant {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku           String   @unique
+  cjVid         String?  @map("cj_vid")
+  size          String?  @default("Standard")
+  color         String?  @default("Obsidian Black")
+  price         Decimal  @db.Decimal(10, 2)
+  salePrice     Decimal? @map("sale_price") @db.Decimal(10, 2)
+  imageUrl      String?  @map("image_url")
+  stockQuantity Int      @default(50) @map("stock_quantity")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([productId])
+  @@index([sku])
+  @@map("product_variants")
+}
+
+model Order {
+  id                String   @id @default(uuid())
+  orderNumber       String   @unique @map("order_number")
+  stripeSessionId   String?  @unique @map("stripe_session_id")
+  trackingCode      String?  @unique @map("tracking_code")
+  status            String   @default("Paid - Ready for CJ Fulfill")
+  customerEmail     String   @map("customer_email")
+  customerName      String   @default("Verified Customer") @map("customer_name")
+  shippingAddress   Json     @default("{}") @map("shipping_address")
+  purchasedSkus     String[] @default([]) @map("purchased_skus")
+  itemsJson         Json     @default("[]") @map("items_json")
+  carrier           String   @default("USPS Priority Mail")
+  estimatedDelivery String   @default("3 to 5 Business Days") @map("estimated_delivery")
+  shippingCity      String?  @map("shipping_city")
+  shippingCountry   String   @default("US") @map("shipping_country")
+  totalAmount       Decimal  @map("total_amount") @db.Decimal(10, 2)
+  currency          String   @default("USD")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@index([orderNumber])
+  @@index([stripeSessionId])
+  @@index([trackingCode])
+  @@index([customerEmail])
+  @@map("orders")
+}
+
+model StoreSettings {
+  id                  String   @id @default("singleton")
+  isStripeEnabled     Boolean  @default(true) @map("is_stripe_enabled")
+  isCodEnabled        Boolean  @default(false) @map("is_cod_enabled")
+  cjApiToken          String?  @map("cj_api_token") @db.Text
+  storeCurrency       String   @default("USD") @map("store_currency")
+  supportEmail        String   @default("support@aerothor.com") @map("support_email")
+  amazonAssociateTag  String   @default("aerothor-20") @map("amazon_associate_tag")
+  autoDeductEnabled   Boolean  @default(true) @map("auto_deduct_enabled")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("store_settings")
+}
+

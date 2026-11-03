@@ -1,0 +1,120 @@
+{
+  "version": 2,
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "env": {
+    "VITE_GA_MEASUREMENT_ID": "G-0KS0T13HQ7",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-0KS0T13HQ7",
+    "NEXT_PUBLIC_SITE_URL": "https://aerothor.vercel.app",
+    "APP_URL": "https://aerothor.vercel.app",
+    "STORE_NAME": "AeroThor Commerce",
+    "DEFAULT_CURRENCY": "USD",
+    "ADMIN_SECRET_KEY": "aero_secret_adm_994821",
+    "ADMIN_EMAIL": "codernestwebsolution@gmail.com",
+    "ADMIN_PASSWORD": "admin12345",
+    "CJ_API_KEY": "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7"
+  },
+  "build": {
+    "env": {
+      "VITE_GA_MEASUREMENT_ID": "G-0KS0T13HQ7",
+      "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-0KS0T13HQ7",
+      "NEXT_PUBLIC_SITE_URL": "https://aerothor.vercel.app",
+      "APP_URL": "https://aerothor.vercel.app"
+    }
+  },
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30,
+      "includeFiles": "data/**"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(self)"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        }
+      ]
+    },
+    {
+      "source": "/feed.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=3600, stale-while-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=3600, stale-while-revalidate"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/product/:id*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/products/:id*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/deals/:country*",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/feed.xml",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/((?!api/|assets/|product/|products/|deals/|feed\\.xml|sitemap\\.xml|robots\\.txt).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

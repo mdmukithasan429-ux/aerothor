@@ -1,0 +1,15 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+!.env.production
+.playwright-cli/
+.aistudio/
+public/assets/aistudio/
+/*.png
+data/cj-token-cache.json
+data/admin-config.json

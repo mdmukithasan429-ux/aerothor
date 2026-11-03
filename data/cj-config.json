@@ -1,0 +1,8 @@
+{
+  "autoDeductEnabled": true,
+  "paymentMode": "wallet_auto_deduct",
+  "cjApiKey": "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7",
+  "cjWalletBalance": 1485.50,
+  "amazonAssociateTag": "aerothor-20",
+  "autoSyncTracking": true
+}

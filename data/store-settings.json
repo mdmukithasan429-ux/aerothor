@@ -1,0 +1,11 @@
+{
+  "id": "singleton",
+  "isStripeEnabled": true,
+  "isCodEnabled": false,
+  "cjApiToken": "CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7",
+  "storeCurrency": "USD",
+  "supportEmail": "support@aerothor.com",
+  "amazonAssociateTag": "aerothor-20",
+  "autoDeductEnabled": true,
+  "updatedAt": "2026-11-01T14:55:00.000Z"
+}
