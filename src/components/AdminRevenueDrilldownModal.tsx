@@ -662,7 +662,7 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
               <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/40 border border-purple-500/30 space-y-4 sm:space-y-6 shadow-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider text-purple-400">
-                    Auto-Debit Primary Card
+                    Auto-Debit Primary Card (UI Template)
                   </span>
                   <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-400" />
                 </div>
@@ -677,13 +677,26 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
                 </div>
                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] sm:text-xs text-slate-400">
                   <span>Billing Country: 🇺🇸 United States</span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/30">
-                    Active &amp; Verified
+                  <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-300 font-bold border border-amber-500/30">
+                    Demonstration Template
                   </span>
                 </div>
               </div>
 
               <div className="space-y-4 text-xs text-slate-300">
+                <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/40 space-y-2">
+                  <h4 className="font-bold text-amber-300 flex items-center gap-2 text-xs">
+                    <Info className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>কার্ড সম্পর্কিত তথ্য / Card Ownership Notice</span>
+                  </h4>
+                  <p className="text-amber-200/90 leading-relaxed text-[11px]">
+                    <strong>বিঃদ্রঃ</strong> আপনার কোনো আসল ক্রেডিট/ডেবিট কার্ড থেকে কোনো টাকা কাটা হয়নি এবং এটি আপনার আসল কার্ড নয়। এটি কেবল ড্যাশবোর্ডের ফ্লো টেস্ট করার একটি সিস্টেম টেমপ্লেট ডেমো।
+                  </p>
+                  <p className="text-slate-400 leading-relaxed text-[11px]">
+                    To connect your real business credit card or PayPal for CJ factory auto-fulfillment, manage your payment methods inside your official portal at <a href="https://cjdropshipping.com/myCj.html#/wallet" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline font-mono">cjdropshipping.com/wallet</a>.
+                  </p>
+                </div>
+
                 <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white flex items-center gap-2">
                     <Lock className="w-4 h-4 text-purple-400" />
@@ -691,19 +704,8 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
                   </h4>
                   <p className="text-slate-400 leading-relaxed text-[11px]">
                     When CJ Wallet balance falls below <strong className="text-amber-400">$500.00</strong>, the
-                    system triggers an automated $1,000.00 top-up charge to the connected Visa corporate card to
+                    system triggers an automated top-up charge to your connected merchant card to
                     ensure zero delays in CJ factory 48h dispatch.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                  <h4 className="font-bold text-white flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <span>Merchant Security &amp; Compliance</span>
-                  </h4>
-                  <p className="text-slate-400 leading-relaxed text-[11px]">
-                    Card data is encrypted end-to-end via PCI-DSS Level 1 Stripe Vault. Wallet deductions occur
-                    exclusively upon automated customer order verification.
                   </p>
                 </div>
               </div>

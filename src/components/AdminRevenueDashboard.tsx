@@ -486,7 +486,7 @@ export const AdminRevenueDashboard: React.FC = () => {
           <div className="flex items-center justify-between text-[11px] text-purple-300 font-semibold pt-1 pointer-events-none">
             <span className="flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Auto-Debit: Visa •••• 4242</span>
+              <span>Auto-Debit: CJ Wallet Linked</span>
             </span>
             <span className="text-[10px] text-slate-500 underline group-hover:text-purple-300">Drill down &rarr;</span>
           </div>
