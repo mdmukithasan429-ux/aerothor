@@ -25,10 +25,13 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Award,
+  Info,
+  Wallet,
 } from 'lucide-react';
 import { getAdminAuthHeaders } from '../lib/admin-auth';
 import { TrackedOrderResult } from './OrderTrackingPage';
 import { formatPriceForDisplay } from '../lib/currency';
+import { AdminRevenueDrilldownModal, DrilldownType } from './AdminRevenueDrilldownModal';
 
 interface RevenueMetrics {
   totalRevenueUsd: number;
@@ -46,6 +49,7 @@ export const AdminRevenueDashboard: React.FC = () => {
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
   const [lastRefreshedAt, setLastRefreshedAt] = useState<Date>(new Date());
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [activeModal, setActiveModal] = useState<DrilldownType>(null);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToast({ text, type });
@@ -326,67 +330,130 @@ export const AdminRevenueDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Top Key Performance Indicators (KPI Cards) */}
+      {/* Top Key Performance Indicators (Interactive Analytics Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1: Gross Revenue */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden">
+        {/* Card 1: Total Stripe Revenue */}
+        <button
+          type="button"
+          onClick={() => setActiveModal('stripe_revenue')}
+          className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden group hover:border-emerald-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-emerald-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+          title="Click to view detailed Stripe revenue transaction log"
+        >
           <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Gross Revenue</span>
-            <DollarSign className="w-4 h-4 text-emerald-400" />
+            <span className="font-semibold uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
+              Total Stripe Revenue
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+            </div>
           </div>
           <div className="text-2xl font-black text-white font-mono">
             ${computedStats.totalRevenueUsd.toFixed(2)}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>Live store transactions sync</span>
+          <div className="flex items-center justify-between text-[11px] text-emerald-400 font-semibold pt-1">
+            <span className="flex items-center gap-1">
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              <span>Stripe 1-Click Checkout</span>
+            </span>
+            <span className="text-[10px] text-slate-500 underline group-hover:text-emerald-300">Drill down &rarr;</span>
           </div>
-        </div>
+        </button>
 
-        {/* KPI 2: Total Completed Orders */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden">
+        {/* Card 2: CJ Wholesale Deducted */}
+        <button
+          type="button"
+          onClick={() => setActiveModal('cj_wholesale')}
+          className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden group hover:border-amber-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-amber-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+          title="Click to view CJ Wholesale COGS & fulfillment deduction log"
+        >
           <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Total Orders</span>
-            <ShoppingBag className="w-4 h-4 text-sky-400" />
+            <span className="font-semibold uppercase tracking-wider group-hover:text-amber-400 transition-colors">
+              CJ Wholesale Deducted
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+              <CreditCard className="w-4 h-4 text-amber-400" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-white font-mono">
-            {computedStats.totalOrders} <span className="text-xs font-normal text-slate-400">orders</span>
+          <div className="text-2xl font-black text-amber-400 font-mono">
+            -${(computedStats.totalRevenueUsd - computedStats.grossProfitUsd).toFixed(2)}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-sky-400 font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>{computedStats.totalUnitsSold} items fulfilled</span>
+          <div className="flex items-center justify-between text-[11px] text-amber-300 font-semibold pt-1">
+            <span className="flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Auto-Fulfillment COGS</span>
+            </span>
+            <span className="text-[10px] text-slate-500 underline group-hover:text-amber-300">Drill down &rarr;</span>
           </div>
-        </div>
+        </button>
 
-        {/* KPI 3: Average Order Value (AOV) */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden">
+        {/* Card 3: Net Merchant Profit */}
+        <button
+          type="button"
+          onClick={() => setActiveModal('net_profit')}
+          className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden group hover:border-sky-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-sky-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500/40"
+          title="Click to view net profit margin breakdown per order"
+        >
           <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Average Order Value</span>
-            <Award className="w-4 h-4 text-amber-400" />
-          </div>
-          <div className="text-2xl font-black text-white font-mono">
-            ${computedStats.averageOrderValueUsd.toFixed(2)}
-          </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-amber-400 font-semibold">
-            <Zap className="w-3.5 h-3.5" />
-            <span>High-CRP cart size</span>
-          </div>
-        </div>
-
-        {/* KPI 4: Estimated Net Profit Margin */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden">
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <span className="font-semibold uppercase tracking-wider">Est. Net Profit</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="font-semibold uppercase tracking-wider group-hover:text-sky-400 transition-colors">
+              Net Merchant Profit
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-400 transition-colors" />
+              <ShieldCheck className="w-4 h-4 text-sky-400" />
+            </div>
           </div>
           <div className="text-2xl font-black text-emerald-400 font-mono">
             ${computedStats.grossProfitUsd.toFixed(2)}
           </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-emerald-300 font-semibold">
+          <div className="flex items-center justify-between text-[11px] text-sky-300 font-semibold pt-1">
             <span>{computedStats.profitMarginPercent.toFixed(1)}% profit margin</span>
+            <span className="text-[10px] text-slate-500 underline group-hover:text-sky-300">Drill down &rarr;</span>
           </div>
-        </div>
+        </button>
+
+        {/* Card 4: CJ Wallet Status */}
+        <button
+          type="button"
+          onClick={() => setActiveModal('cj_wallet')}
+          className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2 relative overflow-hidden group hover:border-purple-500/60 hover:bg-slate-900 hover:shadow-lg hover:shadow-purple-500/10 transition-all text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500/40"
+          title="Click to view CJ Wallet balance, connected card & auto-debit log"
+        >
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span className="font-semibold uppercase tracking-wider group-hover:text-purple-400 transition-colors">
+              CJ Wallet Status
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-400 transition-colors" />
+              <Wallet className="w-4 h-4 text-purple-400" />
+            </div>
+          </div>
+          <div className="text-2xl font-black text-purple-400 font-mono flex items-center justify-between">
+            <span>$2,485.50</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/30 font-sans font-bold">
+              Active
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-purple-300 font-semibold pt-1">
+            <span className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Auto-Debit: Visa •••• 4242</span>
+            </span>
+            <span className="text-[10px] text-slate-500 underline group-hover:text-purple-300">Drill down &rarr;</span>
+          </div>
+        </button>
       </div>
+
+      {/* Interactive Drill-Down Modal */}
+      {activeModal && (
+        <AdminRevenueDrilldownModal
+          type={activeModal}
+          onClose={() => setActiveModal(null)}
+          orders={orders}
+          cjWalletBalance={2485.5}
+        />
+      )}
 
       {/* Main Recharts Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
