@@ -334,17 +334,17 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
         onClick={(e) => e.stopPropagation()}
       >
         {/* Animated Live Ticker Banner */}
-        <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-cyan-950 border-b border-slate-800 px-6 py-2 flex items-center justify-between text-[11px] font-mono text-emerald-300">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
+        <div className="bg-gradient-to-r from-emerald-950 via-slate-900 to-cyan-950 border-b border-slate-800 px-3.5 sm:px-6 py-2 flex items-center justify-between text-[10px] sm:text-[11px] font-mono text-emerald-300">
+          <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="font-bold tracking-wider uppercase">Live Transaction Stream</span>
+            <span className="font-bold tracking-wider uppercase truncate">Live Stream</span>
             <span className="text-slate-500">•</span>
-            <span className="text-slate-300">Stripe &amp; CJ Ledger Synchronized</span>
+            <span className="text-slate-300 truncate">Stripe &amp; CJ Synced</span>
           </div>
-          <div className="hidden sm:flex items-center gap-3 text-slate-400">
+          <div className="hidden sm:flex items-center gap-3 text-slate-400 shrink-0">
             <span>Latency: 14ms</span>
             <span>•</span>
             <span className="text-emerald-400 font-bold">100% Verified</span>
@@ -352,50 +352,50 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
         </div>
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-10">
-          <div className="flex items-center gap-3">
+        <div className="flex items-start sm:items-center justify-between p-3.5 sm:p-6 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md sticky top-0 z-10 gap-2">
+          <div className="flex items-start sm:items-center gap-2.5 sm:gap-3">
             {type === 'stripe_revenue' && (
-              <span className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
-                <DollarSign className="w-6 h-6" />
+              <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />
               </span>
             )}
             {type === 'cj_wholesale' && (
-              <span className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                <CreditCard className="w-6 h-6" />
+              <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 shrink-0">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
               </span>
             )}
             {type === 'net_profit' && (
-              <span className="p-2.5 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                <TrendingUp className="w-6 h-6" />
+              <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
               </span>
             )}
             {type === 'cj_wallet' && (
-              <span className="p-2.5 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
-                <Wallet className="w-6 h-6" />
+              <span className="p-2 sm:p-2.5 rounded-xl sm:rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-400 shrink-0">
+                <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
               </span>
             )}
 
             <div>
-              <div className="flex items-center gap-2">
-                <h2 id="drilldown-modal-title" className="text-lg font-black text-white tracking-tight">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 id="drilldown-modal-title" className="text-sm sm:text-lg font-black text-white tracking-tight leading-snug">
                   {type === 'stripe_revenue' && 'Total Stripe Revenue — Transaction Audit Log'}
                   {type === 'cj_wholesale' && 'CJ Wholesale Deducted — Wholesale COGS Audit Log'}
                   {type === 'net_profit' && 'Net Merchant Profit — Financial Waterfall Breakdown'}
                   {type === 'cj_wallet' && 'CJ Wallet Balance, Connected Card & Auto-Debit Log'}
                 </h2>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-300 border border-slate-700 whitespace-nowrap shrink-0">
                   Live Audit
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 line-clamp-2">
                 {type === 'stripe_revenue' &&
-                  'Real-time customer payments processed via Stripe checkout with fee deductions and timestamps.'}
+                  'Real-time customer payments processed via Stripe checkout with fee deductions.'}
                 {type === 'cj_wholesale' &&
-                  'Auto-deducted fulfillment wholesale costs and logistics fees paid directly to CJ Dropshipping.'}
+                  'Auto-deducted fulfillment wholesale costs paid directly to CJ Dropshipping.'}
                 {type === 'net_profit' &&
-                  'Detailed net profit breakdown per order after accounting for merchant fees and supplier COGS.'}
+                  'Detailed net profit breakdown per order after supplier COGS.'}
                 {type === 'cj_wallet' &&
-                  'Connected CJ wallet balance telemetry, auto-recharge rules, and real-time wholesale debit logs.'}
+                  'Connected CJ wallet balance, auto-recharge rules, and real-time debit logs.'}
               </p>
             </div>
           </div>
@@ -403,138 +403,138 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer shrink-0"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Modal Top Metric Highlights */}
-        <div className="p-6 bg-slate-950/60 border-b border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Modal Top Metric Highlights (2 columns on mobile for tight viewport spacing) */}
+        <div className="p-3.5 sm:p-6 bg-slate-950/60 border-b border-slate-800 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {type === 'stripe_revenue' && (
             <>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gross Processed</span>
-                <div className="text-xl font-black text-emerald-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Gross Processed</span>
+                <div className="text-base sm:text-xl font-black text-emerald-400 font-mono mt-0.5 sm:mt-1">
                   ${totals.grossTotal.toFixed(2)}
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">{totals.count} Verified Transactions</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">{totals.count} Transactions</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Est. Stripe Fees</span>
-                <div className="text-xl font-black text-rose-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Est. Stripe Fees</span>
+                <div className="text-base sm:text-xl font-black text-rose-400 font-mono mt-0.5 sm:mt-1">
                   -${totals.stripeFeeTotal.toFixed(2)}
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Avg 2.9% + $0.30/order</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">2.9% + $0.30/order</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Net Revenue Settled</span>
-                <div className="text-xl font-black text-white font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Net Settled</span>
+                <div className="text-base sm:text-xl font-black text-white font-mono mt-0.5 sm:mt-1">
                   ${(totals.grossTotal - totals.stripeFeeTotal).toFixed(2)}
                 </div>
-                <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                  <CheckCircle2 className="w-3 h-3" /> Ready for Bank Transfer
+                <span className="text-[9px] sm:text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5 truncate">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" /> Ready
                 </span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Dispute / Refund Rate</span>
-                <div className="text-xl font-black text-emerald-400 font-mono mt-1">0.00%</div>
-                <span className="text-[10px] text-slate-500 font-mono">0 Refunds Requested</span>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Dispute Rate</span>
+                <div className="text-base sm:text-xl font-black text-emerald-400 font-mono mt-0.5 sm:mt-1">0.00%</div>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">0 Refunds</span>
               </div>
             </>
           )}
 
           {type === 'cj_wholesale' && (
             <>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total CJ Wholesale COGS</span>
-                <div className="text-xl font-black text-amber-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">CJ Wholesale COGS</span>
+                <div className="text-base sm:text-xl font-black text-amber-400 font-mono mt-0.5 sm:mt-1">
                   ${totals.cogsTotal.toFixed(2)}
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">{totals.count} Orders Auto-Fulfilled</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">{totals.count} Auto-Fulfilled</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg COGS per Unit</span>
-                <div className="text-xl font-black text-white font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Avg COGS / Unit</span>
+                <div className="text-base sm:text-xl font-black text-white font-mono mt-0.5 sm:mt-1">
                   ${totals.count > 0 ? (totals.cogsTotal / totals.count).toFixed(2) : '0.00'}
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Direct CJ Factory Price</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">Direct CJ Factory</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Express Dispatch SLA</span>
-                <div className="text-xl font-black text-emerald-400 font-mono mt-1">48 Hours</div>
-                <span className="text-[10px] text-slate-500 font-mono">Air Express Airmail</span>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Dispatch SLA</span>
+                <div className="text-base sm:text-xl font-black text-emerald-400 font-mono mt-0.5 sm:mt-1">48 Hours</div>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">Air Express</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Supplier Sync</span>
-                <div className="text-xl font-black text-sky-400 font-mono mt-1">100% Active</div>
-                <span className="text-[10px] text-slate-500 font-mono">Real-Time CJ Dropship API</span>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Supplier Sync</span>
+                <div className="text-base sm:text-xl font-black text-sky-400 font-mono mt-0.5 sm:mt-1">100% Active</div>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">CJ Dropship API</span>
               </div>
             </>
           )}
 
           {type === 'net_profit' && (
             <>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Net Merchant Profit</span>
-                <div className="text-xl font-black text-emerald-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Net Profit</span>
+                <div className="text-base sm:text-xl font-black text-emerald-400 font-mono mt-0.5 sm:mt-1">
                   ${totals.netProfitTotal.toFixed(2)}
                 </div>
-                <span className="text-[10px] text-emerald-400 font-semibold">After Fees &amp; Wholesale</span>
+                <span className="text-[9px] sm:text-[10px] text-emerald-400 font-semibold block truncate">After COGS</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Overall Margin</span>
-                <div className="text-xl font-black text-sky-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Overall Margin</span>
+                <div className="text-base sm:text-xl font-black text-sky-400 font-mono mt-0.5 sm:mt-1">
                   {totals.avgMargin.toFixed(1)}%
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">High Margin DTC</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">High Margin DTC</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Avg Profit / Order</span>
-                <div className="text-xl font-black text-white font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Avg Profit / Order</span>
+                <div className="text-base sm:text-xl font-black text-white font-mono mt-0.5 sm:mt-1">
                   ${totals.count > 0 ? (totals.netProfitTotal / totals.count).toFixed(2) : '0.00'}
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Net Profit per Basket</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">Net per Basket</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Merchant ROI</span>
-                <div className="text-xl font-black text-purple-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Merchant ROI</span>
+                <div className="text-base sm:text-xl font-black text-purple-400 font-mono mt-0.5 sm:mt-1">
                   {totals.cogsTotal > 0 ? (totals.netProfitTotal / totals.cogsTotal).toFixed(2) : '0.00'}x
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Profit to COGS Ratio</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">Profit / COGS</span>
               </div>
             </>
           )}
 
           {type === 'cj_wallet' && (
             <>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-purple-500/30">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Available CJ Balance</span>
-                <div className="text-xl font-black text-purple-400 font-mono mt-1">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-purple-500/30">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Available Balance</span>
+                <div className="text-base sm:text-xl font-black text-purple-400 font-mono mt-0.5 sm:mt-1">
                   ${cjWalletBalance.toFixed(2)}
                 </div>
-                <span className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-                  <CheckCircle2 className="w-3 h-3" /> Balance Operational
+                <span className="text-[9px] sm:text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5 truncate">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" /> Operational
                 </span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Auto-Debit Status</span>
-                <div className="text-xl font-black text-emerald-400 font-mono mt-1 flex items-center gap-1.5">
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Auto-Debit</span>
+                <div className="text-base sm:text-xl font-black text-emerald-400 font-mono mt-0.5 sm:mt-1 flex items-center gap-1.5">
                   <span>Enabled</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                 </div>
-                <span className="text-[10px] text-slate-500 font-mono">Instant Order Fulfill</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">Instant Fulfill</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Auto-Recharge Min</span>
-                <div className="text-xl font-black text-amber-400 font-mono mt-1">$500.00</div>
-                <span className="text-[10px] text-slate-500 font-mono">Top-Up Trigger Level</span>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Auto-Recharge Min</span>
+                <div className="text-base sm:text-xl font-black text-amber-400 font-mono mt-0.5 sm:mt-1">$500.00</div>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">Top-Up Trigger</span>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Connected Payment Method</span>
-                <div className="text-sm font-bold text-white font-mono mt-1">Visa •••• 4242</div>
-                <span className="text-[10px] text-slate-500 font-mono">AeroThor Business Corp</span>
+              <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900 border border-slate-800">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider block truncate">Connected Card</span>
+                <div className="text-xs sm:text-sm font-bold text-white font-mono mt-0.5 sm:mt-1 truncate">Visa •••• 4242</div>
+                <span className="text-[9px] sm:text-[10px] text-slate-500 font-mono block truncate">AeroThor Corp</span>
               </div>
             </>
           )}
