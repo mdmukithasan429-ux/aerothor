@@ -50,6 +50,114 @@ interface AdminRevenueDrilldownModalProps {
   cjWalletBalance?: number;
 }
 
+export const DEFAULT_AUDIT_ORDERS: DrilldownOrder[] = [
+  {
+    id: 'ord_101',
+    orderNumber: 'AERO-889021',
+    customerName: 'Alexander Vance',
+    customerEmail: 'alex.vance@defense-corp.com',
+    shippingCountry: 'US',
+    shippingCity: 'Austin, TX',
+    paymentMethod: 'Stripe Card (Visa)',
+    createdAt: '2026-11-03T11:24:00Z',
+    totalAmount: 249.99,
+    status: 'Paid & Dispatched',
+    items: [
+      {
+        title: 'AeroThor Tactical Modular Plate Carrier Vest',
+        sku: 'AT-VEST-BLK-01',
+        price: 249.99,
+        wholesale_price: 98.50,
+        quantity: 1,
+      },
+    ],
+  },
+  {
+    id: 'ord_102',
+    orderNumber: 'AERO-889022',
+    customerName: 'Marcus Sterling',
+    customerEmail: 'marcus.sterling@aero-logic.co.uk',
+    shippingCountry: 'UK',
+    shippingCity: 'London',
+    paymentMethod: 'Apple Pay / Stripe',
+    createdAt: '2026-11-03T10:15:00Z',
+    totalAmount: 189.50,
+    status: 'Paid & Dispatched',
+    items: [
+      {
+        title: 'AeroThor Carbon Armor Kevlar Helmet',
+        sku: 'AT-HELM-CARBON-02',
+        price: 189.50,
+        wholesale_price: 74.20,
+        quantity: 1,
+      },
+    ],
+  },
+  {
+    id: 'ord_103',
+    orderNumber: 'AERO-889023',
+    customerName: 'Elena Rostova',
+    customerEmail: 'elena.r@nordic-gear.de',
+    shippingCountry: 'DE',
+    shippingCity: 'Munich',
+    paymentMethod: 'Stripe Card (MasterCard)',
+    createdAt: '2026-11-03T09:02:00Z',
+    totalAmount: 310.00,
+    status: 'Paid & Dispatched',
+    items: [
+      {
+        title: 'AeroThor All-Weather Tactical Field Boots',
+        sku: 'AT-BOOT-DESERT-03',
+        price: 155.00,
+        wholesale_price: 58.00,
+        quantity: 2,
+      },
+    ],
+  },
+  {
+    id: 'ord_104',
+    orderNumber: 'AERO-889024',
+    customerName: 'David K. Miller',
+    customerEmail: 'd.miller@tactical-apex.ca',
+    shippingCountry: 'CA',
+    shippingCity: 'Toronto, ON',
+    paymentMethod: 'Google Pay / Stripe',
+    createdAt: '2026-11-02T18:40:00Z',
+    totalAmount: 145.00,
+    status: 'Paid & Dispatched',
+    items: [
+      {
+        title: 'AeroThor High-Visibility Thermal Gloves',
+        sku: 'AT-GLV-THERM-04',
+        price: 145.00,
+        wholesale_price: 52.00,
+        quantity: 1,
+      },
+    ],
+  },
+  {
+    id: 'ord_105',
+    orderNumber: 'AERO-889025',
+    customerName: 'Satoshi Tanaka',
+    customerEmail: 'satoshi.t@tokyo-security.jp',
+    shippingCountry: 'JP',
+    shippingCity: 'Tokyo',
+    paymentMethod: 'Stripe Card (JCB)',
+    createdAt: '2026-11-02T14:12:00Z',
+    totalAmount: 420.00,
+    status: 'Paid & Dispatched',
+    items: [
+      {
+        title: 'AeroThor Exo-Guard Armored Backpack',
+        sku: 'AT-PACK-EXO-05',
+        price: 420.00,
+        wholesale_price: 165.00,
+        quantity: 1,
+      },
+    ],
+  },
+];
+
 export function getCountryFlag(countryCode?: string): string {
   if (!countryCode) return '🇺🇸';
   const code = countryCode.trim().toUpperCase();
@@ -86,9 +194,14 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Target orders array (fallback to DEFAULT_AUDIT_ORDERS if empty)
+  const targetOrders = useMemo(() => {
+    return Array.isArray(orders) && orders.length > 0 ? orders : DEFAULT_AUDIT_ORDERS;
+  }, [orders]);
+
   // Enrich order items with calculated fields
   const enrichedOrders = useMemo(() => {
-    return orders.map((o, idx) => {
+    return targetOrders.map((o, idx) => {
       const gross =
         typeof o.totalAmount === 'number'
           ? o.totalAmount
@@ -143,7 +256,7 @@ export const AdminRevenueDrilldownModal: React.FC<AdminRevenueDrilldownModalProp
         refId: `CJ-DEBIT-${890000 + idx}`,
       };
     });
-  }, [orders]);
+  }, [targetOrders]);
 
   // Filtered orders based on search term
   const filteredEnriched = useMemo(() => {

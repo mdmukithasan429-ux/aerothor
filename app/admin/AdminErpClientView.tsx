@@ -611,16 +611,6 @@ export default function AdminErpClientView({
           </div>
         </section>
 
-        {/* Interactive Drill-Down Modal */}
-        {activeModal && (
-          <AdminRevenueDrilldownModal
-            type={activeModal}
-            onClose={() => setActiveModal(null)}
-            orders={orders}
-            cjWalletBalance={2485.5}
-          />
-        )}
-
         {/* 2. ERP NAVIGATION TABS */}
         <div className="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-3">
           <div className="flex items-center gap-2">
@@ -1385,6 +1375,16 @@ export default function AdminErpClientView({
             />
           </div>
         </div>
+      )}
+
+      {/* Root Level Interactive Drill-Down Modal */}
+      {activeModal && (
+        <AdminRevenueDrilldownModal
+          type={activeModal}
+          onClose={() => setActiveModal(null)}
+          orders={orders}
+          cjWalletBalance={2485.5}
+        />
       )}
     </div>
   );

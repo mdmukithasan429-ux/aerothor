@@ -493,16 +493,6 @@ export const AdminRevenueDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Interactive Drill-Down Modal */}
-      {activeModal && (
-        <AdminRevenueDrilldownModal
-          type={activeModal}
-          onClose={() => setActiveModal(null)}
-          orders={orders}
-          cjWalletBalance={2485.5}
-        />
-      )}
-
       {/* Main Recharts Visualizations */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart 1: Revenue & Profit Trend AreaChart */}
@@ -654,6 +644,16 @@ export const AdminRevenueDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Interactive Root Level Drill-Down Modal */}
+      {activeModal && (
+        <AdminRevenueDrilldownModal
+          type={activeModal}
+          onClose={() => setActiveModal(null)}
+          orders={orders}
+          cjWalletBalance={2485.5}
+        />
+      )}
     </div>
   );
 };
