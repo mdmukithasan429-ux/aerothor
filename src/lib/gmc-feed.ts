@@ -42,13 +42,31 @@ export interface GmcProduct {
   shippingCost?: number;
   shipping_cost?: number;
   isTrending?: boolean;
+  isBestSelling?: boolean;
   trendingScore?: number;
+  salesCount?: number;
+  tags?: string[];
+  rating?: number;
+  reviewCount?: number;
+  reviews?: ProductReviewItem[];
+  hasLifetimeUpdateAccess?: boolean;
   variants?: ProductVariantOption[];
   shipping?: {
     country: string;
     service: string;
     price: string;
   }[];
+}
+
+export interface ProductReviewItem {
+  id: string;
+  author: string;
+  country: 'US' | 'GB';
+  rating: number;
+  title: string;
+  comment: string;
+  verifiedPurchase: boolean;
+  date: string;
 }
 
 export interface ChannelMeta {

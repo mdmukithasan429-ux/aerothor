@@ -9,35 +9,45 @@ datasource db {
 }
 
 model Product {
-  id             String           @id @default(uuid())
-  sku            String           @unique
-  cjPid          String?          @unique @map("cj_pid")
-  title          String
-  description    String           @db.Text
-  slug           String           @unique
-  brand          String           @default("AeroThor")
-  price          Decimal          @db.Decimal(10, 2)
-  salePrice      Decimal?         @map("sale_price") @db.Decimal(10, 2)
-  currency       String           @default("USD")
-  stockQuantity  Int              @default(99) @map("stock_quantity")
-  availability   String           @default("in_stock")
-  mainImageUrl   String           @map("main_image_url")
-  additionalImgs Json             @default("[]") @map("additional_images")
-  seoTitle       String?          @map("seo_title")
-  seoDescription String?          @map("seo_description") @db.Text
-  productType    String           @default("dropshipping") @map("product_type") @db.VarChar(64)
-  affiliateUrl   String?          @map("affiliate_url") @db.Text
-  isFreeShipping Boolean          @default(true) @map("is_free_shipping")
-  shippingCost   Float            @default(0) @map("shipping_cost")
-  isVisible      Boolean          @default(true) @map("is_visible")
-  variants       ProductVariant[]
-  createdAt      DateTime         @default(now()) @map("created_at")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
+  id                      String           @id @default(uuid())
+  sku                     String           @unique
+  cjPid                   String?          @unique @map("cj_pid")
+  title                   String
+  description             String           @db.Text
+  slug                    String           @unique
+  brand                   String           @default("AeroThor")
+  price                   Decimal          @db.Decimal(10, 2)
+  salePrice               Decimal?         @map("sale_price") @db.Decimal(10, 2)
+  currency                String           @default("USD")
+  stockQuantity           Int              @default(99) @map("stock_quantity")
+  availability            String           @default("in_stock")
+  mainImageUrl            String           @map("main_image_url")
+  additionalImgs          Json             @default("[]") @map("additional_images")
+  seoTitle                String?          @map("seo_title")
+  seoDescription          String?          @map("seo_description") @db.Text
+  productType             String           @default("dropshipping") @map("product_type") @db.VarChar(64)
+  affiliateUrl            String?          @map("affiliate_url") @db.Text
+  isFreeShipping          Boolean          @default(true) @map("is_free_shipping")
+  shippingCost            Float            @default(0) @map("shipping_cost")
+  isVisible               Boolean          @default(true) @map("is_visible")
+  isTrending              Boolean          @default(false) @map("is_trending")
+  isBestSelling           Boolean          @default(false) @map("is_best_selling")
+  trendingScore           Int              @default(85) @map("trending_score")
+  salesCount              Int              @default(120) @map("sales_count")
+  tags                    String[]         @default([])
+  rating                  Float            @default(4.9)
+  reviewCount             Int              @default(42) @map("review_count")
+  reviewsJson             Json             @default("[]") @map("reviews_json")
+  hasLifetimeUpdateAccess Boolean          @default(true) @map("has_lifetime_update_access")
+  variants                ProductVariant[]
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
 
   @@index([sku])
   @@index([cjPid])
   @@index([slug])
   @@index([productType])
+  @@index([isTrending, isBestSelling, trendingScore])
   @@map("products")
 }
 
@@ -62,27 +72,37 @@ model ProductVariant {
 }
 
 model Order {
-  id                String   @id @default(uuid())
-  orderNumber       String   @unique @map("order_number")
-  stripeSessionId   String?  @unique @map("stripe_session_id")
-  trackingCode      String?  @unique @map("tracking_code")
-  status            String   @default("Paid - Ready for CJ Fulfill")
-  customerEmail     String   @map("customer_email")
-  customerName      String   @default("Verified Customer") @map("customer_name")
-  shippingAddress   Json     @default("{}") @map("shipping_address")
-  purchasedSkus     String[] @default([]) @map("purchased_skus")
-  itemsJson         Json     @default("[]") @map("items_json")
-  carrier           String   @default("USPS Priority Mail")
-  estimatedDelivery String   @default("3 to 5 Business Days") @map("estimated_delivery")
-  shippingCity      String?  @map("shipping_city")
-  shippingCountry   String   @default("US") @map("shipping_country")
-  totalAmount       Decimal  @map("total_amount") @db.Decimal(10, 2)
-  currency          String   @default("USD")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id                       String   @id @default(uuid())
+  orderNumber              String   @unique @map("order_number")
+  stripeSessionId          String?  @unique @map("stripe_session_id")
+  paymentIntentId          String?  @unique @map("payment_intent_id")
+  trackingCode             String?  @unique @map("tracking_code")
+  status                   String   @default("Paid - Ready for CJ Fulfill")
+  paymentStatus            String   @default("paid") @map("payment_status")
+  cjOrderId                String?  @map("cj_order_id")
+  cjOrderStatus            String   @default("awaiting_fulfillment") @map("cj_order_status")
+  cjApiMessage             String?  @map("cj_api_message") @db.Text
+  customerEmail            String   @map("customer_email")
+  customerName             String   @default("Verified Customer") @map("customer_name")
+  customerPhone            String?  @map("customer_phone")
+  shippingAddress          Json     @default("{}") @map("shipping_address")
+  shippingCity             String?  @map("shipping_city")
+  shippingState            String?  @map("shipping_state")
+  shippingZip              String?  @map("shipping_zip")
+  shippingCountry          String   @default("US") @map("shipping_country")
+  purchasedSkus            String[] @default([]) @map("purchased_skus")
+  itemsJson                Json     @default("[]") @map("items_json")
+  carrier                  String   @default("USPS Priority Mail")
+  estimatedDelivery        String   @default("3 to 5 Business Days") @map("estimated_delivery")
+  totalAmount              Decimal  @map("total_amount") @db.Decimal(10, 2)
+  currency                 String   @default("USD")
+  lifetimeUpdatesActivated Boolean  @default(true) @map("lifetime_updates_activated")
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
 
   @@index([orderNumber])
   @@index([stripeSessionId])
+  @@index([paymentIntentId])
   @@index([trackingCode])
   @@index([customerEmail])
   @@map("orders")
@@ -90,15 +110,19 @@ model Order {
 
 model StoreSettings {
   id                  String   @id @default("singleton")
+  storeName           String   @default("AeroThor Performance Essentials") @map("store_name")
+  supportEmail        String   @default("support@aerothor.com") @map("support_email")
+  phoneNumber         String   @default("+1 (800) 555-0199") @map("phone_number")
+  physicalAddress     String   @default("1209 North Orange St, Wilmington, DE 19801") @map("physical_address")
+  logoUrl             String   @default("") @map("logo_url")
+  primaryColorHex     String   @default("#10B981") @map("primary_color_hex")
   isStripeEnabled     Boolean  @default(true) @map("is_stripe_enabled")
   isCodEnabled        Boolean  @default(false) @map("is_cod_enabled")
   cjApiToken          String?  @map("cj_api_token") @db.Text
   storeCurrency       String   @default("USD") @map("store_currency")
-  supportEmail        String   @default("support@aerothor.com") @map("support_email")
   amazonAssociateTag  String   @default("aerothor-20") @map("amazon_associate_tag")
   autoDeductEnabled   Boolean  @default(true) @map("auto_deduct_enabled")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
   @@map("store_settings")
 }
-

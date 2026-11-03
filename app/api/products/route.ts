@@ -1,17 +1,146 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { loadPersistedCatalog } from '@/src/server/storage';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export type StorefrontSortMode = 'trending' | 'random' | 'latest' | 'price_asc' | 'price_desc';
+
+/**
+ * Determines whether a product carries the 'trending' tag or qualifies as a trending / top-selling item.
+ */
+export function isTrendingProduct(product: any): boolean {
+  if (!product) return false;
+  if (product.isTrending === true) return true;
+
+  if (Array.isArray(product.tags)) {
+    const hasTrendingTag = product.tags.some((t: any) =>
+      ['trending', 'bestseller', 'top-seller', 'hot', 'featured'].includes(
+        String(t || '').toLowerCase().trim()
+      )
+    );
+    if (hasTrendingTag) return true;
+  }
+
+  const label = String(
+    product.custom_label_0 || product.tag || product.badge || ''
+  ).toLowerCase();
+  if (
+    label.includes('trending') ||
+    label.includes('bestseller') ||
+    label.includes('top seller') ||
+    label.includes('hot')
+  ) {
+    return true;
+  }
+
+  const titleLower = String(product.title || '').toLowerCase();
+  const typeLower = String(
+    product.productType || product.product_type || product.google_product_category || ''
+  ).toLowerCase();
+
+  // Protective skins, 3M wraps, and discounted items are flagged as trending
+  const hasSaleDiscount = Boolean(product.salePrice || product.sale_price);
+  const isTrendingCategory =
+    typeLower.includes('protective skin') ||
+    typeLower.includes('vinyl') ||
+    titleLower.includes('skin') ||
+    titleLower.includes('wrap') ||
+    titleLower.includes('magsafe') ||
+    titleLower.includes('titanium');
+
+  return hasSaleDiscount || isTrendingCategory;
+}
+
+/**
+ * Enriches a product object with explicit `tags` (including `'trending'` when applicable) and `isTrending`.
+ */
+export function enrichProductWithTrendingTags<T extends Record<string, any>>(product: T): T & {
+  isTrending: boolean;
+  tags: string[];
+} {
+  const trending = isTrendingProduct(product);
+  const existingTags: string[] = Array.isArray(product.tags)
+    ? product.tags.map((t: any) => String(t))
+    : [];
+
+  const tagSet = new Set<string>(existingTags);
+  if (trending) {
+    tagSet.add('trending');
+  }
+  if (product.salePrice || product.sale_price) {
+    tagSet.add('deal');
+  }
+
+  return {
+    ...product,
+    isTrending: trending,
+    tags: Array.from(tagSet),
+  };
+}
+
+/**
+ * Unbiased Fisher-Yates array shuffle for dynamic storefront randomization on every request.
+ */
+export function shuffleArray<T>(items: T[]): T[] {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = temp;
+  }
+  return copy;
+}
+
+/**
+ * Dynamically sorts and shuffles storefront products by 'trending' tag or pure random order.
+ */
+export function sortAndShuffleStorefrontProducts<T extends Record<string, any>>(
+  items: T[],
+  sortMode: StorefrontSortMode = 'trending'
+): Array<T & { isTrending: boolean; tags: string[] }> {
+  const enriched = items.map((item) => enrichProductWithTrendingTags(item));
+
+  if (sortMode === 'random') {
+    return shuffleArray(enriched);
+  }
+
+  if (sortMode === 'price_asc' || sortMode === 'price_desc') {
+    const parseNumericPrice = (p: any): number => {
+      const raw = p.salePrice ?? p.sale_price ?? p.price ?? 0;
+      const num = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+      return Number.isFinite(num) ? num : 0;
+    };
+    return [...enriched].sort((a, b) =>
+      sortMode === 'price_asc'
+        ? parseNumericPrice(a) - parseNumericPrice(b)
+        : parseNumericPrice(b) - parseNumericPrice(a)
+    );
+  }
+
+  if (sortMode === 'latest') {
+    return enriched;
+  }
+
+  // Default: 'trending' — prioritize products with the 'trending' tag first,
+  // and dynamically shuffle within both the trending and standard buckets so every refresh feels alive.
+  const trendingBucket = shuffleArray(enriched.filter((p) => p.isTrending));
+  const standardBucket = shuffleArray(enriched.filter((p) => !p.isTrending));
+  return [...trendingBucket, ...standardBucket];
+}
 
 /**
  * Builds a Prisma `where` clause supporting dynamic Category Tabs
- * ("All", "Clothing", "Tech Accessories", "Affiliate Deals", "Drinkware & Travel", "CJ Marketplace")
+ * ("All", "Trending", "Protective Skins & Wraps", "Clothing", "Tech Accessories", "Affiliate Deals", "Drinkware & Travel", "CJ Marketplace")
  * and search queries (`q`).
  */
 export function buildProductPrismaWhere(params: {
   category?: string;
   query?: string;
   type?: string;
+  tag?: string;
   includeHidden?: boolean;
 }) {
   const andConditions: any[] = [];
@@ -36,11 +165,34 @@ export function buildProductPrismaWhere(params: {
     });
   }
 
+  const tagFilter = (params.tag || '').trim().toLowerCase();
   const cat = (params.category || 'All').trim();
   const catLower = cat.toLowerCase();
 
-  if (cat && catLower !== 'all') {
-    if (catLower === 'affiliate deals' || catLower === 'affiliate') {
+  if (tagFilter === 'trending' || catLower === 'trending') {
+    andConditions.push({
+      OR: [
+        { salePrice: { not: null } },
+        { productType: { contains: 'Protective Skin', mode: 'insensitive' } },
+        { productType: { contains: 'Trending', mode: 'insensitive' } },
+        { title: { contains: 'Skin', mode: 'insensitive' } },
+        { title: { contains: 'Wrap', mode: 'insensitive' } },
+        { title: { contains: 'MagSafe', mode: 'insensitive' } },
+        { title: { contains: 'Titanium', mode: 'insensitive' } },
+      ],
+    });
+  } else if (cat && catLower !== 'all') {
+    if (catLower === 'protective skins & wraps' || catLower === 'protective skins') {
+      andConditions.push({
+        OR: [
+          { productType: { contains: 'Protective Skin', mode: 'insensitive' } },
+          { productType: { contains: 'Wrap', mode: 'insensitive' } },
+          { title: { contains: 'Skin', mode: 'insensitive' } },
+          { title: { contains: 'Wrap', mode: 'insensitive' } },
+          { title: { contains: '3M', mode: 'insensitive' } },
+        ],
+      });
+    } else if (catLower === 'affiliate deals' || catLower === 'affiliate') {
       andConditions.push({
         OR: [
           { productType: { equals: 'affiliate', mode: 'insensitive' } },
@@ -122,7 +274,11 @@ export function buildProductPrismaWhere(params: {
 
 /**
  * GET /api/products
- * Supports server-side pagination (`page`, `limit` / `take`, `skip`) and `category` / `q` filtering via Prisma.
+ * Dynamically refreshes storefront products on every request:
+ * - Supports `?sort=trending` (default: prioritizes 'trending' tagged products & shuffles dynamically)
+ * - Supports `?sort=random` (pure Fisher-Yates random shuffle across matched catalog)
+ * - Supports `?tag=trending` or `?category=Trending` to filter strictly to trending products
+ * - Supports server-side pagination (`page`, `limit` / `take`, `skip`) and `category` / `q` filtering
  */
 export async function GET(req: NextRequest) {
   try {
@@ -141,45 +297,102 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category') || 'All';
     const query = searchParams.get('q') || '';
     const type = searchParams.get('type') || '';
+    const tag = searchParams.get('tag') || '';
+    const rawSort = (searchParams.get('sort') || 'trending').toLowerCase().trim();
+    const sortMode: StorefrontSortMode =
+      rawSort === 'random' || rawSort === 'latest' || rawSort === 'price_asc' || rawSort === 'price_desc'
+        ? rawSort
+        : 'trending';
 
-    const where = buildProductPrismaWhere({
-      category,
-      query,
-      type,
-      includeHidden: false,
-    });
+    let matchedItems: any[] = [];
 
-    const [totalCount, items] = await Promise.all([
-      prisma.product.count({ where }),
-      prisma.product.findMany({
+    try {
+      const where = buildProductPrismaWhere({
+        category,
+        query,
+        type,
+        tag,
+        includeHidden: false,
+      });
+
+      const dbItems = await prisma.product.findMany({
         where,
-        skip,
-        take,
         orderBy: { createdAt: 'desc' },
         include: { variants: true },
-      }),
-    ]);
+      });
 
+      if (dbItems.length > 0) {
+        matchedItems = dbItems.map((p) => ({
+          ...p,
+          id: p.sku || p.id,
+          price: Number(p.price),
+          salePrice: p.salePrice ? Number(p.salePrice) : null,
+          image_link: p.mainImageUrl,
+        }));
+      }
+    } catch {
+      // Fallback to verified persisted catalog if Prisma is unreachable
+    }
+
+    if (matchedItems.length === 0) {
+      const persisted = loadPersistedCatalog();
+      const catLower = category.trim().toLowerCase();
+      const qLower = query.trim().toLowerCase();
+      const tagLower = tag.trim().toLowerCase();
+
+      matchedItems = persisted.filter((p: any) => {
+        if (p.status === 'archived' || p.isVisible === false) return false;
+        if (type === 'affiliate' && p.productType !== 'affiliate') return false;
+        if (type === 'dropshipping' && p.productType === 'affiliate') return false;
+        if ((tagLower === 'trending' || catLower === 'trending') && !isTrendingProduct(p)) {
+          return false;
+        }
+        if (catLower && catLower !== 'all' && catLower !== 'trending') {
+          const hayCat = `${p.product_type || ''} ${p.productType || ''} ${p.title || ''} ${p.description || ''}`.toLowerCase();
+          if (!hayCat.includes(catLower)) return false;
+        }
+        if (qLower) {
+          const hayQ = `${p.title || ''} ${p.description || ''} ${p.id || ''} ${p.brand || ''}`.toLowerCase();
+          if (!hayQ.includes(qLower)) return false;
+        }
+        return true;
+      });
+    }
+
+    const sortedAndShuffled = sortAndShuffleStorefrontProducts(matchedItems, sortMode);
+    const totalCount = sortedAndShuffled.length;
+    const paginatedItems = sortedAndShuffled.slice(skip, skip + take);
     const totalPages = Math.max(1, Math.ceil(totalCount / take));
 
-    return NextResponse.json({
-      success: true,
-      page,
-      pageSize: take,
-      skip,
-      take,
-      totalCount,
-      totalPages,
-      category,
-      query,
-      count: items.length,
-      products: items,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        sort: sortMode,
+        refreshedAt: new Date().toISOString(),
+        page,
+        pageSize: take,
+        skip,
+        take,
+        totalCount,
+        totalPages,
+        category,
+        query,
+        count: paginatedItems.length,
+        products: paginatedItems,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          Pragma: 'no-cache',
+          Expires: '0',
+        },
+      }
+    );
   } catch (error: any) {
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Failed to fetch paginated products',
+        error: error.message || 'Failed to fetch dynamic storefront products',
       },
       { status: 500 }
     );

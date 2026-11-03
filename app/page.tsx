@@ -1,9 +1,15 @@
 import React from 'react';
 import prisma from '@/lib/prisma';
 import { ProductGrid } from '@/components/product/ProductGrid';
-import { buildProductPrismaWhere } from './api/products/route';
+import {
+  buildProductPrismaWhere,
+  sortAndShuffleStorefrontProducts,
+  StorefrontSortMode,
+} from './api/products/route';
+import { loadPersistedCatalog } from '@/src/server/storage';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface StorefrontPageProps {
   searchParams?: Promise<{
@@ -11,6 +17,8 @@ interface StorefrontPageProps {
     limit?: string;
     category?: string;
     q?: string;
+    sort?: string;
+    tag?: string;
   }>;
 }
 
@@ -21,6 +29,12 @@ export default async function StorefrontHomePage({ searchParams }: StorefrontPag
   const skip = (page - 1) * take;
   const category = resolvedParams.category || 'All';
   const query = resolvedParams.q || '';
+  const tag = resolvedParams.tag || '';
+  const rawSort = (resolvedParams.sort || 'trending').toLowerCase().trim();
+  const sortMode: StorefrontSortMode =
+    rawSort === 'random' || rawSort === 'latest' || rawSort === 'price_asc' || rawSort === 'price_desc'
+      ? rawSort
+      : 'trending';
 
   let initialProducts: any[] = [];
 
@@ -28,33 +42,43 @@ export default async function StorefrontHomePage({ searchParams }: StorefrontPag
     const where = buildProductPrismaWhere({
       category,
       query,
+      tag,
       includeHidden: false,
     });
 
     const fetched = await prisma.product.findMany({
       where,
-      skip,
-      take,
       orderBy: { createdAt: 'desc' },
     });
 
-    initialProducts = fetched.map((p) => ({
-      id: p.sku,
-      sku: p.sku,
-      title: p.title,
-      description: p.description,
-      brand: p.brand,
-      price: Number(p.price),
-      salePrice: p.salePrice ? Number(p.salePrice) : null,
-      mainImageUrl: p.mainImageUrl,
-      image_link: p.mainImageUrl,
-      availability: p.availability,
-      productType: p.productType,
-      affiliateUrl: p.affiliateUrl,
-      cjPid: p.cjPid,
-    }));
+    if (fetched.length > 0) {
+      const mapped = fetched.map((p) => ({
+        id: p.sku,
+        sku: p.sku,
+        title: p.title,
+        description: p.description,
+        brand: p.brand,
+        price: Number(p.price),
+        salePrice: p.salePrice ? Number(p.salePrice) : null,
+        mainImageUrl: p.mainImageUrl,
+        image_link: p.mainImageUrl,
+        availability: p.availability,
+        productType: p.productType,
+        affiliateUrl: p.affiliateUrl,
+        cjPid: p.cjPid,
+      }));
+      initialProducts = sortAndShuffleStorefrontProducts(mapped, sortMode).slice(skip, skip + take);
+    }
   } catch {
     initialProducts = [];
+  }
+
+  if (initialProducts.length === 0) {
+    const fallbackCatalog = loadPersistedCatalog();
+    initialProducts = sortAndShuffleStorefrontProducts(fallbackCatalog, sortMode).slice(
+      skip,
+      skip + take
+    );
   }
 
   return (
@@ -64,7 +88,7 @@ export default async function StorefrontHomePage({ searchParams }: StorefrontPag
           AeroThor Official Storefront
         </h1>
         <p className="text-sm text-slate-400">
-          Paginated catalog with dynamic category filtering and 48-hour domestic dispatch.
+          Dynamic catalog sorted by trending demand and randomized on refresh with 48-hour US &amp; UK dispatch.
         </p>
       </div>
 

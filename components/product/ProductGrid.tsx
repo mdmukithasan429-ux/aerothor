@@ -34,6 +34,8 @@ export interface StorefrontProductItem {
   cj_pid?: string | null;
   cjPid?: string | null;
   source?: string;
+  isTrending?: boolean;
+  tags?: string[];
 }
 
 export interface ProductGridProps {
@@ -45,6 +47,7 @@ export interface ProductGridProps {
 
 export const STOREFRONT_CATEGORY_TABS = [
   'All',
+  'Trending',
   'Clothing',
   'Tech Accessories',
   'Affiliate Deals',
@@ -69,6 +72,16 @@ export function matchesProductCategory(
     Boolean(product.affiliateUrl || product.affiliate_url) ||
     idLower.startsWith('aff-');
 
+  if (catLower === 'trending') {
+    return (
+      product.isTrending === true ||
+      (Array.isArray(product.tags) && product.tags.includes('trending')) ||
+      Boolean(product.salePrice || product.sale_price) ||
+      typeLower.includes('protective skin') ||
+      titleLower.includes('skin') ||
+      titleLower.includes('wrap')
+    );
+  }
   if (catLower === 'affiliate deals' || catLower === 'affiliate') {
     return isAffiliate;
   }
@@ -133,6 +146,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   const [products, setProducts] = useState<StorefrontProductItem[]>(initialProducts);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortMode, setSortMode] = useState<'trending' | 'random' | 'price_asc' | 'price_desc'>('trending');
+  const [refreshNonce, setRefreshNonce] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(defaultPageSize);
   const [totalServerCount, setTotalServerCount] = useState<number | null>(null);
@@ -144,12 +159,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     }
   }, [initialProducts]);
 
-  // Reset to page 1 whenever category, search query, or page size changes
+  // Reset to page 1 whenever category, search query, sort mode, or page size changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCategory, searchQuery, itemsPerPage]);
+  }, [selectedCategory, searchQuery, sortMode, itemsPerPage]);
 
-  // Fetch paginated & filtered slice from /api/products (Prisma skip/take/where)
+  // Fetch paginated, sorted & dynamically shuffled slice from /api/products
   useEffect(() => {
     const controller = new AbortController();
     const fetchPage = async () => {
@@ -162,6 +177,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
           take: String(itemsPerPage),
           skip: String(skip),
           category: selectedCategory,
+          sort: sortMode,
+          _t: String(Date.now()),
         });
         if (searchQuery.trim()) {
           params.set('q', searchQuery.trim());
@@ -169,6 +186,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
         const res = await fetch(`/api/products?${params.toString()}`, {
           signal: controller.signal,
+          cache: 'no-store',
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -189,7 +207,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 
     fetchPage();
     return () => controller.abort();
-  }, [currentPage, itemsPerPage, selectedCategory, searchQuery]);
+  }, [currentPage, itemsPerPage, selectedCategory, searchQuery, sortMode, refreshNonce]);
 
   // Dynamic category tabs combining standard tabs + any custom categories in catalog
   const categoryTabs = useMemo(() => {
@@ -296,6 +314,27 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               </button>
             )}
           </div>
+
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as any)}
+            aria-label="Sort products"
+            className="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+          >
+            <option value="trending">Sort: Trending</option>
+            <option value="random">Sort: Random</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={() => setRefreshNonce((n) => n + 1)}
+            title="Dynamically shuffle & refresh storefront products"
+            className="bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg px-2.5 py-2 text-xs font-semibold text-emerald-400 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            Shuffle
+          </button>
 
           <select
             value={itemsPerPage}

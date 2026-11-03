@@ -1463,23 +1463,123 @@ app.delete('/api/campaigns/:id', (req, res) => {
   }
 });
 
-// Products catalog query & batch sync API (supports ?type=, ?category=, ?q=, and optional ?page=&limit=&skip=&take= pagination)
+function isServerTrendingProduct(p: any): boolean {
+  if (!p) return false;
+  if (p.isTrending === true) return true;
+  if (Array.isArray(p.tags)) {
+    const hasTag = p.tags.some((t: any) =>
+      ['trending', 'bestseller', 'top-seller', 'hot', 'featured'].includes(
+        String(t || '').toLowerCase().trim()
+      )
+    );
+    if (hasTag) return true;
+  }
+  const label = String(p.custom_label_0 || p.tag || p.badge || '').toLowerCase();
+  if (
+    label.includes('trending') ||
+    label.includes('bestseller') ||
+    label.includes('top seller') ||
+    label.includes('hot')
+  ) {
+    return true;
+  }
+  const titleLower = String(p.title || '').toLowerCase();
+  const typeLower = String(p.product_type || p.productType || p.google_product_category || '').toLowerCase();
+  const hasDiscount = Boolean(p.sale_price || p.salePrice);
+  const isTrendingNiche =
+    typeLower.includes('protective skin') ||
+    typeLower.includes('vinyl') ||
+    titleLower.includes('skin') ||
+    titleLower.includes('wrap') ||
+    titleLower.includes('magsafe') ||
+    titleLower.includes('titanium');
+  return hasDiscount || isTrendingNiche;
+}
+
+function enrichAndSortCatalogProducts(items: GmcProduct[], rawSort: string): any[] {
+  const sortMode = (rawSort || 'trending').toLowerCase().trim();
+  const enriched = items.map((item: any) => {
+    const trending = isServerTrendingProduct(item);
+    const existingTags: string[] = Array.isArray(item.tags) ? item.tags.map(String) : [];
+    const tagSet = new Set<string>(existingTags);
+    if (trending) tagSet.add('trending');
+    if (item.sale_price || item.salePrice) tagSet.add('deal');
+    return {
+      ...item,
+      isTrending: trending,
+      tags: Array.from(tagSet),
+    };
+  });
+
+  const fisherYatesShuffle = <T,>(arr: T[]): T[] => {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = copy[i];
+      copy[i] = copy[j];
+      copy[j] = tmp;
+    }
+    return copy;
+  };
+
+  if (sortMode === 'random') {
+    return fisherYatesShuffle(enriched);
+  }
+
+  if (sortMode === 'price_asc' || sortMode === 'price_desc') {
+    const parseNum = (p: any) => {
+      const raw = p.sale_price ?? p.salePrice ?? p.price ?? 0;
+      const n = parseFloat(String(raw).replace(/[^0-9.]/g, ''));
+      return Number.isFinite(n) ? n : 0;
+    };
+    return [...enriched].sort((a, b) =>
+      sortMode === 'price_asc' ? parseNum(a) - parseNum(b) : parseNum(b) - parseNum(a)
+    );
+  }
+
+  if (sortMode === 'latest') {
+    return enriched;
+  }
+
+  // Default: 'trending' — surface trending-tagged items first and dynamically shuffle within each tier
+  const trendingBucket = fisherYatesShuffle(enriched.filter((p) => p.isTrending));
+  const standardBucket = fisherYatesShuffle(enriched.filter((p) => !p.isTrending));
+  return [...trendingBucket, ...standardBucket];
+}
+
+// Products catalog query & batch sync API (supports ?sort=trending|random|latest|price_asc|price_desc, ?tag=trending, ?type=, ?category=, ?q=, and optional ?page=&limit=&skip=&take= pagination)
 app.get('/api/products', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   const typeFilter = typeof req.query.type === 'string' ? req.query.type.toLowerCase().trim() : '';
   const category = typeof req.query.category === 'string' ? req.query.category.trim() : 'All';
+  const tagFilter = typeof req.query.tag === 'string' ? req.query.tag.toLowerCase().trim() : '';
+  const sortParam = typeof req.query.sort === 'string' ? req.query.sort.trim() : 'trending';
   const rawQuery = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
   const queryTokens = rawQuery ? rawQuery.split(/\s+/).filter(Boolean) : [];
 
   const matched = currentCatalog.filter((p) => {
     if (typeFilter === 'affiliate' && p.productType !== 'affiliate') return false;
     if (typeFilter === 'dropshipping' && p.productType === 'affiliate') return false;
-    if (!matchesServerProductCategory(p, category)) return false;
+    if (
+      (tagFilter === 'trending' || category.toLowerCase() === 'trending') &&
+      !isServerTrendingProduct(p)
+    ) {
+      return false;
+    }
+    if (category.toLowerCase() !== 'trending' && !matchesServerProductCategory(p, category)) {
+      return false;
+    }
     if (queryTokens.length > 0) {
       const hay = `${p.title || ''} ${p.description || ''} ${p.id || ''} ${p.brand || ''}`.toLowerCase();
       if (!queryTokens.every((t) => hay.includes(t))) return false;
     }
     return true;
   });
+
+  const sortedAndShuffled = enrichAndSortCatalogProducts(matched, sortParam);
 
   const hasPaginationParams =
     req.query.page !== undefined ||
@@ -1497,33 +1597,41 @@ app.get('/api/products', (req, res) => {
       req.query.skip !== undefined && !isNaN(parseInt(String(req.query.skip), 10))
         ? Math.max(0, parseInt(String(req.query.skip), 10))
         : (page - 1) * take;
-    const paginated = matched.slice(skip, skip + take);
+    const paginated = sortedAndShuffled.slice(skip, skip + take);
 
     return res.status(200).json({
+      success: true,
+      sort: sortParam,
+      refreshedAt: new Date().toISOString(),
       page,
       pageSize: take,
       skip,
       take,
-      totalCount: matched.length,
-      totalPages: Math.max(1, Math.ceil(matched.length / take)),
+      totalCount: sortedAndShuffled.length,
+      totalPages: Math.max(1, Math.ceil(sortedAndShuffled.length / take)),
       count: paginated.length,
       products: paginated,
     });
   }
 
   res.status(200).json({
-    totalCount: matched.length,
-    count: matched.length,
-    products: matched,
+    success: true,
+    sort: sortParam,
+    refreshedAt: new Date().toISOString(),
+    totalCount: sortedAndShuffled.length,
+    count: sortedAndShuffled.length,
+    products: sortedAndShuffled,
   });
 });
 
 // Debounced Storefront Product Search API (/api/products/search)
 app.get('/api/products/search', (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const rawQuery = typeof req.query.q === 'string' ? req.query.q : '';
     const category = typeof req.query.category === 'string' ? req.query.category : 'All';
     const typeFilter = typeof req.query.type === 'string' ? req.query.type.toLowerCase().trim() : '';
+    const sortParam = typeof req.query.sort === 'string' ? req.query.sort.trim() : 'trending';
     const limitParam = req.query.limit || req.query.take ? parseInt(String(req.query.limit || req.query.take), 10) : 0;
     const skipParam = req.query.skip ? parseInt(String(req.query.skip), 10) : 0;
 
@@ -1537,7 +1645,11 @@ app.get('/api/products/search', (req, res) => {
       if (typeFilter === 'affiliate' && p.productType !== 'affiliate') return false;
       if (typeFilter === 'dropshipping' && p.productType === 'affiliate') return false;
 
-      if (!matchesServerProductCategory(p, category)) return false;
+      if (category.toLowerCase() === 'trending') {
+        if (!isServerTrendingProduct(p)) return false;
+      } else if (!matchesServerProductCategory(p, category)) {
+        return false;
+      }
       if (queryTokens.length === 0) return true;
 
       const titleLower = (p.title || '').toLowerCase();
@@ -1552,19 +1664,22 @@ app.get('/api/products/search', (req, res) => {
       return queryTokens.every((token) => searchableText.includes(token));
     });
 
+    const sortedAndShuffled = enrichAndSortCatalogProducts(matchedProducts, sortParam);
     const startOffset = skipParam > 0 && Number.isFinite(skipParam) ? skipParam : 0;
     const finalProducts =
       limitParam > 0 && Number.isFinite(limitParam)
-        ? matchedProducts.slice(startOffset, startOffset + limitParam)
+        ? sortedAndShuffled.slice(startOffset, startOffset + limitParam)
         : startOffset > 0
-        ? matchedProducts.slice(startOffset)
-        : matchedProducts;
+        ? sortedAndShuffled.slice(startOffset)
+        : sortedAndShuffled;
 
     res.status(200).json({
       query: rawQuery,
       category,
-      totalCount: matchedProducts.length,
-      count: matchedProducts.length,
+      sort: sortParam,
+      refreshedAt: new Date().toISOString(),
+      totalCount: sortedAndShuffled.length,
+      count: sortedAndShuffled.length,
       totalCatalogCount: currentCatalog.length,
       products: finalProducts,
     });
