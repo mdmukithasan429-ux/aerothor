@@ -32,6 +32,7 @@ import {
 import { getAdminAuthHeaders } from '../lib/admin-auth';
 import { OrderStatusType, TrackedOrderResult } from './OrderTrackingPage';
 import { formatPriceForDisplay } from '../lib/currency';
+import { AdminRevenueDrilldownModal, DrilldownType } from './AdminRevenueDrilldownModal';
 
 interface AdminOrdersManagerProps {
   onOpenPublicTracker?: (orderNumber: string) => void;
@@ -59,6 +60,7 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
   const [cjFinancials, setCjFinancials] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+  const [activeModal, setActiveModal] = useState<DrilldownType>(null);
 
   // Local editable row state keyed by orderNumber
   const [draftEdits, setDraftEdits] = useState<
@@ -530,36 +532,120 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-lg">
-            <div className="text-[10px] uppercase font-mono text-slate-400">Total Stripe Revenue</div>
-            <div className="text-base font-extrabold font-mono text-emerald-400 mt-0.5">
+          {/* Card 1: Total Stripe Revenue */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View Total Stripe Revenue transaction log"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('stripe_revenue');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('stripe_revenue');
+              }
+            }}
+            className="p-3 bg-slate-950/80 border border-slate-800 hover:border-emerald-500/60 rounded-lg cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            title="Click to view detailed Stripe revenue transaction log"
+          >
+            <div className="text-[10px] uppercase font-mono text-slate-400 group-hover:text-emerald-400 transition-colors pointer-events-none flex items-center justify-between">
+              <span>Total Stripe Revenue</span>
+              <span className="text-[9px] text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">Details &rarr;</span>
+            </div>
+            <div className="text-base font-extrabold font-mono text-emerald-400 mt-0.5 pointer-events-none">
               ${(cjFinancials?.totalRevenueCollected ?? orders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0)).toFixed(2)} USD
             </div>
-            <div className="text-[9px] text-slate-500 mt-0.5">Customer payments to Stripe</div>
+            <div className="text-[9px] text-slate-500 mt-0.5 pointer-events-none">Customer payments to Stripe</div>
           </div>
 
-          <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-lg">
-            <div className="text-[10px] uppercase font-mono text-slate-400">CJ Wholesale Deducted</div>
-            <div className="text-base font-extrabold font-mono text-amber-400 mt-0.5">
+          {/* Card 2: CJ Wholesale Deducted */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View CJ Wholesale COGS & fulfillment deduction log"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('cj_wholesale');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('cj_wholesale');
+              }
+            }}
+            className="p-3 bg-slate-950/80 border border-slate-800 hover:border-amber-500/60 rounded-lg cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+            title="Click to view CJ Wholesale COGS & fulfillment deduction log"
+          >
+            <div className="text-[10px] uppercase font-mono text-slate-400 group-hover:text-amber-400 transition-colors pointer-events-none flex items-center justify-between">
+              <span>CJ Wholesale Deducted</span>
+              <span className="text-[9px] text-amber-400 opacity-0 group-hover:opacity-100 transition-opacity">Details &rarr;</span>
+            </div>
+            <div className="text-base font-extrabold font-mono text-amber-400 mt-0.5 pointer-events-none">
               -${(cjFinancials?.totalCjWholesaleDeducted ?? (orders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0) * 0.38)).toFixed(2)} USD
             </div>
-            <div className="text-[9px] text-slate-500 mt-0.5">Auto-debited from CJ Wallet</div>
+            <div className="text-[9px] text-slate-500 mt-0.5 pointer-events-none">Auto-debited from CJ Wallet</div>
           </div>
 
-          <div className="p-3 bg-slate-950/80 border border-emerald-500/30 rounded-lg bg-emerald-950/20">
-            <div className="text-[10px] uppercase font-mono text-emerald-300">Net Merchant Profit</div>
-            <div className="text-base font-extrabold font-mono text-emerald-300 mt-0.5">
+          {/* Card 3: Net Merchant Profit */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View net profit margin breakdown per order"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('net_profit');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('net_profit');
+              }
+            }}
+            className="p-3 bg-slate-950/80 border border-emerald-500/30 hover:border-emerald-400 rounded-lg bg-emerald-950/20 cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            title="Click to view net profit margin breakdown per order"
+          >
+            <div className="text-[10px] uppercase font-mono text-emerald-300 group-hover:text-emerald-200 transition-colors pointer-events-none flex items-center justify-between">
+              <span>Net Merchant Profit</span>
+              <span className="text-[9px] text-emerald-300 opacity-0 group-hover:opacity-100 transition-opacity">Details &rarr;</span>
+            </div>
+            <div className="text-base font-extrabold font-mono text-emerald-300 mt-0.5 pointer-events-none">
               +${(cjFinancials?.netMerchantProfit ?? (orders.reduce((acc, o) => acc + (Number(o.totalAmount) || 0), 0) * 0.62)).toFixed(2)} USD
             </div>
-            <div className="text-[9px] text-emerald-500 font-semibold mt-0.5">Your Retained Earnings</div>
+            <div className="text-[9px] text-emerald-500 font-semibold mt-0.5 pointer-events-none">Your Retained Earnings</div>
           </div>
 
-          <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-lg">
-            <div className="text-[10px] uppercase font-mono text-slate-400">CJ Wallet Status</div>
-            <div className="text-base font-extrabold font-mono text-indigo-400 mt-0.5">
+          {/* Card 4: CJ Wallet Status */}
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="View CJ Wallet balance, connected card & auto-debit log"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveModal('cj_wallet');
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveModal('cj_wallet');
+              }
+            }}
+            className="p-3 bg-slate-950/80 border border-slate-800 hover:border-indigo-500/60 rounded-lg cursor-pointer transition-all select-none group focus:outline-none focus:ring-2 focus:ring-indigo-500/40"
+            title="Click to view CJ Wallet balance, connected card & auto-debit log"
+          >
+            <div className="text-[10px] uppercase font-mono text-slate-400 group-hover:text-indigo-400 transition-colors pointer-events-none flex items-center justify-between">
+              <span>CJ Wallet Status</span>
+              <span className="text-[9px] text-indigo-400 opacity-0 group-hover:opacity-100 transition-opacity">Details &rarr;</span>
+            </div>
+            <div className="text-base font-extrabold font-mono text-indigo-400 mt-0.5 pointer-events-none">
               ${(cjFinancials?.walletBalance ?? 1485.50).toFixed(2)} USD
             </div>
-            <div className="text-[9px] text-slate-500 mt-0.5">Linked Visa/Mastercard Active</div>
+            <div className="text-[9px] text-slate-500 mt-0.5 pointer-events-none">Linked Visa/Mastercard Active</div>
           </div>
         </div>
       </div>
@@ -1012,6 +1098,16 @@ export const AdminOrdersManager: React.FC<AdminOrdersManagerProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Interactive Drill-Down Audit Modal */}
+      {activeModal && (
+        <AdminRevenueDrilldownModal
+          type={activeModal}
+          onClose={() => setActiveModal(null)}
+          orders={orders}
+          cjWalletBalance={cjFinancials?.walletBalance ?? 1485.50}
+        />
       )}
     </div>
   );
