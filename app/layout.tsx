@@ -127,20 +127,19 @@ export default async function RootLayout({
         <link rel="alternate" hrefLang="en-US" href={`${BASE_DOMAIN}/deals/us`} />
         <link rel="alternate" hrefLang="en-GB" href={`${BASE_DOMAIN}/deals/uk`} />
 
-        {/* Google Analytics 4 (GA4) Tracking Script — Deferred via lazyOnload for 0ms TBT */}
+        {/* Google Analytics 4 (GA4) Tracking Script */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          strategy="lazyOnload"
+          strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="lazyOnload">
+        <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
             gtag('config', '${GA_MEASUREMENT_ID}', {
               page_path: window.location.pathname,
-              send_page_view: true,
-              cookie_flags: 'SameSite=None;Secure'
+              send_page_view: true
             });
           `}
         </Script>

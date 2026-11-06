@@ -171,7 +171,10 @@ export async function POST(req: NextRequest) {
       await prisma.product.deleteMany({});
     }
 
-    const cjApiKey = process.env.CJ_API_KEY || body.apiKey || '';
+    const cjApiKey =
+      process.env.CJ_API_KEY ||
+      body.apiKey ||
+      'CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7';
     let rawCjItems: any[] = [];
 
     if (cjApiKey) {

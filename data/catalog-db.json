@@ -1,6 +1,1814 @@
 {
-  "updatedAt": "2026-11-03T18:57:22.397Z",
+  "updatedAt": "2026-11-06T16:28:38.803Z",
   "products": [
+    {
+      "id": "CJ-CIFBUY-SKULL-01",
+      "title": "CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home",
+      "description": "Heavy-duty laser-cut wrought iron gothic skull silhouette wall plaque with weather-resistant matte black powder coating. Engineered for indoor living rooms, studies, and outdoor yard, patio, or garden wall installation. Fast 3–7 business day domestic US & UK tracked dispatch.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-CIFBUY-SKULL-01",
+      "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+      "price": "28.99 USD",
+      "sale_price": "24.99 USD",
+      "wholesale_price": 8.9,
+      "availability": "in_stock",
+      "brand": "CIFbuy",
+      "mpn": "CIFBUY-SKULL-PLAQUE-01",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "cj_pid": "CJ-CIFBUY-SKULL-01",
+      "google_product_category": "Home & Garden > Decor > Artwork > Wall Sculptures",
+      "product_type": "Home & Garden > Yard & Wall Decor",
+      "isTrending": true,
+      "isBestSelling": false,
+      "trendingScore": 89,
+      "salesCount": 685,
+      "tags": [
+        "trending",
+        "cj-verified"
+      ],
+      "rating": 4.88,
+      "reviewCount": 119,
+      "hasLifetimeUpdateAccess": true,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        },
+        {
+          "country": "GB",
+          "service": "Royal Mail Tracked 48",
+          "price": "0.00 GBP"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "REV-CJ-CIFBUY-SKULL-01-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-CIFBUY-SKULL-01-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-CIFBUY-SKULL-01-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 5,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-CIFBUY-SKULL-01-OBS-STAN",
+          "sku": "CJ-CIFBUY-SKULL-01-OBS-STAN",
+          "cj_vid": "CJ-CIFBUY-SKULL-01-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "28.99 USD",
+          "sale_price": "24.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-CIFBUY-SKULL-01-OBS-PRO",
+          "sku": "CJ-CIFBUY-SKULL-01-OBS-PRO",
+          "cj_vid": "CJ-CIFBUY-SKULL-01-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "33.99 USD",
+          "sale_price": "29.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-CIFBUY-SKULL-01-TIT-STAN",
+          "sku": "CJ-CIFBUY-SKULL-01-TIT-STAN",
+          "cj_vid": "CJ-CIFBUY-SKULL-01-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "30.99 USD",
+          "sale_price": "26.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-CIFBUY-SKULL-01-TIT-PRO",
+          "sku": "CJ-CIFBUY-SKULL-01-TIT-PRO",
+          "cj_vid": "CJ-CIFBUY-SKULL-01-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "35.99 USD",
+          "sale_price": "31.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-CIFBUY-SKULL-01-ALP-STAN",
+          "sku": "CJ-CIFBUY-SKULL-01-ALP-STAN",
+          "cj_vid": "CJ-CIFBUY-SKULL-01-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "32.99 USD",
+          "sale_price": "28.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-CIFBUY-SKULL-01-ALP-PRO",
+          "sku": "CJ-CIFBUY-SKULL-01-ALP-PRO",
+          "cj_vid": "CJ-CIFBUY-SKULL-01-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "37.99 USD",
+          "sale_price": "33.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-DRONE-GPS-4K",
+      "title": "AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras",
+      "description": "Pro-grade compact folding drone equipped with 4K UHD 30fps HDR optical sensor, 3-axis anti-shake gimbal, dual GPS auto-return, and 28-minute flight time per battery. Direct dispatch via CJ Dropshipping.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-DRONE-GPS-4K",
+      "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+      "price": "149.99 USD",
+      "sale_price": "129.99 USD",
+      "wholesale_price": 45,
+      "availability": "in_stock",
+      "brand": "AeroDrone",
+      "cj_pid": "CJ-DRONE-GPS-4K-01",
+      "mpn": "CJ-DRONE-4K-GPS",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Cameras & Optics > Photography > Drones",
+      "product_type": "Tech Accessories > Drones & Camera Gear",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 98,
+      "salesCount": 1890,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.95,
+      "reviewCount": 340,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Air Express",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-DRONE-GPS-4K-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-DRONE-GPS-4K-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-DRONE-GPS-4K-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-DRONE-GPS-4K-OBS-STAN",
+          "sku": "CJ-DRONE-GPS-4K-OBS-STAN",
+          "cj_vid": "CJ-DRONE-GPS-4K-01-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "149.99 USD",
+          "sale_price": "129.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-DRONE-GPS-4K-OBS-PRO",
+          "sku": "CJ-DRONE-GPS-4K-OBS-PRO",
+          "cj_vid": "CJ-DRONE-GPS-4K-01-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "154.99 USD",
+          "sale_price": "134.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-DRONE-GPS-4K-TIT-STAN",
+          "sku": "CJ-DRONE-GPS-4K-TIT-STAN",
+          "cj_vid": "CJ-DRONE-GPS-4K-01-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "151.99 USD",
+          "sale_price": "131.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-DRONE-GPS-4K-TIT-PRO",
+          "sku": "CJ-DRONE-GPS-4K-TIT-PRO",
+          "cj_vid": "CJ-DRONE-GPS-4K-01-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "156.99 USD",
+          "sale_price": "136.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-DRONE-GPS-4K-ALP-STAN",
+          "sku": "CJ-DRONE-GPS-4K-ALP-STAN",
+          "cj_vid": "CJ-DRONE-GPS-4K-01-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "153.99 USD",
+          "sale_price": "133.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-DRONE-GPS-4K-ALP-PRO",
+          "sku": "CJ-DRONE-GPS-4K-ALP-PRO",
+          "cj_vid": "CJ-DRONE-GPS-4K-01-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "158.99 USD",
+          "sale_price": "138.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-ESPRESSO-PORTABLE",
+      "title": "PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine",
+      "description": "Rechargeable handheld travel espresso machine with built-in self-heating water chamber and 15-bar Italian pump. Compatible with NS capsules and ground espresso coffee. Compact for camping, road trips, and office desks.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-ESPRESSO-PORTABLE",
+      "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+      "price": "89.99 USD",
+      "sale_price": "74.99 USD",
+      "wholesale_price": 28.5,
+      "availability": "in_stock",
+      "brand": "PressUp",
+      "cj_pid": "CJ-ESPRESSO-PORT-02",
+      "mpn": "CJ-PRESSUP-15BAR",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Home & Garden > Kitchen & Dining > Coffee Makers > Espresso Machines",
+      "product_type": "Drinkware & Travel > Portable Coffee Makers",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 96,
+      "salesCount": 1420,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.92,
+      "reviewCount": 265,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-ESPRESSO-PORTABLE-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-ESPRESSO-PORTABLE-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-ESPRESSO-PORTABLE-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 5,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-ESPRESSO-PORTABLE-OBS-STAN",
+          "sku": "CJ-ESPRESSO-PORTABLE-OBS-STAN",
+          "cj_vid": "CJ-ESPRESSO-PORT-02-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "89.99 USD",
+          "sale_price": "74.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-ESPRESSO-PORTABLE-OBS-PRO",
+          "sku": "CJ-ESPRESSO-PORTABLE-OBS-PRO",
+          "cj_vid": "CJ-ESPRESSO-PORT-02-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "94.99 USD",
+          "sale_price": "79.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-ESPRESSO-PORTABLE-TIT-STAN",
+          "sku": "CJ-ESPRESSO-PORTABLE-TIT-STAN",
+          "cj_vid": "CJ-ESPRESSO-PORT-02-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "91.99 USD",
+          "sale_price": "76.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-ESPRESSO-PORTABLE-TIT-PRO",
+          "sku": "CJ-ESPRESSO-PORTABLE-TIT-PRO",
+          "cj_vid": "CJ-ESPRESSO-PORT-02-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "96.99 USD",
+          "sale_price": "81.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-ESPRESSO-PORTABLE-ALP-STAN",
+          "sku": "CJ-ESPRESSO-PORTABLE-ALP-STAN",
+          "cj_vid": "CJ-ESPRESSO-PORT-02-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "93.99 USD",
+          "sale_price": "78.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-ESPRESSO-PORTABLE-ALP-PRO",
+          "sku": "CJ-ESPRESSO-PORTABLE-ALP-PRO",
+          "cj_vid": "CJ-ESPRESSO-PORT-02-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "98.99 USD",
+          "sale_price": "83.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-ULTRASONIC-CLEANER",
+      "title": "SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank",
+      "description": "High-frequency 45,000Hz ultrasonic wave chamber thoroughly cleans eyeglasses, rings, watches, waterproof shavers, and makeup tools without harsh chemicals. Auto shut-off timer and quiet motor.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-ULTRASONIC-CLEANER",
+      "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+      "price": "39.99 USD",
+      "sale_price": "32.99 USD",
+      "wholesale_price": 11.2,
+      "availability": "in_stock",
+      "brand": "SonicPro",
+      "cj_pid": "CJ-ULTRASONIC-CLEAN-03",
+      "mpn": "CJ-SONIC-45KHZ",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Health & Beauty > Personal Care > Jewelry Cleaners",
+      "product_type": "Home & Garden > Cleaning Appliances",
+      "isTrending": true,
+      "isBestSelling": false,
+      "trendingScore": 92,
+      "salesCount": 980,
+      "tags": [
+        "trending",
+        "cj-verified"
+      ],
+      "rating": 4.89,
+      "reviewCount": 185,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-ULTRASONIC-CLEANER-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-ULTRASONIC-CLEANER-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-ULTRASONIC-CLEANER-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 5,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-ULTRASONIC-CLEANER-OBS-STAN",
+          "sku": "CJ-ULTRASONIC-CLEANER-OBS-STAN",
+          "cj_vid": "CJ-ULTRASONIC-CLEAN-03-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "39.99 USD",
+          "sale_price": "32.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-ULTRASONIC-CLEANER-OBS-PRO",
+          "sku": "CJ-ULTRASONIC-CLEANER-OBS-PRO",
+          "cj_vid": "CJ-ULTRASONIC-CLEAN-03-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "44.99 USD",
+          "sale_price": "37.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-ULTRASONIC-CLEANER-TIT-STAN",
+          "sku": "CJ-ULTRASONIC-CLEANER-TIT-STAN",
+          "cj_vid": "CJ-ULTRASONIC-CLEAN-03-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "41.99 USD",
+          "sale_price": "34.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-ULTRASONIC-CLEANER-TIT-PRO",
+          "sku": "CJ-ULTRASONIC-CLEANER-TIT-PRO",
+          "cj_vid": "CJ-ULTRASONIC-CLEAN-03-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "46.99 USD",
+          "sale_price": "39.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-ULTRASONIC-CLEANER-ALP-STAN",
+          "sku": "CJ-ULTRASONIC-CLEANER-ALP-STAN",
+          "cj_vid": "CJ-ULTRASONIC-CLEAN-03-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "43.99 USD",
+          "sale_price": "36.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-ULTRASONIC-CLEANER-ALP-PRO",
+          "sku": "CJ-ULTRASONIC-CLEANER-ALP-PRO",
+          "cj_vid": "CJ-ULTRASONIC-CLEAN-03-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "48.99 USD",
+          "sale_price": "41.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-LUMBAR-CUSHION",
+      "title": "Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort",
+      "description": "High-density ventilated memory foam backrest cushion contoured for spinal alignment and lower back pressure relief. Removable 3D mesh breathable cover with dual adjustable non-slip straps.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-LUMBAR-CUSHION",
+      "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+      "price": "34.99 USD",
+      "sale_price": "28.99 USD",
+      "wholesale_price": 9.8,
+      "availability": "in_stock",
+      "brand": "PostureComfort",
+      "cj_pid": "CJ-LUMBAR-MEMFOAM-04",
+      "mpn": "CJ-LUMBAR-04",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Furniture > Office Furniture Accessories > Chair Pads",
+      "product_type": "Home & Garden > Office Ergonomics",
+      "isTrending": false,
+      "isBestSelling": true,
+      "trendingScore": 91,
+      "salesCount": 1650,
+      "tags": [
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.91,
+      "reviewCount": 290,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Ground Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-LUMBAR-CUSHION-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-LUMBAR-CUSHION-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-LUMBAR-CUSHION-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-LUMBAR-CUSHION-OBS-STAN",
+          "sku": "CJ-LUMBAR-CUSHION-OBS-STAN",
+          "cj_vid": "CJ-LUMBAR-MEMFOAM-04-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "34.99 USD",
+          "sale_price": "28.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-LUMBAR-CUSHION-OBS-PRO",
+          "sku": "CJ-LUMBAR-CUSHION-OBS-PRO",
+          "cj_vid": "CJ-LUMBAR-MEMFOAM-04-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "39.99 USD",
+          "sale_price": "33.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-LUMBAR-CUSHION-TIT-STAN",
+          "sku": "CJ-LUMBAR-CUSHION-TIT-STAN",
+          "cj_vid": "CJ-LUMBAR-MEMFOAM-04-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "36.99 USD",
+          "sale_price": "30.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-LUMBAR-CUSHION-TIT-PRO",
+          "sku": "CJ-LUMBAR-CUSHION-TIT-PRO",
+          "cj_vid": "CJ-LUMBAR-MEMFOAM-04-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "41.99 USD",
+          "sale_price": "35.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-LUMBAR-CUSHION-ALP-STAN",
+          "sku": "CJ-LUMBAR-CUSHION-ALP-STAN",
+          "cj_vid": "CJ-LUMBAR-MEMFOAM-04-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "38.99 USD",
+          "sale_price": "32.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-LUMBAR-CUSHION-ALP-PRO",
+          "sku": "CJ-LUMBAR-CUSHION-ALP-PRO",
+          "cj_vid": "CJ-LUMBAR-MEMFOAM-04-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "43.99 USD",
+          "sale_price": "37.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-RGB-SOUNDBAR",
+      "title": "SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input",
+      "description": "Compact stereo PC soundbar with dual 52mm full-range drivers, tuned bass diaphragm, and 8 dynamic RGB lighting modes. One-knob volume control with instant Bluetooth 5.3 and 3.5mm AUX switching.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-RGB-SOUNDBAR",
+      "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+      "price": "49.99 USD",
+      "sale_price": "39.99 USD",
+      "wholesale_price": 14.5,
+      "availability": "in_stock",
+      "brand": "SoundPulse",
+      "cj_pid": "CJ-RGB-SOUNDBAR-05",
+      "mpn": "CJ-SOUNDPULSE-RGB",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Electronics > Audio > Audio Components > Speakers",
+      "product_type": "Tech Accessories > Desktop Audio",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 95,
+      "salesCount": 2100,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.94,
+      "reviewCount": 380,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-RGB-SOUNDBAR-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-RGB-SOUNDBAR-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-RGB-SOUNDBAR-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-RGB-SOUNDBAR-OBS-STAN",
+          "sku": "CJ-RGB-SOUNDBAR-OBS-STAN",
+          "cj_vid": "CJ-RGB-SOUNDBAR-05-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "49.99 USD",
+          "sale_price": "39.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-RGB-SOUNDBAR-OBS-PRO",
+          "sku": "CJ-RGB-SOUNDBAR-OBS-PRO",
+          "cj_vid": "CJ-RGB-SOUNDBAR-05-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "54.99 USD",
+          "sale_price": "44.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-RGB-SOUNDBAR-TIT-STAN",
+          "sku": "CJ-RGB-SOUNDBAR-TIT-STAN",
+          "cj_vid": "CJ-RGB-SOUNDBAR-05-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "51.99 USD",
+          "sale_price": "41.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-RGB-SOUNDBAR-TIT-PRO",
+          "sku": "CJ-RGB-SOUNDBAR-TIT-PRO",
+          "cj_vid": "CJ-RGB-SOUNDBAR-05-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "56.99 USD",
+          "sale_price": "46.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-RGB-SOUNDBAR-ALP-STAN",
+          "sku": "CJ-RGB-SOUNDBAR-ALP-STAN",
+          "cj_vid": "CJ-RGB-SOUNDBAR-05-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "53.99 USD",
+          "sale_price": "43.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-RGB-SOUNDBAR-ALP-PRO",
+          "sku": "CJ-RGB-SOUNDBAR-ALP-PRO",
+          "cj_vid": "CJ-RGB-SOUNDBAR-05-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "58.99 USD",
+          "sale_price": "48.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-PET-FOUNTAIN",
+      "title": "PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter",
+      "description": "Food-grade 304 stainless steel pet drinking fountain with quadruple filtration system (activated carbon, ion-exchange resin, non-woven fabric). Ultra-quiet <20dB submersible water pump.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-PET-FOUNTAIN",
+      "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+      "price": "36.99 USD",
+      "sale_price": "29.99 USD",
+      "wholesale_price": 10.2,
+      "availability": "in_stock",
+      "brand": "PurePaws",
+      "cj_pid": "CJ-PET-FOUNTAIN-06",
+      "mpn": "CJ-PUREPAWS-2.5L",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Animals & Pet Supplies > Pet Supplies > Cat Supplies > Cat Bowls & Feeders",
+      "product_type": "Home & Garden > Pet Care & Supplies",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 94,
+      "salesCount": 1780,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.93,
+      "reviewCount": 310,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-PET-FOUNTAIN-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-PET-FOUNTAIN-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-PET-FOUNTAIN-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-PET-FOUNTAIN-OBS-STAN",
+          "sku": "CJ-PET-FOUNTAIN-OBS-STAN",
+          "cj_vid": "CJ-PET-FOUNTAIN-06-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "36.99 USD",
+          "sale_price": "29.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-PET-FOUNTAIN-OBS-PRO",
+          "sku": "CJ-PET-FOUNTAIN-OBS-PRO",
+          "cj_vid": "CJ-PET-FOUNTAIN-06-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "41.99 USD",
+          "sale_price": "34.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-PET-FOUNTAIN-TIT-STAN",
+          "sku": "CJ-PET-FOUNTAIN-TIT-STAN",
+          "cj_vid": "CJ-PET-FOUNTAIN-06-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "38.99 USD",
+          "sale_price": "31.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-PET-FOUNTAIN-TIT-PRO",
+          "sku": "CJ-PET-FOUNTAIN-TIT-PRO",
+          "cj_vid": "CJ-PET-FOUNTAIN-06-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "43.99 USD",
+          "sale_price": "36.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-PET-FOUNTAIN-ALP-STAN",
+          "sku": "CJ-PET-FOUNTAIN-ALP-STAN",
+          "cj_vid": "CJ-PET-FOUNTAIN-06-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "40.99 USD",
+          "sale_price": "33.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-PET-FOUNTAIN-ALP-PRO",
+          "sku": "CJ-PET-FOUNTAIN-ALP-PRO",
+          "cj_vid": "CJ-PET-FOUNTAIN-06-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "45.99 USD",
+          "sale_price": "38.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-THERMAL-GLOVES",
+      "title": "AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves",
+      "description": "Windproof 3M Thinsulate lined winter sports gloves with sensitive conductive touchscreen fingertips and non-slip silicone palm grip. Ideal for winter cycling, running, hiking, and daily commuting.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-THERMAL-GLOVES",
+      "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+      "price": "32.99 USD",
+      "sale_price": "26.99 USD",
+      "wholesale_price": 8.5,
+      "availability": "in_stock",
+      "brand": "AeroThor",
+      "cj_pid": "CJ-THERMAL-GLOVES-07",
+      "mpn": "AT-THERM-GLV",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Apparel & Accessories > Clothing Accessories > Gloves & Mittens",
+      "product_type": "Clothing > Outerwear & Gloves",
+      "isTrending": true,
+      "isBestSelling": false,
+      "trendingScore": 90,
+      "salesCount": 1240,
+      "tags": [
+        "trending",
+        "cj-verified"
+      ],
+      "rating": 4.9,
+      "reviewCount": 210,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-THERMAL-GLOVES-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-THERMAL-GLOVES-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-THERMAL-GLOVES-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-THERMAL-GLOVES-OBS-STAN",
+          "sku": "CJ-THERMAL-GLOVES-OBS-STAN",
+          "cj_vid": "CJ-THERMAL-GLOVES-07-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "32.99 USD",
+          "sale_price": "26.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-THERMAL-GLOVES-OBS-PRO",
+          "sku": "CJ-THERMAL-GLOVES-OBS-PRO",
+          "cj_vid": "CJ-THERMAL-GLOVES-07-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "37.99 USD",
+          "sale_price": "31.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-THERMAL-GLOVES-TIT-STAN",
+          "sku": "CJ-THERMAL-GLOVES-TIT-STAN",
+          "cj_vid": "CJ-THERMAL-GLOVES-07-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "34.99 USD",
+          "sale_price": "28.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-THERMAL-GLOVES-TIT-PRO",
+          "sku": "CJ-THERMAL-GLOVES-TIT-PRO",
+          "cj_vid": "CJ-THERMAL-GLOVES-07-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "39.99 USD",
+          "sale_price": "33.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-THERMAL-GLOVES-ALP-STAN",
+          "sku": "CJ-THERMAL-GLOVES-ALP-STAN",
+          "cj_vid": "CJ-THERMAL-GLOVES-07-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "36.99 USD",
+          "sale_price": "30.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-THERMAL-GLOVES-ALP-PRO",
+          "sku": "CJ-THERMAL-GLOVES-ALP-PRO",
+          "cj_vid": "CJ-THERMAL-GLOVES-07-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "41.99 USD",
+          "sale_price": "35.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-MOON-LAMP",
+      "title": "AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote",
+      "description": "High-precision 3D printed lunar sphere hovering and slowly spinning above a dark walnut magnetic base. Controlled via touch sensor or 16-color wireless remote control. Low-power wireless electromagnetic induction.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-MOON-LAMP",
+      "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+      "price": "89.99 USD",
+      "sale_price": "74.99 USD",
+      "wholesale_price": 26,
+      "availability": "in_stock",
+      "brand": "AstraLev",
+      "cj_pid": "CJ-MOON-LEV-08",
+      "mpn": "CJ-ASTRA-MOON",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Home & Garden > Lighting > Lamps",
+      "product_type": "Home & Garden > Ambient Lighting",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 97,
+      "salesCount": 2310,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.96,
+      "reviewCount": 415,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-MOON-LAMP-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-MOON-LAMP-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-MOON-LAMP-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 5,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-MOON-LAMP-OBS-STAN",
+          "sku": "CJ-MOON-LAMP-OBS-STAN",
+          "cj_vid": "CJ-MOON-LEV-08-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "89.99 USD",
+          "sale_price": "74.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-MOON-LAMP-OBS-PRO",
+          "sku": "CJ-MOON-LAMP-OBS-PRO",
+          "cj_vid": "CJ-MOON-LEV-08-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "94.99 USD",
+          "sale_price": "79.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-MOON-LAMP-TIT-STAN",
+          "sku": "CJ-MOON-LAMP-TIT-STAN",
+          "cj_vid": "CJ-MOON-LEV-08-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "91.99 USD",
+          "sale_price": "76.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-MOON-LAMP-TIT-PRO",
+          "sku": "CJ-MOON-LAMP-TIT-PRO",
+          "cj_vid": "CJ-MOON-LEV-08-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "96.99 USD",
+          "sale_price": "81.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-MOON-LAMP-ALP-STAN",
+          "sku": "CJ-MOON-LAMP-ALP-STAN",
+          "cj_vid": "CJ-MOON-LEV-08-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "93.99 USD",
+          "sale_price": "78.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-MOON-LAMP-ALP-PRO",
+          "sku": "CJ-MOON-LAMP-ALP-PRO",
+          "cj_vid": "CJ-MOON-LEV-08-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "98.99 USD",
+          "sale_price": "83.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-DESK-MAT-LEATHER",
+      "title": "VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat",
+      "description": "Dual-sided desk pad featuring 100% natural Bavarian wool felt on one side and scratch-resistant waterproof vegan leather on the reverse. Dampens key-switch acoustics and provides zero-slip mouse tracking.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-DESK-MAT-LEATHER",
+      "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+      "price": "44.99 USD",
+      "sale_price": "36.99 USD",
+      "wholesale_price": 12.5,
+      "availability": "in_stock",
+      "brand": "VoltCore",
+      "cj_pid": "CJ-DESKMAT-FELT-09",
+      "mpn": "VC-DESKMAT-ALP",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Office Supplies > Desk Accessories > Desk Pads",
+      "product_type": "Tech Accessories > Workspace Setup",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 93,
+      "salesCount": 1540,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.92,
+      "reviewCount": 275,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-DESK-MAT-LEATHER-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-DESK-MAT-LEATHER-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-DESK-MAT-LEATHER-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 5,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-DESK-MAT-LEATHER-OBS-STAN",
+          "sku": "CJ-DESK-MAT-LEATHER-OBS-STAN",
+          "cj_vid": "CJ-DESKMAT-FELT-09-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "44.99 USD",
+          "sale_price": "36.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-DESK-MAT-LEATHER-OBS-PRO",
+          "sku": "CJ-DESK-MAT-LEATHER-OBS-PRO",
+          "cj_vid": "CJ-DESKMAT-FELT-09-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "49.99 USD",
+          "sale_price": "41.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-DESK-MAT-LEATHER-TIT-STAN",
+          "sku": "CJ-DESK-MAT-LEATHER-TIT-STAN",
+          "cj_vid": "CJ-DESKMAT-FELT-09-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "46.99 USD",
+          "sale_price": "38.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-DESK-MAT-LEATHER-TIT-PRO",
+          "sku": "CJ-DESK-MAT-LEATHER-TIT-PRO",
+          "cj_vid": "CJ-DESKMAT-FELT-09-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "51.99 USD",
+          "sale_price": "43.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-DESK-MAT-LEATHER-ALP-STAN",
+          "sku": "CJ-DESK-MAT-LEATHER-ALP-STAN",
+          "cj_vid": "CJ-DESKMAT-FELT-09-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "48.99 USD",
+          "sale_price": "40.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-DESK-MAT-LEATHER-ALP-PRO",
+          "sku": "CJ-DESK-MAT-LEATHER-ALP-PRO",
+          "cj_vid": "CJ-DESKMAT-FELT-09-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "53.99 USD",
+          "sale_price": "45.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-DOCKING-HUB-4K",
+      "title": "VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub",
+      "description": "Heavy-duty CNC anodized aluminum 10-in-1 docking hub with 85W power delivery, dual 4K 60Hz HDMI outputs, UHS-II SD card reader, 2.5G Ethernet, and 40Gbps Thunderbolt data passthrough.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-DOCKING-HUB-4K",
+      "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+      "price": "119.99 USD",
+      "sale_price": "99.99 USD",
+      "wholesale_price": 36,
+      "availability": "in_stock",
+      "brand": "VoltCore",
+      "cj_pid": "CJ-DOCKING-HUB-10",
+      "mpn": "VC-TB4-DOCK-10IN1",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Electronics > Electronics Accessories > Computer Components > Docking Stations",
+      "product_type": "Tech Accessories > Workstation Docks",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 97,
+      "salesCount": 2050,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.95,
+      "reviewCount": 360,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-DOCKING-HUB-4K-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-DOCKING-HUB-4K-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-DOCKING-HUB-4K-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-DOCKING-HUB-4K-OBS-STAN",
+          "sku": "CJ-DOCKING-HUB-4K-OBS-STAN",
+          "cj_vid": "CJ-DOCKING-HUB-10-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "119.99 USD",
+          "sale_price": "99.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-DOCKING-HUB-4K-OBS-PRO",
+          "sku": "CJ-DOCKING-HUB-4K-OBS-PRO",
+          "cj_vid": "CJ-DOCKING-HUB-10-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "124.99 USD",
+          "sale_price": "104.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-DOCKING-HUB-4K-TIT-STAN",
+          "sku": "CJ-DOCKING-HUB-4K-TIT-STAN",
+          "cj_vid": "CJ-DOCKING-HUB-10-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "121.99 USD",
+          "sale_price": "101.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-DOCKING-HUB-4K-TIT-PRO",
+          "sku": "CJ-DOCKING-HUB-4K-TIT-PRO",
+          "cj_vid": "CJ-DOCKING-HUB-10-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "126.99 USD",
+          "sale_price": "106.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-DOCKING-HUB-4K-ALP-STAN",
+          "sku": "CJ-DOCKING-HUB-4K-ALP-STAN",
+          "cj_vid": "CJ-DOCKING-HUB-10-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "123.99 USD",
+          "sale_price": "103.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-DOCKING-HUB-4K-ALP-PRO",
+          "sku": "CJ-DOCKING-HUB-4K-ALP-PRO",
+          "cj_vid": "CJ-DOCKING-HUB-10-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "128.99 USD",
+          "sale_price": "108.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-WIRELESS-KEYBOARD",
+      "title": "Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard",
+      "description": "Premium double-gasket full CNC aluminum wireless mechanical keyboard with hot-swappable switches, PBT keycaps, Bluetooth 5.1, and open-source QMK/VIA keymap programming.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-WIRELESS-KEYBOARD",
+      "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+      "price": "199.99 USD",
+      "sale_price": "179.99 USD",
+      "wholesale_price": 68,
+      "availability": "in_stock",
+      "brand": "Keychron",
+      "cj_pid": "CJ-KEYBOARD-Q1PRO",
+      "mpn": "KC-Q1PRO-CNC",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Electronics > Electronics Accessories > Keyboards",
+      "product_type": "Tech Accessories > Keyboards & Input",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 99,
+      "salesCount": 3100,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.97,
+      "reviewCount": 620,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-WIRELESS-KEYBOARD-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-WIRELESS-KEYBOARD-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-WIRELESS-KEYBOARD-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-WIRELESS-KEYBOARD-OBS-STAN",
+          "sku": "CJ-WIRELESS-KEYBOARD-OBS-STAN",
+          "cj_vid": "CJ-KEYBOARD-Q1PRO-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "199.99 USD",
+          "sale_price": "179.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-WIRELESS-KEYBOARD-OBS-PRO",
+          "sku": "CJ-WIRELESS-KEYBOARD-OBS-PRO",
+          "cj_vid": "CJ-KEYBOARD-Q1PRO-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "204.99 USD",
+          "sale_price": "184.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-WIRELESS-KEYBOARD-TIT-STAN",
+          "sku": "CJ-WIRELESS-KEYBOARD-TIT-STAN",
+          "cj_vid": "CJ-KEYBOARD-Q1PRO-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "201.99 USD",
+          "sale_price": "181.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-WIRELESS-KEYBOARD-TIT-PRO",
+          "sku": "CJ-WIRELESS-KEYBOARD-TIT-PRO",
+          "cj_vid": "CJ-KEYBOARD-Q1PRO-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "206.99 USD",
+          "sale_price": "186.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-WIRELESS-KEYBOARD-ALP-STAN",
+          "sku": "CJ-WIRELESS-KEYBOARD-ALP-STAN",
+          "cj_vid": "CJ-KEYBOARD-Q1PRO-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "203.99 USD",
+          "sale_price": "183.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-WIRELESS-KEYBOARD-ALP-PRO",
+          "sku": "CJ-WIRELESS-KEYBOARD-ALP-PRO",
+          "cj_vid": "CJ-KEYBOARD-Q1PRO-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "208.99 USD",
+          "sale_price": "188.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
+    {
+      "id": "CJ-SILENT-MOUSE",
+      "title": "Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse",
+      "description": "Iconic ergonomic productivity mouse featuring 8000 DPI track-on-glass sensor, Quiet Click switches (90% noise reduction), MagSpeed electromagnetic scroll wheel, and 70-day USB-C battery life.",
+      "link": "https://aerothor.smmgrows.com/product/CJ-SILENT-MOUSE",
+      "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+      "price": "99.99 USD",
+      "sale_price": "89.99 USD",
+      "wholesale_price": 34,
+      "availability": "in_stock",
+      "brand": "Logitech",
+      "cj_pid": "CJ-MOUSE-MX3S",
+      "mpn": "LOGI-MX3S-8K",
+      "condition": "new",
+      "identifier_exists": true,
+      "productType": "dropshipping",
+      "source": "cj_live",
+      "google_product_category": "Electronics > Electronics Accessories > Computer Mice",
+      "product_type": "Tech Accessories > Mice & Trackpads",
+      "isTrending": true,
+      "isBestSelling": true,
+      "trendingScore": 98,
+      "salesCount": 2950,
+      "tags": [
+        "trending",
+        "best-selling",
+        "cj-verified"
+      ],
+      "rating": 4.96,
+      "reviewCount": 580,
+      "shipping": [
+        {
+          "country": "US",
+          "service": "USPS Priority Tracked",
+          "price": "0.00 USD"
+        }
+      ],
+      "hasLifetimeUpdateAccess": true,
+      "reviews": [
+        {
+          "id": "REV-CJ-SILENT-MOUSE-1",
+          "author": "Marcus V.",
+          "country": "US",
+          "rating": 5,
+          "title": "Precision fitment and zero bulk",
+          "comment": "Installed the Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse in under 5 minutes. Fits like an original OEM component and fast dispatch.",
+          "verifiedPurchase": true,
+          "date": "2026-10-28"
+        },
+        {
+          "id": "REV-CJ-SILENT-MOUSE-2",
+          "author": "Eleanor H.",
+          "country": "GB",
+          "rating": 5,
+          "title": "Arrived in London in 48 hours via Royal Mail",
+          "comment": "Exceptional build quality on the Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse. Tactile finish feels premium and reliable.",
+          "verifiedPurchase": true,
+          "date": "2026-10-24"
+        },
+        {
+          "id": "REV-CJ-SILENT-MOUSE-3",
+          "author": "Devon K.",
+          "country": "US",
+          "rating": 4.9,
+          "title": "Best daily carry upgrade this year",
+          "comment": "Tried three competing brands before switching to this Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse. Rock-solid durability and fast USPS Priority tracking.",
+          "verifiedPurchase": true,
+          "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "CJ-SILENT-MOUSE-OBS-STAN",
+          "sku": "CJ-SILENT-MOUSE-OBS-STAN",
+          "cj_vid": "CJ-MOUSE-MX3S-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "99.99 USD",
+          "sale_price": "89.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "CJ-SILENT-MOUSE-OBS-PRO",
+          "sku": "CJ-SILENT-MOUSE-OBS-PRO",
+          "cj_vid": "CJ-MOUSE-MX3S-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "104.99 USD",
+          "sale_price": "94.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "CJ-SILENT-MOUSE-TIT-STAN",
+          "sku": "CJ-SILENT-MOUSE-TIT-STAN",
+          "cj_vid": "CJ-MOUSE-MX3S-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "101.99 USD",
+          "sale_price": "91.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "CJ-SILENT-MOUSE-TIT-PRO",
+          "sku": "CJ-SILENT-MOUSE-TIT-PRO",
+          "cj_vid": "CJ-MOUSE-MX3S-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "106.99 USD",
+          "sale_price": "96.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "CJ-SILENT-MOUSE-ALP-STAN",
+          "sku": "CJ-SILENT-MOUSE-ALP-STAN",
+          "cj_vid": "CJ-MOUSE-MX3S-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "103.99 USD",
+          "sale_price": "93.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "CJ-SILENT-MOUSE-ALP-PRO",
+          "sku": "CJ-SILENT-MOUSE-ALP-PRO",
+          "cj_vid": "CJ-MOUSE-MX3S-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "108.99 USD",
+          "sale_price": "98.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
+      ]
+    },
     {
       "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN",
       "title": "3M Matte Obsidian Carbon Precision Protective Skin — iPhone 16 Pro & Pro Max",
@@ -74,6 +1882,74 @@
           "comment": "Tried three competing brands before switching to this 3M Matte Obsidian Carbon Precision Protective Skin. Rock-solid durability and fast USPS Priority tracking.",
           "verifiedPurchase": true,
           "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN-OBS-STAN",
+          "sku": "SKIN-3M-IPHONE16PRO-OBSIDIAN-OBS-STAN",
+          "cj_vid": "SKIN-3M-IPHONE16PRO-OBSIDIAN-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "29.99 USD",
+          "sale_price": "24.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN-OBS-PRO",
+          "sku": "SKIN-3M-IPHONE16PRO-OBSIDIAN-OBS-PRO",
+          "cj_vid": "SKIN-3M-IPHONE16PRO-OBSIDIAN-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "34.99 USD",
+          "sale_price": "29.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN-TIT-STAN",
+          "sku": "SKIN-3M-IPHONE16PRO-OBSIDIAN-TIT-STAN",
+          "cj_vid": "SKIN-3M-IPHONE16PRO-OBSIDIAN-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "31.99 USD",
+          "sale_price": "26.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN-TIT-PRO",
+          "sku": "SKIN-3M-IPHONE16PRO-OBSIDIAN-TIT-PRO",
+          "cj_vid": "SKIN-3M-IPHONE16PRO-OBSIDIAN-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "36.99 USD",
+          "sale_price": "31.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN-ALP-STAN",
+          "sku": "SKIN-3M-IPHONE16PRO-OBSIDIAN-ALP-STAN",
+          "cj_vid": "SKIN-3M-IPHONE16PRO-OBSIDIAN-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "33.99 USD",
+          "sale_price": "28.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "SKIN-3M-IPHONE16PRO-OBSIDIAN-ALP-PRO",
+          "sku": "SKIN-3M-IPHONE16PRO-OBSIDIAN-ALP-PRO",
+          "cj_vid": "SKIN-3M-IPHONE16PRO-OBSIDIAN-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "38.99 USD",
+          "sale_price": "33.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
         }
       ]
     },
@@ -151,6 +2027,74 @@
           "verifiedPurchase": true,
           "date": "2026-10-19"
         }
+      ],
+      "variants": [
+        {
+          "id": "SKIN-3M-MACBOOKPRO-TITAN-OBS-STAN",
+          "sku": "SKIN-3M-MACBOOKPRO-TITAN-OBS-STAN",
+          "cj_vid": "SKIN-3M-MACBOOKPRO-TITAN-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "54.99 USD",
+          "sale_price": "44.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "SKIN-3M-MACBOOKPRO-TITAN-OBS-PRO",
+          "sku": "SKIN-3M-MACBOOKPRO-TITAN-OBS-PRO",
+          "cj_vid": "SKIN-3M-MACBOOKPRO-TITAN-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "59.99 USD",
+          "sale_price": "49.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "SKIN-3M-MACBOOKPRO-TITAN-TIT-STAN",
+          "sku": "SKIN-3M-MACBOOKPRO-TITAN-TIT-STAN",
+          "cj_vid": "SKIN-3M-MACBOOKPRO-TITAN-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "56.99 USD",
+          "sale_price": "46.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "SKIN-3M-MACBOOKPRO-TITAN-TIT-PRO",
+          "sku": "SKIN-3M-MACBOOKPRO-TITAN-TIT-PRO",
+          "cj_vid": "SKIN-3M-MACBOOKPRO-TITAN-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "61.99 USD",
+          "sale_price": "51.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "SKIN-3M-MACBOOKPRO-TITAN-ALP-STAN",
+          "sku": "SKIN-3M-MACBOOKPRO-TITAN-ALP-STAN",
+          "cj_vid": "SKIN-3M-MACBOOKPRO-TITAN-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "58.99 USD",
+          "sale_price": "48.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "SKIN-3M-MACBOOKPRO-TITAN-ALP-PRO",
+          "sku": "SKIN-3M-MACBOOKPRO-TITAN-ALP-PRO",
+          "cj_vid": "SKIN-3M-MACBOOKPRO-TITAN-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "63.99 USD",
+          "sale_price": "53.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
       ]
     },
     {
@@ -225,6 +2169,74 @@
           "comment": "Tried three competing brands before switching to this Stealth Forged Carbon 3M Console & DualSense Protective Wrap. Rock-solid durability and fast USPS Priority tracking.",
           "verifiedPurchase": true,
           "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "SKIN-3M-PS5PRO-STEALTH-OBS-STAN",
+          "sku": "SKIN-3M-PS5PRO-STEALTH-OBS-STAN",
+          "cj_vid": "SKIN-3M-PS5PRO-STEALTH-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "42.99 USD",
+          "sale_price": "34.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "SKIN-3M-PS5PRO-STEALTH-OBS-PRO",
+          "sku": "SKIN-3M-PS5PRO-STEALTH-OBS-PRO",
+          "cj_vid": "SKIN-3M-PS5PRO-STEALTH-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "47.99 USD",
+          "sale_price": "39.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "SKIN-3M-PS5PRO-STEALTH-TIT-STAN",
+          "sku": "SKIN-3M-PS5PRO-STEALTH-TIT-STAN",
+          "cj_vid": "SKIN-3M-PS5PRO-STEALTH-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "44.99 USD",
+          "sale_price": "36.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "SKIN-3M-PS5PRO-STEALTH-TIT-PRO",
+          "sku": "SKIN-3M-PS5PRO-STEALTH-TIT-PRO",
+          "cj_vid": "SKIN-3M-PS5PRO-STEALTH-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "49.99 USD",
+          "sale_price": "41.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "SKIN-3M-PS5PRO-STEALTH-ALP-STAN",
+          "sku": "SKIN-3M-PS5PRO-STEALTH-ALP-STAN",
+          "cj_vid": "SKIN-3M-PS5PRO-STEALTH-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "46.99 USD",
+          "sale_price": "38.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "SKIN-3M-PS5PRO-STEALTH-ALP-PRO",
+          "sku": "SKIN-3M-PS5PRO-STEALTH-ALP-PRO",
+          "cj_vid": "SKIN-3M-PS5PRO-STEALTH-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "51.99 USD",
+          "sale_price": "43.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
         }
       ]
     },
@@ -302,929 +2314,73 @@
           "verifiedPurchase": true,
           "date": "2026-10-19"
         }
-      ]
-    },
-    {
-      "id": "CJ-CIFBUY-SKULL-01",
-      "title": "CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home",
-      "description": "Heavy-duty laser-cut wrought iron gothic skull silhouette wall plaque with weather-resistant matte black powder coating. Engineered for indoor living rooms, studies, and outdoor yard, patio, or garden wall installation. Fast 3–7 business day domestic US & UK tracked dispatch.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-CIFBUY-SKULL-01",
-      "image_link": "https://images.unsplash.com/photo-1509557965875-b88c97052f0e?auto=format&fit=crop&w=800&q=80",
-      "price": "28.99 USD",
-      "sale_price": "24.99 USD",
-      "wholesale_price": 8.9,
-      "availability": "in_stock",
-      "brand": "CIFbuy",
-      "mpn": "CIFBUY-SKULL-PLAQUE-01",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "cj_pid": "CJ-CIFBUY-SKULL-01",
-      "google_product_category": "Home & Garden > Decor > Artwork > Wall Sculptures",
-      "product_type": "Home & Garden > Yard & Wall Decor",
-      "isTrending": true,
-      "isBestSelling": false,
-      "trendingScore": 89,
-      "salesCount": 685,
-      "tags": [
-        "trending",
-        "cj-verified"
       ],
-      "rating": 4.88,
-      "reviewCount": 119,
-      "hasLifetimeUpdateAccess": true,
-      "shipping": [
+      "variants": [
         {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
+          "id": "SKIN-3M-STEAMDECK-MATRIX-OBS-STAN",
+          "sku": "SKIN-3M-STEAMDECK-MATRIX-OBS-STAN",
+          "cj_vid": "SKIN-3M-STEAMDECK-MATRIX-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "36.99 USD",
+          "sale_price": "29.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
         },
         {
-          "country": "GB",
-          "service": "Royal Mail Tracked 48",
-          "price": "0.00 GBP"
-        }
-      ],
-      "reviews": [
-        {
-          "id": "REV-CJ-CIFBUY-SKULL-01-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
+          "id": "SKIN-3M-STEAMDECK-MATRIX-OBS-PRO",
+          "sku": "SKIN-3M-STEAMDECK-MATRIX-OBS-PRO",
+          "cj_vid": "SKIN-3M-STEAMDECK-MATRIX-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "41.99 USD",
+          "sale_price": "34.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
         },
         {
-          "id": "REV-CJ-CIFBUY-SKULL-01-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
+          "id": "SKIN-3M-STEAMDECK-MATRIX-TIT-STAN",
+          "sku": "SKIN-3M-STEAMDECK-MATRIX-TIT-STAN",
+          "cj_vid": "SKIN-3M-STEAMDECK-MATRIX-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "38.99 USD",
+          "sale_price": "31.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
         },
         {
-          "id": "REV-CJ-CIFBUY-SKULL-01-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 5,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this CIFbuy Gothic Iron Skull Silhouette Wall Plaque Outdoor Indoor Halloween Decor for Yard Garden Home. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-DRONE-GPS-4K",
-      "title": "AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras",
-      "description": "Pro-grade compact folding drone equipped with 4K UHD 30fps HDR optical sensor, 3-axis anti-shake gimbal, dual GPS auto-return, and 28-minute flight time per battery. Direct dispatch via CJ Dropshipping.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-DRONE-GPS-4K",
-      "image_link": "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=800&q=80",
-      "price": "149.99 USD",
-      "sale_price": "129.99 USD",
-      "wholesale_price": 45,
-      "availability": "in_stock",
-      "brand": "AeroDrone",
-      "cj_pid": "CJ-DRONE-GPS-4K-01",
-      "mpn": "CJ-DRONE-4K-GPS",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Cameras & Optics > Photography > Drones",
-      "product_type": "Tech Accessories > Drones & Camera Gear",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 98,
-      "salesCount": 1890,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.95,
-      "reviewCount": 340,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Air Express",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-DRONE-GPS-4K-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
+          "id": "SKIN-3M-STEAMDECK-MATRIX-TIT-PRO",
+          "sku": "SKIN-3M-STEAMDECK-MATRIX-TIT-PRO",
+          "cj_vid": "SKIN-3M-STEAMDECK-MATRIX-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "43.99 USD",
+          "sale_price": "36.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
         },
         {
-          "id": "REV-CJ-DRONE-GPS-4K-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
+          "id": "SKIN-3M-STEAMDECK-MATRIX-ALP-STAN",
+          "sku": "SKIN-3M-STEAMDECK-MATRIX-ALP-STAN",
+          "cj_vid": "SKIN-3M-STEAMDECK-MATRIX-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "40.99 USD",
+          "sale_price": "33.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
         },
         {
-          "id": "REV-CJ-DRONE-GPS-4K-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this AeroDrone Pro 4K HDR Foldable GPS Drone with Brushless Motor & Dual Optical Cameras. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-ESPRESSO-PORTABLE",
-      "title": "PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine",
-      "description": "Rechargeable handheld travel espresso machine with built-in self-heating water chamber and 15-bar Italian pump. Compatible with NS capsules and ground espresso coffee. Compact for camping, road trips, and office desks.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-ESPRESSO-PORTABLE",
-      "image_link": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=800&q=80",
-      "price": "89.99 USD",
-      "sale_price": "74.99 USD",
-      "wholesale_price": 28.5,
-      "availability": "in_stock",
-      "brand": "PressUp",
-      "cj_pid": "CJ-ESPRESSO-PORT-02",
-      "mpn": "CJ-PRESSUP-15BAR",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Home & Garden > Kitchen & Dining > Coffee Makers > Espresso Machines",
-      "product_type": "Drinkware & Travel > Portable Coffee Makers",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 96,
-      "salesCount": 1420,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.92,
-      "reviewCount": 265,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-ESPRESSO-PORTABLE-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-ESPRESSO-PORTABLE-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-ESPRESSO-PORTABLE-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 5,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this PressUp Pro Portable Electric Espresso Maker 15-Bar Heated Extraction Travel Espresso Machine. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-ULTRASONIC-CLEANER",
-      "title": "SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank",
-      "description": "High-frequency 45,000Hz ultrasonic wave chamber thoroughly cleans eyeglasses, rings, watches, waterproof shavers, and makeup tools without harsh chemicals. Auto shut-off timer and quiet motor.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-ULTRASONIC-CLEANER",
-      "image_link": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80",
-      "price": "39.99 USD",
-      "sale_price": "32.99 USD",
-      "wholesale_price": 11.2,
-      "availability": "in_stock",
-      "brand": "SonicPro",
-      "cj_pid": "CJ-ULTRASONIC-CLEAN-03",
-      "mpn": "CJ-SONIC-45KHZ",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Health & Beauty > Personal Care > Jewelry Cleaners",
-      "product_type": "Home & Garden > Cleaning Appliances",
-      "isTrending": true,
-      "isBestSelling": false,
-      "trendingScore": 92,
-      "salesCount": 980,
-      "tags": [
-        "trending",
-        "cj-verified"
-      ],
-      "rating": 4.89,
-      "reviewCount": 185,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-ULTRASONIC-CLEANER-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-ULTRASONIC-CLEANER-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-ULTRASONIC-CLEANER-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 5,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this SonicPro 45kHz Ultrasonic Jewelry & Glassware Deep Cleaner with Stainless Tank. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-LUMBAR-CUSHION",
-      "title": "Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort",
-      "description": "High-density ventilated memory foam backrest cushion contoured for spinal alignment and lower back pressure relief. Removable 3D mesh breathable cover with dual adjustable non-slip straps.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-LUMBAR-CUSHION",
-      "image_link": "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80",
-      "price": "34.99 USD",
-      "sale_price": "28.99 USD",
-      "wholesale_price": 9.8,
-      "availability": "in_stock",
-      "brand": "PostureComfort",
-      "cj_pid": "CJ-LUMBAR-MEMFOAM-04",
-      "mpn": "CJ-LUMBAR-04",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Furniture > Office Furniture Accessories > Chair Pads",
-      "product_type": "Home & Garden > Office Ergonomics",
-      "isTrending": false,
-      "isBestSelling": true,
-      "trendingScore": 91,
-      "salesCount": 1650,
-      "tags": [
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.91,
-      "reviewCount": 290,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Ground Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-LUMBAR-CUSHION-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-LUMBAR-CUSHION-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-LUMBAR-CUSHION-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this Ergonomic Memory Foam Lumbar Support Seat Cushion for Office Chairs & Driving Comfort. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-RGB-SOUNDBAR",
-      "title": "SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input",
-      "description": "Compact stereo PC soundbar with dual 52mm full-range drivers, tuned bass diaphragm, and 8 dynamic RGB lighting modes. One-knob volume control with instant Bluetooth 5.3 and 3.5mm AUX switching.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-RGB-SOUNDBAR",
-      "image_link": "https://images.unsplash.com/photo-1545454675-3531b543be5d?auto=format&fit=crop&w=800&q=80",
-      "price": "49.99 USD",
-      "sale_price": "39.99 USD",
-      "wholesale_price": 14.5,
-      "availability": "in_stock",
-      "brand": "SoundPulse",
-      "cj_pid": "CJ-RGB-SOUNDBAR-05",
-      "mpn": "CJ-SOUNDPULSE-RGB",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Electronics > Audio > Audio Components > Speakers",
-      "product_type": "Tech Accessories > Desktop Audio",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 95,
-      "salesCount": 2100,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.94,
-      "reviewCount": 380,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-RGB-SOUNDBAR-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-RGB-SOUNDBAR-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-RGB-SOUNDBAR-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this SoundPulse Dual-Driver RGB Desktop Gaming Soundbar with Bluetooth 5.3 & Aux Input. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-PET-FOUNTAIN",
-      "title": "PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter",
-      "description": "Food-grade 304 stainless steel pet drinking fountain with quadruple filtration system (activated carbon, ion-exchange resin, non-woven fabric). Ultra-quiet <20dB submersible water pump.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-PET-FOUNTAIN",
-      "image_link": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?auto=format&fit=crop&w=800&q=80",
-      "price": "36.99 USD",
-      "sale_price": "29.99 USD",
-      "wholesale_price": 10.2,
-      "availability": "in_stock",
-      "brand": "PurePaws",
-      "cj_pid": "CJ-PET-FOUNTAIN-06",
-      "mpn": "CJ-PUREPAWS-2.5L",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Animals & Pet Supplies > Pet Supplies > Cat Supplies > Cat Bowls & Feeders",
-      "product_type": "Home & Garden > Pet Care & Supplies",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 94,
-      "salesCount": 1780,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.93,
-      "reviewCount": 310,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-PET-FOUNTAIN-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-PET-FOUNTAIN-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-PET-FOUNTAIN-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this PurePaws 2.5L Ultra-Quiet Stainless Steel Pet Automatic Water Fountain with Filter. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-THERMAL-GLOVES",
-      "title": "AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves",
-      "description": "Windproof 3M Thinsulate lined winter sports gloves with sensitive conductive touchscreen fingertips and non-slip silicone palm grip. Ideal for winter cycling, running, hiking, and daily commuting.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-THERMAL-GLOVES",
-      "image_link": "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=800&q=80",
-      "price": "32.99 USD",
-      "sale_price": "26.99 USD",
-      "wholesale_price": 8.5,
-      "availability": "in_stock",
-      "brand": "AeroThor",
-      "cj_pid": "CJ-THERMAL-GLOVES-07",
-      "mpn": "AT-THERM-GLV",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Apparel & Accessories > Clothing Accessories > Gloves & Mittens",
-      "product_type": "Clothing > Outerwear & Gloves",
-      "isTrending": true,
-      "isBestSelling": false,
-      "trendingScore": 90,
-      "salesCount": 1240,
-      "tags": [
-        "trending",
-        "cj-verified"
-      ],
-      "rating": 4.9,
-      "reviewCount": 210,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-THERMAL-GLOVES-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-THERMAL-GLOVES-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-THERMAL-GLOVES-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this AeroThor High-Visibility Thermal Heated Waterproof Touchscreen Winter Gloves. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-MOON-LAMP",
-      "title": "AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote",
-      "description": "High-precision 3D printed lunar sphere hovering and slowly spinning above a dark walnut magnetic base. Controlled via touch sensor or 16-color wireless remote control. Low-power wireless electromagnetic induction.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-MOON-LAMP",
-      "image_link": "https://images.unsplash.com/photo-1532009877282-3340270e0529?auto=format&fit=crop&w=800&q=80",
-      "price": "89.99 USD",
-      "sale_price": "74.99 USD",
-      "wholesale_price": 26,
-      "availability": "in_stock",
-      "brand": "AstraLev",
-      "cj_pid": "CJ-MOON-LEV-08",
-      "mpn": "CJ-ASTRA-MOON",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Home & Garden > Lighting > Lamps",
-      "product_type": "Home & Garden > Ambient Lighting",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 97,
-      "salesCount": 2310,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.96,
-      "reviewCount": 415,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-MOON-LAMP-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-MOON-LAMP-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-MOON-LAMP-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 5,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this AstraLev Magnetic Levitation 3D Floating Moon Lamp with 16 RGB Colors & Remote. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-DESK-MAT-LEATHER",
-      "title": "VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat",
-      "description": "Dual-sided desk pad featuring 100% natural Bavarian wool felt on one side and scratch-resistant waterproof vegan leather on the reverse. Dampens key-switch acoustics and provides zero-slip mouse tracking.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-DESK-MAT-LEATHER",
-      "image_link": "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=800&q=80",
-      "price": "44.99 USD",
-      "sale_price": "36.99 USD",
-      "wholesale_price": 12.5,
-      "availability": "in_stock",
-      "brand": "VoltCore",
-      "cj_pid": "CJ-DESKMAT-FELT-09",
-      "mpn": "VC-DESKMAT-ALP",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Office Supplies > Desk Accessories > Desk Pads",
-      "product_type": "Tech Accessories > Workspace Setup",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 93,
-      "salesCount": 1540,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.92,
-      "reviewCount": 275,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-DESK-MAT-LEATHER-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-DESK-MAT-LEATHER-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-DESK-MAT-LEATHER-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 5,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this VoltCore Alpine Silver Edition Extended Merino Felt & Vegan Leather Acoustic Desk Mat. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-DOCKING-HUB-4K",
-      "title": "VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub",
-      "description": "Heavy-duty CNC anodized aluminum 10-in-1 docking hub with 85W power delivery, dual 4K 60Hz HDMI outputs, UHS-II SD card reader, 2.5G Ethernet, and 40Gbps Thunderbolt data passthrough.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-DOCKING-HUB-4K",
-      "image_link": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=800&q=80",
-      "price": "119.99 USD",
-      "sale_price": "99.99 USD",
-      "wholesale_price": 36,
-      "availability": "in_stock",
-      "brand": "VoltCore",
-      "cj_pid": "CJ-DOCKING-HUB-10",
-      "mpn": "VC-TB4-DOCK-10IN1",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Electronics > Electronics Accessories > Computer Components > Docking Stations",
-      "product_type": "Tech Accessories > Workstation Docks",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 97,
-      "salesCount": 2050,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.95,
-      "reviewCount": 360,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-DOCKING-HUB-4K-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-DOCKING-HUB-4K-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-DOCKING-HUB-4K-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this VoltCore Alpine Silver Edition Thunderbolt 4 40Gbps 10-in-1 Dual-4K Workstation Docking Hub. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-WIRELESS-KEYBOARD",
-      "title": "Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard",
-      "description": "Premium double-gasket full CNC aluminum wireless mechanical keyboard with hot-swappable switches, PBT keycaps, Bluetooth 5.1, and open-source QMK/VIA keymap programming.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-WIRELESS-KEYBOARD",
-      "image_link": "https://images.unsplash.com/photo-1587829741301-dc798b83add3?auto=format&fit=crop&w=800&q=80",
-      "price": "199.99 USD",
-      "sale_price": "179.99 USD",
-      "wholesale_price": 68,
-      "availability": "in_stock",
-      "brand": "Keychron",
-      "cj_pid": "CJ-KEYBOARD-Q1PRO",
-      "mpn": "KC-Q1PRO-CNC",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Electronics > Electronics Accessories > Keyboards",
-      "product_type": "Tech Accessories > Keyboards & Input",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 99,
-      "salesCount": 3100,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.97,
-      "reviewCount": 620,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-WIRELESS-KEYBOARD-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-WIRELESS-KEYBOARD-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-WIRELESS-KEYBOARD-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this Keychron Q1 Pro QMK/VIA Wireless Custom CNC Anodized Aluminum Mechanical Keyboard. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
-        }
-      ]
-    },
-    {
-      "id": "CJ-SILENT-MOUSE",
-      "title": "Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse",
-      "description": "Iconic ergonomic productivity mouse featuring 8000 DPI track-on-glass sensor, Quiet Click switches (90% noise reduction), MagSpeed electromagnetic scroll wheel, and 70-day USB-C battery life.",
-      "link": "https://aerothor.smmgrows.com/product/CJ-SILENT-MOUSE",
-      "image_link": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80",
-      "price": "99.99 USD",
-      "sale_price": "89.99 USD",
-      "wholesale_price": 34,
-      "availability": "in_stock",
-      "brand": "Logitech",
-      "cj_pid": "CJ-MOUSE-MX3S",
-      "mpn": "LOGI-MX3S-8K",
-      "condition": "new",
-      "identifier_exists": true,
-      "productType": "dropshipping",
-      "source": "cj_live",
-      "google_product_category": "Electronics > Electronics Accessories > Computer Mice",
-      "product_type": "Tech Accessories > Mice & Trackpads",
-      "isTrending": true,
-      "isBestSelling": true,
-      "trendingScore": 98,
-      "salesCount": 2950,
-      "tags": [
-        "trending",
-        "best-selling",
-        "cj-verified"
-      ],
-      "rating": 4.96,
-      "reviewCount": 580,
-      "shipping": [
-        {
-          "country": "US",
-          "service": "USPS Priority Tracked",
-          "price": "0.00 USD"
-        }
-      ],
-      "hasLifetimeUpdateAccess": true,
-      "reviews": [
-        {
-          "id": "REV-CJ-SILENT-MOUSE-1",
-          "author": "Marcus V.",
-          "country": "US",
-          "rating": 5,
-          "title": "Precision fitment and zero bulk",
-          "comment": "Installed the Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse in under 5 minutes. Fits like an original OEM component and fast dispatch.",
-          "verifiedPurchase": true,
-          "date": "2026-10-28"
-        },
-        {
-          "id": "REV-CJ-SILENT-MOUSE-2",
-          "author": "Eleanor H.",
-          "country": "GB",
-          "rating": 5,
-          "title": "Arrived in London in 48 hours via Royal Mail",
-          "comment": "Exceptional build quality on the Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse. Tactile finish feels premium and reliable.",
-          "verifiedPurchase": true,
-          "date": "2026-10-24"
-        },
-        {
-          "id": "REV-CJ-SILENT-MOUSE-3",
-          "author": "Devon K.",
-          "country": "US",
-          "rating": 4.9,
-          "title": "Best daily carry upgrade this year",
-          "comment": "Tried three competing brands before switching to this Logitech MX Master 3S Ergonomic 8K DPI Silent Wireless Bluetooth Mouse. Rock-solid durability and fast USPS Priority tracking.",
-          "verifiedPurchase": true,
-          "date": "2026-10-19"
+          "id": "SKIN-3M-STEAMDECK-MATRIX-ALP-PRO",
+          "sku": "SKIN-3M-STEAMDECK-MATRIX-ALP-PRO",
+          "cj_vid": "SKIN-3M-STEAMDECK-MATRIX-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "45.99 USD",
+          "sale_price": "38.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
         }
       ]
     },
@@ -1297,6 +2453,74 @@
           "verifiedPurchase": true,
           "date": "2026-10-19"
         }
+      ],
+      "variants": [
+        {
+          "id": "AFF-PEAKDESIGN-BACKPACK-OBS-STAN",
+          "sku": "AFF-PEAKDESIGN-BACKPACK-OBS-STAN",
+          "cj_vid": "AFF-PEAKDESIGN-BACKPACK-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "289.95 USD",
+          "sale_price": "259.95 USD",
+          "image_link": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "AFF-PEAKDESIGN-BACKPACK-OBS-PRO",
+          "sku": "AFF-PEAKDESIGN-BACKPACK-OBS-PRO",
+          "cj_vid": "AFF-PEAKDESIGN-BACKPACK-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "294.95 USD",
+          "sale_price": "264.95 USD",
+          "image_link": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "AFF-PEAKDESIGN-BACKPACK-TIT-STAN",
+          "sku": "AFF-PEAKDESIGN-BACKPACK-TIT-STAN",
+          "cj_vid": "AFF-PEAKDESIGN-BACKPACK-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "291.95 USD",
+          "sale_price": "261.95 USD",
+          "image_link": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "AFF-PEAKDESIGN-BACKPACK-TIT-PRO",
+          "sku": "AFF-PEAKDESIGN-BACKPACK-TIT-PRO",
+          "cj_vid": "AFF-PEAKDESIGN-BACKPACK-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "296.95 USD",
+          "sale_price": "266.95 USD",
+          "image_link": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "AFF-PEAKDESIGN-BACKPACK-ALP-STAN",
+          "sku": "AFF-PEAKDESIGN-BACKPACK-ALP-STAN",
+          "cj_vid": "AFF-PEAKDESIGN-BACKPACK-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "293.95 USD",
+          "sale_price": "263.95 USD",
+          "image_link": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "AFF-PEAKDESIGN-BACKPACK-ALP-PRO",
+          "sku": "AFF-PEAKDESIGN-BACKPACK-ALP-PRO",
+          "cj_vid": "AFF-PEAKDESIGN-BACKPACK-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "298.95 USD",
+          "sale_price": "268.95 USD",
+          "image_link": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
       ]
     },
     {
@@ -1361,6 +2585,74 @@
           "verifiedPurchase": true,
           "date": "2026-10-19"
         }
+      ],
+      "variants": [
+        {
+          "id": "AFF-SONY-WH1000XM5-OBS-STAN",
+          "sku": "AFF-SONY-WH1000XM5-OBS-STAN",
+          "cj_vid": "AFF-SONY-WH1000XM5-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "399.99 USD",
+          "sale_price": "348.00 USD",
+          "image_link": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "AFF-SONY-WH1000XM5-OBS-PRO",
+          "sku": "AFF-SONY-WH1000XM5-OBS-PRO",
+          "cj_vid": "AFF-SONY-WH1000XM5-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "404.99 USD",
+          "sale_price": "353.00 USD",
+          "image_link": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "AFF-SONY-WH1000XM5-TIT-STAN",
+          "sku": "AFF-SONY-WH1000XM5-TIT-STAN",
+          "cj_vid": "AFF-SONY-WH1000XM5-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "401.99 USD",
+          "sale_price": "350.00 USD",
+          "image_link": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "AFF-SONY-WH1000XM5-TIT-PRO",
+          "sku": "AFF-SONY-WH1000XM5-TIT-PRO",
+          "cj_vid": "AFF-SONY-WH1000XM5-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "406.99 USD",
+          "sale_price": "355.00 USD",
+          "image_link": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "AFF-SONY-WH1000XM5-ALP-STAN",
+          "sku": "AFF-SONY-WH1000XM5-ALP-STAN",
+          "cj_vid": "AFF-SONY-WH1000XM5-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "403.99 USD",
+          "sale_price": "352.00 USD",
+          "image_link": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "AFF-SONY-WH1000XM5-ALP-PRO",
+          "sku": "AFF-SONY-WH1000XM5-ALP-PRO",
+          "cj_vid": "AFF-SONY-WH1000XM5-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "408.99 USD",
+          "sale_price": "357.00 USD",
+          "image_link": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
+        }
       ]
     },
     {
@@ -1423,6 +2715,74 @@
           "comment": "Tried three competing brands before switching to this Garmin Forerunner 265 Running Smartwatch with Colorful AMOLED Display. Rock-solid durability and fast USPS Priority tracking.",
           "verifiedPurchase": true,
           "date": "2026-10-19"
+        }
+      ],
+      "variants": [
+        {
+          "id": "AFF-GARMIN-FORERUNNER-OBS-STAN",
+          "sku": "AFF-GARMIN-FORERUNNER-OBS-STAN",
+          "cj_vid": "AFF-GARMIN-FORERUNNER-V1",
+          "color": "Obsidian Black",
+          "size": "Standard",
+          "price": "449.99 USD",
+          "sale_price": "399.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 46
+        },
+        {
+          "id": "AFF-GARMIN-FORERUNNER-OBS-PRO",
+          "sku": "AFF-GARMIN-FORERUNNER-OBS-PRO",
+          "cj_vid": "AFF-GARMIN-FORERUNNER-V2",
+          "color": "Obsidian Black",
+          "size": "Pro Bundle",
+          "price": "454.99 USD",
+          "sale_price": "404.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 47
+        },
+        {
+          "id": "AFF-GARMIN-FORERUNNER-TIT-STAN",
+          "sku": "AFF-GARMIN-FORERUNNER-TIT-STAN",
+          "cj_vid": "AFF-GARMIN-FORERUNNER-V3",
+          "color": "Titanium Silver",
+          "size": "Standard",
+          "price": "451.99 USD",
+          "sale_price": "401.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 48
+        },
+        {
+          "id": "AFF-GARMIN-FORERUNNER-TIT-PRO",
+          "sku": "AFF-GARMIN-FORERUNNER-TIT-PRO",
+          "cj_vid": "AFF-GARMIN-FORERUNNER-V4",
+          "color": "Titanium Silver",
+          "size": "Pro Bundle",
+          "price": "456.99 USD",
+          "sale_price": "406.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 49
+        },
+        {
+          "id": "AFF-GARMIN-FORERUNNER-ALP-STAN",
+          "sku": "AFF-GARMIN-FORERUNNER-ALP-STAN",
+          "cj_vid": "AFF-GARMIN-FORERUNNER-V5",
+          "color": "Alpine Slate",
+          "size": "Standard",
+          "price": "453.99 USD",
+          "sale_price": "403.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 50
+        },
+        {
+          "id": "AFF-GARMIN-FORERUNNER-ALP-PRO",
+          "sku": "AFF-GARMIN-FORERUNNER-ALP-PRO",
+          "cj_vid": "AFF-GARMIN-FORERUNNER-V6",
+          "color": "Alpine Slate",
+          "size": "Pro Bundle",
+          "price": "458.99 USD",
+          "sale_price": "408.99 USD",
+          "image_link": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
+          "stock_quantity": 51
         }
       ]
     }

@@ -13,3 +13,4 @@ public/assets/aistudio/
 /*.png
 data/cj-token-cache.json
 data/admin-config.json
+*.zip

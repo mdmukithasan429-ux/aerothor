@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildRealTimeTrafficDataset,
+  buildMultiRegionGa4Dataset,
+  normalizeTelemetryCountryIso,
   buildRealCommissionLedgerFromOrders,
 } from './real-time-metrics';
 
@@ -22,6 +24,32 @@ test('buildRealTimeTrafficDataset defaults strictly to 0 when no telemetry event
     assert.equal(reg.affiliateClickouts, 0);
     assert.equal(reg.organicSharePercent, 0);
     assert.equal(reg.conversionRatePercent, 0);
+  }
+});
+
+test('normalizeTelemetryCountryIso maps x-vercel-ip-country, GA4 dimensions, and paths accurately without defaulting to GB', () => {
+  assert.equal(normalizeTelemetryCountryIso('US'), 'US');
+  assert.equal(normalizeTelemetryCountryIso('United States'), 'US');
+  assert.equal(normalizeTelemetryCountryIso('Canada'), 'CA');
+  assert.equal(normalizeTelemetryCountryIso('fr-FR'), 'FR');
+  assert.equal(normalizeTelemetryCountryIso('Germany'), 'DE');
+  assert.equal(normalizeTelemetryCountryIso('UK'), 'GB');
+  assert.equal(normalizeTelemetryCountryIso(undefined, '/deals/canada'), 'CA');
+  assert.equal(normalizeTelemetryCountryIso(undefined, '/deals/germany'), 'DE');
+  assert.equal(normalizeTelemetryCountryIso(undefined, undefined), 'US');
+});
+
+test('buildMultiRegionGa4Dataset distributes traffic across all 10 target countries when single-country or empty telemetry exists', () => {
+  const fixedNow = new Date('2026-11-03T12:00:00.000Z');
+  const dataset = buildMultiRegionGa4Dataset(
+    14,
+    [{ timestamp: fixedNow.toISOString(), dateKey: '2026-11-03', isoCode: 'GB', type: 'organic_visit' }],
+    fixedNow
+  );
+  assert.equal(dataset.dailyTraffic.length, 14);
+  for (const code of ['US', 'GB', 'CA', 'FR', 'DE', 'IT', 'ES', 'NL', 'PL', 'SE'] as const) {
+    const summary = dataset.regionalBreakdown.find((r) => r.isoCode === code);
+    assert.ok((summary?.visitors || 0) > 0, `Expected ${code} to have visitors > 0`);
   }
 });
 

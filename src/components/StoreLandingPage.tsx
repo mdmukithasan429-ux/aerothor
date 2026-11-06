@@ -45,6 +45,7 @@ import { Campaign, INITIAL_CAMPAIGNS } from '../lib/campaigns';
 import { useStoreSettings } from '../lib/useStoreSettings';
 import { HeroPromotionCarousel } from './home/HeroPromotionCarousel';
 import { PromoCouponDrawer } from './home/PromoCouponDrawer';
+import { ExitIntentModal } from './home/ExitIntentModal';
 import { NewsletterBanner } from './home/NewsletterBanner';
 import {
   TARGET_REGIONS,
@@ -2334,6 +2335,9 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
       {/* Floating Corporate Voucher / Promo Coupon Drawer */}
       <PromoCouponDrawer />
+
+      {/* Exit Intent Localized Voucher Modal Hook */}
+      <ExitIntentModal currentRegion={currentRegion} />
     </div>
   );
 };

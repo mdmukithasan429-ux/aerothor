@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     // -------------------------------------------------------------------------
     const body = await req.json().catch(() => ({}));
     const {
-      apiKey = process.env.CJ_API_KEY,
+      apiKey = process.env.CJ_API_KEY || 'CJ5994755@api@2bc8a55e048b442388da8f746d2f81f7',
       targetCount = 200,          // Target count to sync
       pageSize = 50,              // CJ max allowed is typically 50-100
       maxPages = 10,              // Max loops to prevent runaway execution
