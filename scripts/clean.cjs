@@ -10,3 +10,4 @@ for (const target of targets) {
     console.log(`✓ Cleaned ${target}`);
   }
 }
+
