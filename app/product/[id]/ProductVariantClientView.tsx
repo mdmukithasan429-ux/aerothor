@@ -91,16 +91,15 @@ export function ProductVariantClientView({ product }: { product: ClientProductDa
     }
   };
 
-  return (
-    const isAffiliate =
-      product.productType === 'affiliate' ||
-      Boolean(product.affiliateUrl) ||
-      product.id.toLowerCase().startsWith('aff-');
-    const outboundLink =
-      product.affiliateUrl ||
-      `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`;
+  const isAffiliate =
+    product.productType === 'affiliate' ||
+    Boolean(product.affiliateUrl) ||
+    product.id.toLowerCase().startsWith('aff-');
+  const outboundLink =
+    product.affiliateUrl ||
+    `https://www.amazon.com/s?k=${encodeURIComponent(product.title)}`;
 
-    return (
+  return (
       <div
         className={`grid grid-cols-1 lg:grid-cols-2 gap-10 bg-slate-900/90 rounded-2xl p-6 sm:p-10 shadow-2xl ${
           isAffiliate ? 'border border-amber-500/30' : 'border border-slate-800'

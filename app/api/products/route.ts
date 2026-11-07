@@ -420,7 +420,7 @@ export async function GET(req: NextRequest) {
       });
 
       if (dbItems.length > 0) {
-        matchedItems = dbItems.map((p) => ({
+        matchedItems = dbItems.map((p: any) => ({
           ...p,
           id: p.sku || p.id,
           price: Number(p.price),

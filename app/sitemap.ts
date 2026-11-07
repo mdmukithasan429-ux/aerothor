@@ -149,7 +149,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const catalog = loadPersistedCatalog();
     for (const product of catalog) {
       if (!product || !product.id) continue;
-      if (product.status === 'archived' || product.isVisible === false) continue;
+      if ((product as any).status === 'archived' || (product as any).isVisible === false) continue;
       if (!entryMap.has(product.id)) {
         entryMap.set(product.id, {
           sku: product.id,

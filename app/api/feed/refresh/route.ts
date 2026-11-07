@@ -52,14 +52,14 @@ async function handleRefresh(req: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    const inStockCount = products.filter((p) => p.availability === 'in_stock').length;
+    const inStockCount = products.filter((p: any) => p.availability === 'in_stock').length;
     const outOfStockCount = products.length - inStockCount;
 
     // 2. Build Google Merchant Center RSS 2.0 XML with updated lastBuildDate
     const appUrl = process.env.APP_URL || 'https://ais-dev-3nqmvpugp7tuj6tqdspsbn-806254583049.asia-northeast1.run.app';
     const lastBuildDate = new Date().toUTCString();
 
-    const itemsXml = products.map((item) => {
+    const itemsXml = products.map((item: any) => {
       const escape = (str: string) =>
         str
           .replace(/&/g, '&amp;')

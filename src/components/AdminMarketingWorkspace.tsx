@@ -597,3 +597,6 @@ export function AdminMarketingWorkspace() {
     </div>
   );
 }
+
+export const AdminMarketingHub = AdminMarketingWorkspace;
+

@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
         productsUpdated: totalInsertedCount,
         status: 'success',
       },
-    }).catch((e) => console.warn('[Log Warning]', e.message));
+    }).catch((e: any) => console.warn('[Log Warning]', e?.message));
 
     return NextResponse.json({
       success: true,

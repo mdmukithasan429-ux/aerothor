@@ -303,7 +303,7 @@ export async function PATCH(req: NextRequest) {
             data: dataToUpdate,
           })
           .then(() => updatedCount++)
-          .catch((e) => console.warn('[Batch Item Skip]:', e.message));
+          .catch((e: any) => console.warn('[Batch Item Skip]:', e?.message));
       }
 
       return NextResponse.json({

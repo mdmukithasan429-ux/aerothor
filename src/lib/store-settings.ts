@@ -36,6 +36,10 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   updatedAt: new Date().toISOString(),
 };
 
+export async function getStoreSettings(): Promise<StoreSettings> {
+  return DEFAULT_STORE_SETTINGS;
+}
+
 /**
   Injects or updates CSS custom variables on the document head
   mapping primaryColorHex to live theme highlights.

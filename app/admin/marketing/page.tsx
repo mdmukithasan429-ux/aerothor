@@ -1,5 +1,5 @@
 import React from 'react';
-import { AdminMarketingHub } from '../../../src/components/AdminMarketingHub';
+import { AdminMarketingWorkspace as AdminMarketingHub } from '../../../src/components/AdminMarketingWorkspace';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

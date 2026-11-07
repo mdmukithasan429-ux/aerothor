@@ -103,6 +103,7 @@ export default async function CountryDealsLandingPage({
 
   if (!region) {
     notFound();
+    return null;
   }
 
   // Prioritize verified Amazon Affiliate items + top-rated Direct Dropshipping products

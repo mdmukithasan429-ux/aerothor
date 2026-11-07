@@ -23,5 +23,5 @@
     },
     "noEmit": true
   },
-  "exclude": ["dist", "app", "lib"]
+  "exclude": ["dist"]
 }

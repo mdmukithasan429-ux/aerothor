@@ -28,7 +28,7 @@ export async function GET(_req: NextRequest) {
     const lastBuildDate = new Date().toUTCString();
 
     const itemsXml = products
-      .map((item) => {
+      .map((item: any) => {
         const numericPrice =
           typeof item.price === 'number'
             ? item.price

@@ -34,7 +34,7 @@ export default async function AdminErpDashboardPage() {
 
     totalProductsCount = productCount;
 
-    orders = fetchedOrders.map((o) => ({
+    orders = fetchedOrders.map((o: any) => ({
       ...o,
       totalAmount:
         typeof o.totalAmount === 'object' && o.totalAmount !== null
@@ -44,7 +44,7 @@ export default async function AdminErpDashboardPage() {
       updatedAt: o.updatedAt.toISOString(),
     }));
 
-    products = fetchedProducts.map((p) => ({
+    products = fetchedProducts.map((p: any) => ({
       ...p,
       price:
         typeof p.price === 'object' && p.price !== null

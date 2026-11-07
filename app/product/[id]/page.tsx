@@ -168,6 +168,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
   if (!product) {
     notFound();
+    return null;
   }
 
   const queryRegionParam =
@@ -188,7 +189,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.title,
-    image: [product.image_link, ...(product.additional_image_links || [])],
+    image: [product.image_link, ...(product.additional_image_link || [])],
     description: product.description || resolveProductSeoDescription(product),
     sku: product.id,
     mpn: product.mpn || product.id,
@@ -275,7 +276,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
         dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
       />
 
-      <ProductDetails product={product} relatedProducts={relatedProducts} />
+      <ProductDetails product={product as any} relatedDeals={relatedProducts as any} />
     </>
   );
 }
