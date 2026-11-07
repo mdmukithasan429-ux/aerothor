@@ -379,8 +379,13 @@ export default function App() {
       : activeTab;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
-      {/* Role-Based Top Navigation Bar (Customer Storefront vs Protected Admin Console) */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#070d1d] to-[#030712] text-slate-100 flex flex-col font-sans selection:bg-cyan-500/25 selection:text-cyan-200 relative overflow-x-hidden">
+      {/* Ambient background glowing orbs for Anti-gravity atmosphere */}
+      <div className="fixed top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="fixed bottom-1/4 right-10 w-[450px] h-[450px] bg-purple-600/10 rounded-full blur-[160px] pointer-events-none z-0" />
+      <div className="fixed top-1/2 right-1/3 w-80 h-80 bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none z-0" />
+
+      {/* Role-Based Responsive Sidebar Navigation (Desktop fixed left sidebar + Mobile slide-in drawer) */}
       <TopBar
         activeTab={effectiveTab}
         onTabChange={handleProtectedTabChange}
@@ -404,8 +409,9 @@ export default function App() {
         onSelectRegionSlug={(slug) => setSelectedRegionSlug(slug)}
       />
 
-      {/* Main Viewport Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      {/* Main Content Area: Shifted right for desktop sidebar (lg:pl-64 xl:pl-72) and padded at bottom (pb-32) */}
+      <div className="flex-1 flex flex-col lg:pl-64 xl:pl-72 transition-all duration-300 w-full min-w-0 z-10">
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-32">
         <AnimatePresence mode="wait">
           <motion.div
             key={effectiveTab}
@@ -582,7 +588,7 @@ export default function App() {
       {isCurrentTabPublic && <NewsletterBanner />}
 
       {/* Footer strictly compliant with GMC merchant transparency requirements */}
-      <footer className="border-t border-slate-900 py-8 px-6 text-slate-400 text-xs">
+      <footer className="border-t border-white/10 py-8 px-6 text-slate-400 text-xs backdrop-blur-xl bg-slate-950/60">
         <div className="max-w-7xl mx-auto space-y-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1">
@@ -665,6 +671,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

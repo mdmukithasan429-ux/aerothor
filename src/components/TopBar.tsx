@@ -1,5 +1,35 @@
-import React from 'react';
-import { ExternalLink, Store, Shield, Lock, LogOut, Eye, Truck, Sparkles, PackageSearch, ClipboardList, Tag, Zap, Settings, Globe, BarChart3, TrendingUp, ShieldCheck, CreditCard, Megaphone } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  Store,
+  Shield,
+  Lock,
+  LogOut,
+  Eye,
+  Truck,
+  Sparkles,
+  PackageSearch,
+  ClipboardList,
+  Tag,
+  Zap,
+  Settings,
+  Globe,
+  BarChart3,
+  TrendingUp,
+  ShieldCheck,
+  CreditCard,
+  Megaphone,
+  Menu,
+  X,
+  ExternalLink,
+  ChevronRight,
+  Layers,
+  Activity,
+  RefreshCw,
+  Upload,
+  FileCode,
+  Database,
+  RotateCcw,
+} from 'lucide-react';
 import { TARGET_REGIONS, getRegionOrDefault } from '../lib/i18n-regions';
 import { useStoreSettings } from '../lib/useStoreSettings';
 
@@ -25,7 +55,7 @@ export type WorkspaceTab =
   | 'seo_audit'
   | 'marketing';
 
-interface TopBarProps {
+export interface TopBarProps {
   activeTab: WorkspaceTab;
   onTabChange: (tab: WorkspaceTab) => void;
   productCount: number;
@@ -53,6 +83,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSelectRegionSlug,
 }) => {
   const { settings } = useStoreSettings();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const showAdminNavigation = isAdminAuthenticated && !isCustomerPreviewMode;
   const activeGeoRegion = getRegionOrDefault(activeRegionSlug || 'us');
 
@@ -63,6 +94,7 @@ export const TopBar: React.FC<TopBarProps> = ({
     if (onSelectStoreCategory) {
       onSelectStoreCategory(category);
     }
+    setIsMobileMenuOpen(false);
     setTimeout(() => {
       const catalogEl = document.getElementById('catalog');
       if (catalogEl) {
@@ -71,27 +103,142 @@ export const TopBar: React.FC<TopBarProps> = ({
     }, 50);
   };
 
-  return (
-    <header className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800">
-      {/* Geo-Routed Regional Dispatch Notification Bar (Middleware Personalized) */}
-      <div className="bg-slate-900/95 border-b border-slate-800/80 px-4 py-1.5 text-[11px] text-slate-300">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span>{activeGeoRegion.flag}</span>
-            <span className="font-semibold text-emerald-400">
-              Free 48h Dispatch to {activeGeoRegion.countryNameWithArticle}
+  const handleNavClick = (tab: WorkspaceTab) => {
+    onTabChange(tab);
+    setIsMobileMenuOpen(false);
+  };
+
+  // Nav Item component with Anti-gravity floating and neon highlights
+  const NavItem = ({
+    tab,
+    icon: Icon,
+    label,
+    badge,
+    badgeColor = 'cyan',
+    onClick,
+  }: {
+    tab?: WorkspaceTab;
+    icon: React.ElementType;
+    label: string;
+    badge?: string | number;
+    badgeColor?: 'cyan' | 'amber' | 'emerald' | 'purple' | 'sky' | 'indigo';
+    onClick?: () => void;
+  }) => {
+    const isActive = tab && activeTab === tab;
+    const badgeColorClasses = {
+      cyan: 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30',
+      amber: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
+      emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
+      purple: 'bg-purple-500/10 text-purple-300 border-purple-500/30',
+      sky: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+      indigo: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30',
+    }[badgeColor];
+
+    return (
+      <button
+        type="button"
+        onClick={onClick ? onClick : () => tab && handleNavClick(tab)}
+        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer group ${
+          isActive
+            ? 'bg-gradient-to-r from-cyan-500/15 via-cyan-500/5 to-transparent text-cyan-300 border-l-2 border-cyan-400 shadow-md shadow-cyan-500/10 translate-x-1'
+            : 'text-slate-400 hover:text-slate-100 hover:bg-white/[0.05] hover:translate-x-1'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Icon
+            className={`w-4 h-4 shrink-0 transition-transform duration-200 group-hover:scale-110 ${
+              isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'
+            }`}
+          />
+          <span className="truncate">{label}</span>
+        </div>
+        {badge !== undefined && (
+          <span
+            className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-md border shrink-0 transition-colors ${badgeColorClasses}`}
+          >
+            {badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  // Full Sidebar Content for both Desktop dock and Mobile slide-in
+  const renderSidebarContent = () => (
+    <div className="flex flex-col h-full justify-between space-y-6">
+      {/* Top Brand & Mode Area */}
+      <div className="space-y-4">
+        {/* Brand Wordmark & Floating Logo */}
+        <div className="flex items-center justify-between gap-3 px-2 pt-1">
+          <button
+            type="button"
+            onClick={() => handleNavClick('storefront')}
+            className="flex items-center gap-2.5 group cursor-pointer text-left"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-emerald-400 to-indigo-500 p-[1px] shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-400/40 group-hover:-translate-y-0.5 transition-all duration-300">
+              <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
+                <Zap className="w-4 h-4 text-cyan-400 fill-cyan-400/20 group-hover:rotate-12 transition-transform duration-300" />
+              </div>
+            </div>
+            <div>
+              <div className="font-extrabold text-sm tracking-tight text-white group-hover:text-cyan-300 transition-colors flex items-center gap-1.5">
+                <span>{settings.storeName || 'AeroThor'}</span>
+              </div>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                Anti-Gravity UI
+              </p>
+            </div>
+          </button>
+
+          {/* Close button on mobile */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Close navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Operating Mode Status Pill */}
+        <div className="px-2">
+          {showAdminNavigation ? (
+            <div className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/20 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-amber-300 font-mono text-[11px] font-bold">
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span>Admin ERP Console</span>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-sm shadow-amber-400" />
+            </div>
+          ) : (
+            <div className="p-2.5 rounded-xl bg-gradient-to-r from-cyan-500/10 via-cyan-500/5 to-transparent border border-cyan-500/20 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-cyan-300 font-mono text-[11px] font-semibold">
+                <Store className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Official Storefront</span>
+              </div>
+              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-sm shadow-cyan-400" />
+            </div>
+          )}
+        </div>
+
+        {/* Anti-gravity Floating Regional Deals Selector Card */}
+        <div className="p-3 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/10 shadow-lg shadow-black/30 space-y-2">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="text-slate-400 font-medium flex items-center gap-1.5">
+              <Globe className="w-3 h-3 text-cyan-400" />
+              <span>Target Market</span>
             </span>
-            <span className="hidden md:inline text-slate-600">·</span>
-            <span className="hidden md:inline text-slate-400">
-              Carrier: {activeGeoRegion.carrierName} ({activeGeoRegion.transitDays})
+            <span className="text-emerald-400 font-mono font-bold text-[10px]">
+              {activeGeoRegion.flag} {activeGeoRegion.isoCode} ({activeGeoRegion.currencyCode})
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <span className="text-[10px] text-slate-400 hidden sm:inline items-center gap-1">
-              <Globe className="w-3 h-3 inline text-emerald-400 mr-1" />
-              10-Country Deals:
-            </span>
+          <p className="text-[10px] text-slate-300 leading-tight">
+            Free 48h to {activeGeoRegion.countryName} via {activeGeoRegion.carrierName}
+          </p>
+
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-1">
             {TARGET_REGIONS.map((region) => {
               const isSelected = activeGeoRegion.slug === region.slug;
               return (
@@ -103,14 +250,12 @@ export const TopBar: React.FC<TopBarProps> = ({
                       onSelectRegionSlug(region.slug);
                     }
                   }}
-                  aria-label={`Select ${region.countryName} marketplace (${region.currencyCode})`}
-                  aria-pressed={isSelected}
-                  className={`px-1.5 py-0.5 rounded font-mono text-[10px] transition-colors cursor-pointer ${
+                  className={`px-1.5 py-1 rounded-lg text-[10px] font-mono font-bold transition-all shrink-0 cursor-pointer ${
                     isSelected
-                      ? 'bg-emerald-400 text-slate-950 font-bold ring-1 ring-emerald-300 shadow-sm'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                      ? 'bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 shadow-md shadow-cyan-500/30 scale-105'
+                      : 'text-slate-400 hover:text-white bg-white/[0.04] hover:bg-white/[0.08]'
                   }`}
-                  title={`${region.countryName} (${region.currencyCode} · ${region.currencySymbol}): ${region.dispatchBannerText}`}
+                  title={`${region.countryName} (${region.currencyCode})`}
                 >
                   <span aria-hidden="true">{region.flag}</span> {region.isoCode}
                 </button>
@@ -118,543 +263,385 @@ export const TopBar: React.FC<TopBarProps> = ({
             })}
           </div>
         </div>
+
+        {/* Customer Preview Notice if Admin is Previewing Storefront */}
+        {isAdminAuthenticated && isCustomerPreviewMode && (
+          <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/30 text-xs space-y-2">
+            <div className="flex items-center gap-1.5 text-emerald-300 font-semibold text-[11px]">
+              <Eye className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Customer Preview Active</span>
+            </div>
+            <p className="text-[10px] text-emerald-200/80">
+              Admin controls hidden from shoppers.
+            </p>
+            <div className="flex items-center gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={onToggleCustomerPreview}
+                className="flex-1 py-1 px-2 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-lg text-[10px] transition-colors cursor-pointer text-center"
+              >
+                Return to /admin
+              </button>
+              <button
+                type="button"
+                onClick={onAdminLogout}
+                className="py-1 px-2 bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 rounded-lg text-[10px] transition-colors cursor-pointer"
+              >
+                Lock
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Categories Container */}
+        <div className="space-y-5 pt-2">
+          {/* Storefront Section */}
+          <div className="space-y-1">
+            <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold">
+              Storefront &amp; Deals
+            </p>
+            <NavItem
+              tab="storefront"
+              icon={Store}
+              label={`Shop All Gear`}
+              badge={productCount}
+              badgeColor="cyan"
+              onClick={() => handleCustomerCategoryClick('All')}
+            />
+            <NavItem
+              icon={Sparkles}
+              label="Trending Arrivals"
+              badge="Hot"
+              badgeColor="emerald"
+              onClick={() => handleCustomerCategoryClick('CJ Marketplace')}
+            />
+            <NavItem
+              icon={Zap}
+              label="Tech Accessories"
+              onClick={() => handleCustomerCategoryClick('Tech Accessories')}
+            />
+            <NavItem
+              icon={PackageSearch}
+              label="Drinkware & Travel"
+              onClick={() => handleCustomerCategoryClick('Drinkware & Travel')}
+            />
+            <NavItem
+              tab="affiliates"
+              icon={Tag}
+              label="Affiliate Partner Deals"
+              badge="Amazon"
+              badgeColor="amber"
+            />
+            <NavItem
+              tab="track_order"
+              icon={Truck}
+              label="Track Your Order"
+              badge="Live"
+              badgeColor="emerald"
+            />
+            <NavItem
+              tab="return_policy"
+              icon={RotateCcw}
+              label="Return & Refund Policy"
+            />
+          </div>
+
+          {/* Admin Operations Section (Only when Admin is Authenticated) */}
+          {showAdminNavigation && (
+            <>
+              {/* Group 1: Operations */}
+              <div className="space-y-1 pt-2 border-t border-white/[0.06]">
+                <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold flex items-center gap-1.5">
+                  <Shield className="w-3 h-3 text-amber-400" />
+                  <span>Operations &amp; Orders</span>
+                </p>
+                <NavItem
+                  tab="admin_inventory"
+                  icon={Shield}
+                  label="Inventory Catalog"
+                  badge="/admin"
+                  badgeColor="amber"
+                />
+                <NavItem
+                  tab="admin_orders"
+                  icon={ClipboardList}
+                  label="Orders Manager"
+                  badge="Orders"
+                  badgeColor="emerald"
+                />
+                <NavItem
+                  tab="admin_revenue"
+                  icon={TrendingUp}
+                  label="Revenue Dashboard"
+                  badge="P&L"
+                  badgeColor="emerald"
+                />
+                <NavItem
+                  tab="admin_payments"
+                  icon={CreditCard}
+                  label="Payment Gateway Hub"
+                  badge="Stripe"
+                  badgeColor="indigo"
+                />
+              </div>
+
+              {/* Group 2: Marketing & Growth */}
+              <div className="space-y-1 pt-2 border-t border-white/[0.06]">
+                <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-cyan-400 font-bold flex items-center gap-1.5">
+                  <Megaphone className="w-3 h-3 text-cyan-400" />
+                  <span>Marketing &amp; Growth</span>
+                </p>
+                <NavItem
+                  tab="marketing"
+                  icon={Megaphone}
+                  label="Marketing & Ads Hub"
+                  badge="Ads"
+                  badgeColor="amber"
+                />
+                <NavItem
+                  tab="seo_audit"
+                  icon={ShieldCheck}
+                  label="SEO Meta Audit"
+                  badge="Audit"
+                  badgeColor="amber"
+                />
+                <NavItem
+                  tab="international_seo"
+                  icon={BarChart3}
+                  label="SEO & Traffic Analytics"
+                  badge="GA4"
+                  badgeColor="sky"
+                />
+                <NavItem
+                  tab="affiliate_auto_sync"
+                  icon={Zap}
+                  label="Affiliate Auto-Sync"
+                  badge="500+"
+                  badgeColor="emerald"
+                />
+              </div>
+
+              {/* Group 3: Feeds & Integrations */}
+              <div className="space-y-1 pt-2 border-t border-white/[0.06]">
+                <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-purple-400 font-bold flex items-center gap-1.5">
+                  <Database className="w-3 h-3 text-purple-400" />
+                  <span>Feeds &amp; Integrations</span>
+                </p>
+                <NavItem
+                  tab="cj_sync"
+                  icon={RefreshCw}
+                  label="CJ Dropshipping Sync"
+                  badge="API"
+                  badgeColor="cyan"
+                />
+                <NavItem
+                  tab="gmc_feed"
+                  icon={Database}
+                  label="Google Merchant Feed"
+                  badge={productCount}
+                  badgeColor="emerald"
+                />
+                <NavItem
+                  tab="csv_upload"
+                  icon={Upload}
+                  label="CSV Catalog Ingestion"
+                />
+                <NavItem
+                  tab="nextjs_code"
+                  icon={FileCode}
+                  label="Next.js App Router Code"
+                />
+              </div>
+
+              {/* Group 4: AI & Settings */}
+              <div className="space-y-1 pt-2 border-t border-white/[0.06]">
+                <p className="px-3 text-[10px] font-mono uppercase tracking-widest text-slate-400 font-bold flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3 text-purple-400" />
+                  <span>AI &amp; System Settings</span>
+                </p>
+                <NavItem
+                  tab="admin_settings"
+                  icon={Settings}
+                  label="Store Settings"
+                  badge="ERP"
+                  badgeColor="cyan"
+                />
+                <NavItem
+                  tab="ai_chat"
+                  icon={Sparkles}
+                  label="AI Commerce Assistant"
+                  badge="AI"
+                  badgeColor="purple"
+                />
+                <NavItem
+                  tab="creative_studio"
+                  icon={Layers}
+                  label="Creative Ad Studio"
+                />
+                <NavItem
+                  tab="pmax_audit"
+                  icon={Activity}
+                  label="PMax Performance Audit"
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Admin Preview Banner if Admin is previewing Customer View */}
-      {isAdminAuthenticated && isCustomerPreviewMode && (
-        <div className="bg-emerald-950/90 border-b border-emerald-500/30 px-4 py-1.5 text-[11px] text-emerald-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Eye className="w-3.5 h-3.5 text-emerald-400" />
-            <span>
-              <strong>Customer Storefront View (/):</strong> Admin tabs, inventory controls, and API integrations are hidden from shoppers.
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
+      {/* Sidebar Footer Controls & Admin Session Bar */}
+      <div className="pt-4 border-t border-white/10 space-y-2">
+        {showAdminNavigation ? (
+          <div className="space-y-1.5">
             <button
               type="button"
               onClick={onToggleCustomerPreview}
-              className="px-2.5 py-0.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded text-[11px] transition-colors cursor-pointer"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-white/[0.03] hover:bg-white/[0.08] hover:text-white border border-white/10 transition-all cursor-pointer"
             >
-              Return to /admin
+              <div className="flex items-center gap-2">
+                <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Customer View</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
             </button>
+
+            <a
+              href="/api/feed.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-white/[0.03] hover:bg-white/[0.08] hover:text-white border border-white/10 transition-all"
+            >
+              <div className="flex items-center gap-2">
+                <Database className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Live XML Feed</span>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+            </a>
+
             <button
               type="button"
               onClick={onAdminLogout}
-              className="px-2 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 rounded text-[11px] transition-colors cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-300 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-500/30 hover:border-rose-500/50 transition-all cursor-pointer shadow-sm shadow-rose-950/40"
             >
-              Lock Admin
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        {/* Main Header Bar */}
-        <div className="flex items-center justify-between gap-4 py-3">
-          {/* Zone 1: Brand Wordmark */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <button
-              onClick={() => onTabChange('storefront')}
-              className="text-base sm:text-lg font-extrabold tracking-tight text-white whitespace-nowrap hover:text-emerald-400 transition-colors flex items-center gap-2 cursor-pointer"
-            >
-              <span>{settings.storeName || 'Store'}</span>
-            </button>
-            {showAdminNavigation ? (
-              <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded">
-                <Shield className="w-3 h-3 text-amber-400" />
-                <span>/admin</span>
-              </span>
-            ) : (
-              <span className="hidden md:inline-block text-[11px] font-mono text-slate-400 border border-slate-800 px-2 py-0.5 rounded">
-                Official Storefront
-              </span>
-            )}
-          </div>
-
-          {/* Zone 2: Navigation Links */}
-          {showAdminNavigation ? (
-            <nav className="hidden lg:flex items-center gap-1" aria-label="Admin Navigation">
-              <button
-                onClick={() => onTabChange('storefront')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'storefront'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <Store className="w-3.5 h-3.5" />
-                <span>Storefront (/)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('admin_inventory')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'admin_inventory'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <Shield className="w-3.5 h-3.5 text-amber-400" />
-                <span>Inventory (/admin)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('admin_orders')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'admin_orders'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <ClipboardList className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Orders (/admin/orders)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('admin_revenue')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'admin_revenue'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30'
-                }`}
-              >
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Revenue Dashboard</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('admin_payments')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'admin_payments'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-indigo-300 hover:text-indigo-200 bg-indigo-950/40 border border-indigo-500/30'
-                }`}
-              >
-                <CreditCard className="w-3.5 h-3.5 text-indigo-400" />
-                <span>Payment Hub (/admin/payments)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('marketing')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'marketing'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/30'
-                }`}
-              >
-                <Megaphone className="w-3.5 h-3.5 text-amber-400" />
-                <span>Marketing &amp; Ads (/admin/marketing)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('seo_audit')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'seo_audit'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-amber-400 hover:text-amber-300 bg-amber-950/40 border border-amber-500/30'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-                <span>SEO Meta Audit</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('affiliate_auto_sync')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'affiliate_auto_sync'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30'
-                }`}
-              >
-                <Zap className="w-3.5 h-3.5 text-amber-400" />
-                <span>Affiliate Auto-Sync (500+)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('admin_settings')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'admin_settings'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                <Settings className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Settings (/admin/settings)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('international_seo')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'international_seo'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-sky-400 hover:text-sky-300 bg-sky-950/40 border border-sky-500/30'
-                }`}
-              >
-                <BarChart3 className="w-3.5 h-3.5 text-sky-400" />
-                <span>SEO &amp; Traffic (/admin/seo)</span>
-              </button>
-
-              <button
-                onClick={() => onTabChange('track_order')}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'track_order'
-                    ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                Track (/track-order)
-              </button>
-
-              <button
-                onClick={() => onTabChange('cj_sync')}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'cj_sync'
-                    ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                API Sync (CJ)
-              </button>
-
-              <button
-                onClick={() => onTabChange('gmc_feed')}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'gmc_feed'
-                    ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                GMC Feed ({productCount})
-              </button>
-
-              <button
-                onClick={() => onTabChange('csv_upload')}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'csv_upload'
-                    ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                CSV Ingestion
-              </button>
-
-              <button
-                onClick={() => onTabChange('nextjs_code')}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
-                  activeTab === 'nextjs_code'
-                    ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                }`}
-              >
-                Next.js Code
-              </button>
-            </nav>
-          ) : (
-            <nav className="hidden lg:flex items-center gap-1.5" aria-label="Customer Storefront Navigation">
-              <button
-                type="button"
-                onClick={() => handleCustomerCategoryClick('All')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                  activeTab === 'storefront'
-                    ? 'text-white bg-slate-900'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-900'
-                }`}
-              >
-                Shop All ({productCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCustomerCategoryClick('CJ Marketplace')}
-                className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-emerald-400 rounded-md hover:bg-slate-900 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Sparkles className="w-3 h-3 text-emerald-400" />
-                <span>Trending Arrivals</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCustomerCategoryClick('Tech Accessories')}
-                className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md hover:bg-slate-900 transition-colors cursor-pointer"
-              >
-                Tech Accessories
-              </button>
-              <button
-                type="button"
-                onClick={() => handleCustomerCategoryClick('Drinkware & Travel')}
-                className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md hover:bg-slate-900 transition-colors cursor-pointer"
-              >
-                Drinkware &amp; Travel
-              </button>
-              <button
-                type="button"
-                onClick={() => onTabChange('affiliates')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === 'affiliates'
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                    : 'text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/40 hover:border-amber-400'
-                }`}
-              >
-                <Tag className="w-3.5 h-3.5 text-amber-400" />
-                <span>Affiliate Deals</span>
-                <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-amber-400/20 text-amber-200">
-                  Amazon
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onTabChange('track_order')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === 'track_order'
-                    ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                    : 'text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30'
-                }`}
-              >
-                <PackageSearch className="w-3.5 h-3.5" />
-                <span>Track Order</span>
-              </button>
-            </nav>
-          )}
-
-          {/* Zone 3: Right Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {showAdminNavigation ? (
-              <>
-                <button
-                  type="button"
-                  onClick={onToggleCustomerPreview}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 bg-slate-900 border border-slate-700 rounded-lg hover:bg-slate-800 hover:text-emerald-400 transition-colors whitespace-nowrap cursor-pointer"
-                  title="Preview what public customers see"
-                >
-                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Customer View</span>
-                </button>
-                <a
-                  href="/api/feed.xml"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hidden xl:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-950 bg-emerald-400 rounded-lg hover:bg-emerald-300 transition-colors whitespace-nowrap shadow-sm shadow-emerald-500/10"
-                >
-                  <span>Live XML Feed</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-                <button
-                  type="button"
-                  onClick={onAdminLogout}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-200 bg-rose-950/60 border border-rose-500/30 rounded-lg hover:bg-rose-900/70 transition-colors whitespace-nowrap cursor-pointer"
-                  title="Lock Admin Console & return to public storefront"
-                >
-                  <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Lock Admin</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onTabChange('track_order')}
-                  className="lg:hidden inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-emerald-400 bg-emerald-950/50 border border-emerald-500/30 rounded-lg whitespace-nowrap cursor-pointer"
-                >
-                  <PackageSearch className="w-3.5 h-3.5" />
-                  <span>Track Order</span>
-                </button>
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/20 rounded-lg whitespace-nowrap">
-                  <Truck className="w-3.5 h-3.5" />
-                  <span>Free 48h US &amp; UK Dispatch</span>
-                </div>
-                {!isAdminAuthenticated && (
-                  <button
-                    type="button"
-                    onClick={onOpenAdminLogin}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-white bg-slate-900/80 hover:bg-slate-900 border border-slate-800 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
-                    title="Merchant Administrator Sign In (/admin)"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Admin</span>
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile / Tablet Horizontal Scroll Row */}
-        {showAdminNavigation ? (
-          <div
-            className="lg:hidden flex items-center gap-2 overflow-x-auto pb-2.5 pt-1 no-scrollbar border-t border-slate-900"
-            aria-label="Mobile Admin Navigation"
-          >
-            <button
-              onClick={() => onTabChange('storefront')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'storefront'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              Storefront (/)
-            </button>
-
-            <button
-              onClick={() => onTabChange('admin_inventory')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'admin_inventory'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              Inventory (/admin)
-            </button>
-
-            <button
-              onClick={() => onTabChange('admin_orders')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'admin_orders'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              Orders (/admin/orders)
-            </button>
-
-            <button
-              onClick={() => onTabChange('marketing')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors flex items-center gap-1 ${
-                activeTab === 'marketing'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/30'
-              }`}
-            >
-              <Megaphone className="w-3 h-3 text-amber-400" />
-              <span>Marketing &amp; Ads</span>
-            </button>
-
-            <button
-              onClick={() => onTabChange('affiliate_auto_sync')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors flex items-center gap-1 ${
-                activeTab === 'affiliate_auto_sync'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30'
-              }`}
-            >
-              <Zap className="w-3 h-3 text-amber-400" />
-              <span>Auto-Sync (500+)</span>
-            </button>
-
-            <button
-              onClick={() => onTabChange('admin_settings')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md whitespace-nowrap shrink-0 transition-colors flex items-center gap-1 ${
-                activeTab === 'admin_settings'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-slate-300 hover:text-white'
-              }`}
-            >
-              <Settings className="w-3 h-3 text-emerald-400" />
-              <span>Settings</span>
-            </button>
-
-            <button
-              onClick={() => onTabChange('international_seo')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 transition-colors flex items-center gap-1 ${
-                activeTab === 'international_seo'
-                  ? 'bg-emerald-400 text-slate-950 shadow-sm'
-                  : 'text-sky-400 bg-sky-950/40 border border-sky-500/30'
-              }`}
-            >
-              <BarChart3 className="w-3 h-3 text-sky-400" />
-              <span>SEO Analytics</span>
-            </button>
-
-            <button
-              onClick={() => onTabChange('track_order')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'track_order'
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Track Order
-            </button>
-
-            <button
-              onClick={() => onTabChange('cj_sync')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'cj_sync'
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              API Sync (CJ)
-            </button>
-
-            <button
-              onClick={() => onTabChange('gmc_feed')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'gmc_feed'
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              GMC Feed ({productCount})
-            </button>
-
-            <button
-              onClick={() => onTabChange('nextjs_code')}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md whitespace-nowrap shrink-0 transition-colors ${
-                activeTab === 'nextjs_code'
-                  ? 'bg-slate-800 text-emerald-400 border border-slate-700 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Next.js Code
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span>Lock Admin Session</span>
             </button>
           </div>
         ) : (
-          <div
-            className="lg:hidden flex items-center gap-2 overflow-x-auto pb-2.5 pt-1 no-scrollbar border-t border-slate-900"
-            aria-label="Mobile Storefront Categories"
-          >
-            <button
-              type="button"
-              onClick={() => handleCustomerCategoryClick('All')}
-              className="px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 rounded-md whitespace-nowrap shrink-0"
-            >
-              All Gear ({productCount})
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCustomerCategoryClick('CJ Marketplace')}
-              className="px-3 py-1.5 text-xs font-medium text-emerald-400 bg-slate-900/60 rounded-md whitespace-nowrap shrink-0"
-            >
-              Trending Arrivals
-            </button>
-            <button
-              type="button"
-              onClick={() => onTabChange('affiliates')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-md whitespace-nowrap shrink-0 flex items-center gap-1 ${
-                activeTab === 'affiliates'
-                  ? 'bg-amber-500 text-slate-950 font-black'
-                  : 'bg-amber-950/40 text-amber-300 border border-amber-500/40'
-              }`}
-            >
-              <Tag className="w-3 h-3 text-amber-400" />
-              <span>Affiliate Deals</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCustomerCategoryClick('Tech Accessories')}
-              className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md whitespace-nowrap shrink-0"
-            >
-              Tech Accessories
-            </button>
-            <button
-              type="button"
-              onClick={() => handleCustomerCategoryClick('Drinkware & Travel')}
-              className="px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white rounded-md whitespace-nowrap shrink-0"
-            >
-              Drinkware &amp; Travel
-            </button>
+          <div>
+            {!isAdminAuthenticated ? (
+              <button
+                type="button"
+                onClick={() => {
+                  onOpenAdminLogin();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-cyan-300 bg-cyan-950/30 hover:bg-cyan-900/40 border border-cyan-500/30 hover:border-cyan-400 shadow-lg shadow-cyan-500/10 hover:-translate-y-0.5 transition-all cursor-pointer"
+              >
+                <Lock className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Merchant Admin Portal</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onToggleCustomerPreview}
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-amber-300 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-500/30 transition-all cursor-pointer"
+              >
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span>Return to Admin (/admin)</span>
+              </button>
+            )}
           </div>
         )}
+
+        <div className="pt-2 text-center text-[10px] font-mono text-slate-400 flex items-center justify-between px-2">
+          <span>AeroThor OS v2.8</span>
+          <span className="flex items-center gap-1 text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            99.98% Live
+          </span>
+        </div>
       </div>
-    </header>
+    </div>
+  );
+
+  return (
+    <>
+      {/* 1. DESKTOP FIXED SIDEBAR NAVIGATION (Anti-gravity Floating Glassmorphism) */}
+      <aside
+        className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 xl:w-72 flex-col z-40 bg-slate-950/80 backdrop-blur-2xl border-r border-white/10 shadow-2xl shadow-cyan-950/30 p-4 overflow-y-auto no-scrollbar"
+        aria-label="Desktop Dashboard Sidebar"
+      >
+        {renderSidebarContent()}
+      </aside>
+
+      {/* 2. MOBILE STICKY FLOATING HEADER (With Hamburger trigger) */}
+      <header
+        className="lg:hidden sticky top-0 z-40 backdrop-blur-xl bg-slate-950/85 border-b border-white/10 px-4 py-3 shadow-xl shadow-black/40 flex items-center justify-between"
+        aria-label="Mobile Navigation Bar"
+      >
+        {/* Hamburger Trigger Button */}
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 text-cyan-400 hover:text-cyan-300 shadow-md shadow-cyan-500/10 active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+          aria-label="Open mobile navigation menu"
+        >
+          <Menu className="w-5 h-5" />
+          <span className="text-xs font-mono font-bold hidden sm:inline">MENU</span>
+        </button>
+
+        {/* Brand Center */}
+        <button
+          type="button"
+          onClick={() => handleNavClick('storefront')}
+          className="flex items-center gap-2 cursor-pointer"
+        >
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-400 to-indigo-500 p-[1px] shadow-md shadow-cyan-500/30">
+            <div className="w-full h-full bg-slate-950 rounded-[7px] flex items-center justify-center">
+              <Zap className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400/20" />
+            </div>
+          </div>
+          <span className="font-extrabold text-sm text-white tracking-tight">
+            {settings.storeName || 'AeroThor'}
+          </span>
+        </button>
+
+        {/* Right Quick Action: Target Market & Tracking */}
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => handleNavClick('track_order')}
+            className="p-1.5 text-emerald-400 hover:text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-xs font-semibold cursor-pointer"
+            title="Track Order"
+          >
+            <PackageSearch className="w-4 h-4" />
+          </button>
+          <span className="text-xs font-mono px-2 py-1 rounded-lg bg-white/[0.05] border border-white/10 text-slate-300 font-bold">
+            {activeGeoRegion.flag} {activeGeoRegion.isoCode}
+          </span>
+        </div>
+      </header>
+
+      {/* 3. MOBILE SLIDE-IN OVERLAY DRAWER WITH BACKDROP BLUR */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop Blur Overlay */}
+          <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity duration-300 animate-in fade-in"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-80 max-w-[85vw] bg-slate-950/95 backdrop-blur-2xl border-r border-cyan-500/20 shadow-2xl shadow-cyan-950/50 p-4 flex flex-col justify-between overflow-y-auto z-10 animate-in slide-in-from-left duration-300">
+            {renderSidebarContent()}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
+
+export const AppSidebar = TopBar;
+export default TopBar;

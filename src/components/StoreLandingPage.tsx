@@ -717,7 +717,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
   };
 
   return (
-    <div className="space-y-12 pb-12 font-sans text-slate-100">
+    <div className="space-y-12 pb-32 font-sans text-slate-100">
       {/* Native Impact.com & Sponsored Brand Hero Banner Slider */}
       <HeroPromoCarousel />
 
@@ -728,12 +728,12 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
         products={products}
       />
 
-      {/* Hero Intro & Trust Badges Strip */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-10 lg:p-12">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Hero Intro & Trust Badges Strip (Anti-gravity Floating Glassmorphism) */}
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl shadow-cyan-950/20 p-6 sm:p-10 lg:p-12 hover:border-cyan-500/30 transition-all duration-300">
+        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="flex items-center gap-2 text-xs text-emerald-400 font-mono tracking-wide">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="flex items-center gap-2 text-xs text-cyan-400 font-mono tracking-wide">
+            <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
             <span>{(settings.storeName || 'Official Store').toUpperCase()} · OFFICIAL STORE · US &amp; UK DIRECT WAREHOUSE</span>
           </div>
 
@@ -748,7 +748,7 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <a
               href="#catalog"
-              className="px-5 py-2.5 bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm rounded-lg hover:bg-emerald-300 transition-colors shadow-lg shadow-emerald-500/10 inline-flex items-center gap-2"
+              className="px-5 py-2.5 bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-black text-xs sm:text-sm rounded-xl hover:from-cyan-300 hover:to-emerald-300 transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-400/40 hover:-translate-y-1 inline-flex items-center gap-2 cursor-pointer"
             >
               <span>Explore Collection ({products.length})</span>
               <ChevronRight className="w-4 h-4" />
@@ -756,25 +756,25 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
             <button
               onClick={() => setIsCartOpen(true)}
-              className="px-4 py-2.5 bg-slate-900 border border-slate-700 text-slate-200 font-medium text-xs sm:text-sm rounded-lg hover:bg-slate-800 transition-colors inline-flex items-center gap-2"
+              className="px-4 py-2.5 bg-white/[0.04] backdrop-blur-md border border-white/10 text-slate-200 font-semibold text-xs sm:text-sm rounded-xl hover:bg-white/10 hover:border-cyan-500/30 transition-all shadow-md hover:-translate-y-1 inline-flex items-center gap-2 cursor-pointer"
             >
-              <ShoppingBag className="w-4 h-4 text-emerald-400" />
+              <ShoppingBag className="w-4 h-4 text-cyan-400" />
               <span>View Cart ({cart.reduce((a, b) => a + b.quantity, 0)})</span>
             </button>
           </div>
         </div>
 
-        {/* Trust Badges Strip (GMC Compliant Policies) */}
-        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 mt-6 border-t border-slate-800/80 text-xs">
-          <div className="flex items-center gap-2.5">
-            <Truck className="w-4 h-4 text-emerald-400 shrink-0" />
+        {/* Trust Badges Strip (GMC Compliant Policies with Neon Accents) */}
+        <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-4 pt-8 mt-6 border-t border-white/10 text-xs">
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-cyan-500/30 transition-colors">
+            <Truck className="w-4 h-4 text-cyan-400 shrink-0" />
             <div>
               <p className="font-semibold text-white">48h Domestic Dispatch</p>
               <p className="text-slate-400 text-[11px]">Free US &amp; UK mainland tracked</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 transition-colors">
             <RotateCcw className="w-4 h-4 text-emerald-400 shrink-0" />
             <div>
               <p className="font-semibold text-white">30-Day Free Returns</p>
@@ -782,16 +782,16 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-amber-500/30 transition-colors">
+            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
             <div>
               <p className="font-semibold text-white">GS1 GTIN Verified</p>
               <p className="text-slate-400 text-[11px]">Official Google Shopping catalog</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <Lock className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/[0.02] border border-white/5 hover:border-purple-500/30 transition-colors">
+            <Lock className="w-4 h-4 text-purple-400 shrink-0" />
             <div>
               <p className="font-semibold text-white">Encrypted Checkout</p>
               <p className="text-slate-400 text-[11px]">Apple Pay, Google Pay &amp; Visa</p>
@@ -828,8 +828,8 @@ export const StoreLandingPage: React.FC<StoreLandingPageProps> = ({
 
       {/* Catalog Filter & Showcase */}
       <section id="catalog" className="space-y-6">
-        {/* Country-Specific Multi-Marketplace & Domestic Fulfillment Status Bar */}
-        <div className="rounded-xl border border-emerald-500/30 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 p-4 shadow-lg shadow-black/40">
+        {/* Country-Specific Multi-Marketplace & Domestic Fulfillment Status Bar (Anti-gravity Glassmorphic Panel) */}
+        <div className="rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-5 shadow-2xl shadow-cyan-950/20 hover:border-cyan-500/30 transition-all duration-300">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center gap-3">
               <span className="text-3xl select-none shrink-0" aria-hidden="true">
